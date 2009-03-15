@@ -1,0 +1,7 @@
+bindings/python2/build
+bindings/python2/*.pyc
+bindings/python2/*.pyo
+libfiu/*.o
+libfiu/libfiu.a
+libfiu/libfiu.pc
+libfiu/libfiu.so

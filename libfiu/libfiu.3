@@ -1,0 +1,170 @@
+.TH libfiu 3 "17/Feb/2009"
+.SH NAME
+libfiu - Fault injection in userspace
+.SH SYNOPSYS
+.nf
+.B /* Core API */
+.B #include <fiu.h>
+.sp
+.BI "int fiu_init(unsigned int " flags ");"
+.BI "int fiu_fail(const char *" name ");"
+.BI "void *fiu_failinfo(void);"
+.BI "[void] fiu_do_on(char *" name ", " action "); [macro]"
+.BI "[void] fiu_exit_on(char *" name "); [macro]"
+.BI "[void] fiu_return_on(char *" name ", " retval "); [macro]"
+.sp
+.B /* Control API */
+.B #include <fiu-control.h>
+.sp
+.BI "int fiu_enable(const char *" name ", int " failnum ","
+.BI "		void *" failinfo ", unsigned int " flags ");"
+.BI "int fiu_enable_random(const char *" name ", int " failnum ","
+.BI "		void *" failinfo ", unsigned int " flags ", float " probability ");"
+.BI "typedef int external_cb_t(const char *" name ", int *" failnum ","
+.BI "		void **" failinfo ", unsigned int *" flags ");"
+.BI "int fiu_enable_external(const char *" name ", int " failnum ","
+.BI "		void *" failinfo ", unsigned int " flags ","
+.BI "		external_cb_t *" external_cb ");"
+.BI "int fiu_disable(const char *" name ");"
+.sp
+.fi
+.SH DESCRIPTION
+
+libfiu is a library for fault injection. It provides functions to mark "points
+of failure" inside your code (the "core API"), and functions to enable/disable
+the failure of those points (the "control API").
+
+The core API is used inside the code wanting to perform failure injection on.
+The control API is used inside the testing code, in order to control the
+injection of failures.
+
+This page is an API reference and not a complete manual, and as such does not
+go into detail about how to use the library. The library's manual can be found
+in the distribution.
+
+.SS CORE API
+
+To use the core API, you should
+.IR "#include <fiu.h>" .
+
+Because fault injection is usually a debugging/testing facility, unwanted at
+runtime, some special considerations were taken to minimize the impact of the
+core API. First of all, if
+.I FIU_ENABLE
+is not defined, then fiu.h will define empty stubs for all the core API,
+effectively disabling fault injection completely, without any runtime
+performance.
+
+Also, a special header
+.I fiu-local.h
+is shipped with libfiu. It is meant to be included in your project to avoid
+having libfiu as a mandatory build-time dependency. You can add it to your
+project, and #include it instead of
+.IR fiu.h .
+It will take care of including the real
+.I fiu.h
+only when
+.I FIU_ENABLE
+is defined. It is entirely optional, but recommended. See the library's manual
+for more details.
+
+
+.TP
+.BI "int fiu_init(" flags ")"
+Initializes the library. Ideally, you should only call this once, although it
+can cope with multiple calls. The flags parameter is currently unused and must
+be set to 0. Returns 0 on success, < 0 on error.
+
+.TP
+.BI "fiu_fail(" name ")"
+Returns the failure status of the given point of failure. 0 means it should
+not fail. By default, all points of failure do not fail; they're enabled in
+runtime using the control API.
+
+.TP
+.BI "fiu_failinfo()"
+Returns the information associated with the last failure, or NULL if there
+isn't one.
+
+.TP
+.BI "fiu_do_on(" name ", " action ") [macro]"
+This is a macro that uses
+.B fiu_fail()
+to perform the given action when the given point of failure fails. The action
+can be any valid C statement.
+
+.TP
+.BI "fiu_exit_on(" name ") [macro]"
+This is a macro that uses
+.B fiu_fail()
+to exit the process when the given point of failure fails. The process is exit
+using exit(3), which is given the status EXIT_FAILURE.
+
+.TP
+.BI "fiu_return_on(" name ", " retval ") [macro]"
+This is a macro that uses
+.B fiu_fail()
+to make the current function return the given value (whose type obviously
+depends on the return type of the function).
+
+.SS CONTROL API
+
+To use the control API, you should
+.IR "#include <fiu-control.h>" .
+
+.TP
+.BI "fiu_enable(" name ", " failnum ", " failinfo ", " flags ")"
+Enables the given point of failure.
+.I failnum
+is what
+.B fiu_fail()
+will return, and must be != 0.
+.I failinfo
+is what
+.B fiu_failinfo()
+will return when called after the given point of failure has failed.
+.I flags
+can be either 0 or
+.IR FIU_ONETIME ,
+which indicates that this point of failure should only fail once.  Returns 0 if
+success, < 0 otherwise. If the point of failure was already enabled, this
+overwrites the previous values.
+
+Successive calls to
+.B fiu_fail()
+will return
+.I failnum
+until this point of failure is disabled. If
+.I FIU_ONETIME
+was passed in the flags, this point of failure is disabled immediately after
+failing once.
+
+If the name ends with an asterisk, then it this will match all points of
+failure that begin with the given name (excluding the asterisk, of course).
+
+.TP
+.BI "fiu_enable_random(" name ", " failnum ", " failinfo ", " flags ", " probability ")"
+Enables the given point of failure, with the given probability. The rest of the
+parameters, as well as the return value, are the same as the ones in
+.BR fiu_enable() .
+
+.TP
+.BI "fiu_enable_external(" name ", " failnum ", " failinfo ", " flags ", " external_cb ")"
+Enables the given point of failure, leaving the decision whether to fail or not
+to the given external function, which should return 0 if it is not to fail, or
+1 otherwise. The rest of the parameters, as well as the return value, are the
+same as the ones in
+.BR fiu_enable() .
+
+.TP
+.BI "fiu_disable(" name ")"
+Disables the given point of failure, undoing the actions of the
+.B fiu_enable*()
+functions.
+
+.SH BUGS
+
+If you want to report bugs, or have any questions or comments, just let me
+know at albertito@blitiri.com.ar. For more information about the library, you
+can go to http://blitiri.com.ar/p/libfiu.
+

@@ -1,0 +1,12 @@
+
+prefix=++PREFIX++
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libfiu
+Description: Fault injection in userspace
+URL: http://blitiri.com.ar/p/libfiu/
+Version: 0.10
+Libs: -L${libdir} -lfiu
+Cflags: -I${includedir}
+
