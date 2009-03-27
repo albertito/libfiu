@@ -68,9 +68,9 @@ static PyObject *enable_random(PyObject *self, PyObject *args)
 	int failnum;
 	PyObject *failinfo;
 	unsigned int flags;
-	float probability;
+	double probability;
 
-	if (!PyArg_ParseTuple(args, "siOIf:enable_random", &name, &failnum,
+	if (!PyArg_ParseTuple(args, "siOId:enable_random", &name, &failnum,
 				&failinfo, &flags, &probability))
 		return NULL;
 
