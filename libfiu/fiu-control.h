@@ -14,7 +14,7 @@
  * - failinfo: what will fiu_failinfo() return.
  * - flags: flags.
  * - returns: 0 if success, < 0 otherwise.
- * */
+ */
 int fiu_enable(const char *name, int failnum, void *failinfo,
 		unsigned int flags);
 
