@@ -2,6 +2,9 @@
 #include <stdlib.h>		/* malloc() and friends */
 #include <string.h>		/* strcmp() and friends */
 #include <pthread.h>		/* mutexes */
+#include <sys/time.h>		/* gettimeofday() */
+#include <time.h>		/* gettimeofday() */
+#include <limits.h>		/* ULONG_MAX */
 
 /* Enable us, so we get the real prototypes from the headers */
 #define FIU_ENABLE 1
@@ -149,6 +152,38 @@ static int shrink_enabled_fails(void)
 	return 0;
 }
 
+/* Returns a random double.
+ *
+ * We can't just use drand48() or similar and seed at initialization because a
+ * lot of normal scenarios involve forking.
+ *
+ * As we don't really need a very good, thread-safe or secure random source,
+ * we use an algorithm similar to the one used in rand() and drand48() (a
+ * linear congruential generator, see
+ * http://en.wikipedia.org/wiki/Linear_congruential_generator for more
+ * information), but also taking into account the microseconds of the current
+ * epoch time. Coefficients are the ones used in rand(), so we assume
+ * sizeof(int) >= 4.
+ *
+ * Microseconds are multiplied because normally they're < 1000000 and they
+ * wouldn't really affect the initial outcome. A power of 2 was chosen as the
+ * multiplier for efficiency reasons.
+ *
+ * That change makes the PRNG theoretically worse, but good enough for our
+ * purposes. */
+static unsigned int randd_xn = 0xA673F42D;
+static double randd(void)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	randd_xn = (1103515245 * randd_xn + 12345) + tv.tv_usec * 16384;
+
+	return (double) randd_xn / UINT_MAX;
+}
+
+
 /*
  * Core API
  */
@@ -199,7 +234,7 @@ int fiu_fail(const char *name)
 				goto exit_fail;
 				break;
 			case PF_PROB:
-				if (pf->minfo.probability > drand48())
+				if (pf->minfo.probability > randd())
 					goto exit_fail;
 				break;
 			case PF_EXTERNAL:
