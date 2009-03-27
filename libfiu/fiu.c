@@ -197,7 +197,7 @@ int fiu_fail(const char *name)
 				goto exit_fail;
 				break;
 			case PF_PROB:
-				if (pf->minfo.probability < drand48() )
+				if (pf->minfo.probability > drand48())
 					goto exit_fail;
 				break;
 			case PF_EXTERNAL:
