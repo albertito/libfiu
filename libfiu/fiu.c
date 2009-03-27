@@ -159,17 +159,19 @@ static int shrink_enabled_fails(void)
 int fiu_init(unsigned int flags)
 {
 	ef_wlock();
-	if (!initialized) {
-		/* first time we get called */
-		pthread_key_create(&last_failinfo_key, NULL);
-
-		enabled_fails = NULL;
-		enabled_fails_last = NULL;
-		enabled_fails_len = 0;
-		enabled_fails_nfree = 0;
-
-		initialized = 1;
+	if (initialized) {
+		ef_wunlock();
+		return 0;
 	}
+
+	pthread_key_create(&last_failinfo_key, NULL);
+
+	enabled_fails = NULL;
+	enabled_fails_last = NULL;
+	enabled_fails_len = 0;
+	enabled_fails_nfree = 0;
+
+	initialized = 1;
 
 	ef_wunlock();
 	return 0;
