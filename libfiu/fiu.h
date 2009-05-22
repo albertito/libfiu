@@ -50,10 +50,6 @@ void *fiu_failinfo(void);
 #define fiu_return_on(name, retval) fiu_do_on(name, return retval)
 
 
-/* Undefine the private defines */
-#undef _likely
-#undef _unlikely
-
 #else
 /* fiu not enabled, this should match fiu-local.h but we don't include it
  * because it includes us assuming we're installed system-wide */
