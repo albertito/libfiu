@@ -138,7 +138,7 @@ static PyObject *enable_external(PyObject *self, PyObject *args)
 	unsigned int flags;
 	PyObject *py_external_cb;
 
-	if (!PyArg_ParseTuple(args, "siIO:enable_random", &name, &failnum,
+	if (!PyArg_ParseTuple(args, "siIO:enable_external", &name, &failnum,
 				&flags, &py_external_cb))
 		return NULL;
 
@@ -162,7 +162,7 @@ static PyObject *disable(PyObject *self, PyObject *args)
 {
 	char *name;
 
-	if (!PyArg_ParseTuple(args, "s:fail", &name))
+	if (!PyArg_ParseTuple(args, "s:disable", &name))
 		return NULL;
 
 	return PyLong_FromLong(fiu_disable(name));
