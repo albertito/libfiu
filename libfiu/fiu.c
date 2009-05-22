@@ -152,33 +152,34 @@ static int shrink_enabled_fails(void)
 	return 0;
 }
 
-/* Returns a random double.
+/* Pseudorandom number generator.
  *
- * We can't just use drand48() or similar and seed at initialization because a
- * lot of normal scenarios involve forking.
+ * The performance of the PRNG is very sensitive to us, so we implement our
+ * own instead of just use drand48() or similar.
  *
  * As we don't really need a very good, thread-safe or secure random source,
  * we use an algorithm similar to the one used in rand() and drand48() (a
  * linear congruential generator, see
  * http://en.wikipedia.org/wiki/Linear_congruential_generator for more
- * information), but also taking into account the microseconds of the current
- * epoch time. Coefficients are the ones used in rand(), so we assume
+ * information). Coefficients are the ones used in rand(), so we assume
  * sizeof(int) >= 4.
  *
- * Microseconds are multiplied because normally they're < 1000000 and they
- * wouldn't really affect the initial outcome. A power of 2 was chosen as the
- * multiplier for efficiency reasons.
- *
- * That change makes the PRNG theoretically worse, but good enough for our
- * purposes. */
+ * To seed it, we use the current microseconds. To prevent seed reuse, we
+ * re-seed after each fork (see atfork_child()). */
 static unsigned int randd_xn = 0xA673F42D;
-static double randd(void)
+
+static void prng_seed(void)
 {
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 
-	randd_xn = (1103515245 * randd_xn + 12345) + tv.tv_usec * 16384;
+	randd_xn = tv.tv_usec;
+}
+
+static double randd(void)
+{
+	randd_xn = 1103515245 * randd_xn + 12345;
 
 	return (double) randd_xn / UINT_MAX;
 }
@@ -187,7 +188,7 @@ static double randd(void)
  * registered via pthread_atfork() in fiu_init(). */
 static void atfork_child(void)
 {
-
+	prng_seed();
 }
 
 
@@ -217,6 +218,8 @@ int fiu_init(unsigned int flags)
 		ef_wunlock();
 		return -1;
 	}
+
+	prng_seed();
 
 	initialized = 1;
 
