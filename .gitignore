@@ -1,9 +1,6 @@
-bindings/python2/build
-bindings/python2/*.pyc
-bindings/python2/*.pyo
-bindings/python3/build
-bindings/python3/*.pyc
-bindings/python3/*.pyo
+bindings/python/build
+bindings/python/*.pyc
+bindings/python/*.pyo
 libfiu/*.o
 libfiu/libfiu.a
 libfiu/libfiu.pc

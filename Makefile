@@ -11,22 +11,19 @@ install:
 
 
 python2:
-	cd bindings/python2 && python setup.py build
+	cd bindings/python && python setup.py build
 
 python2_install:
-	cd bindings/python2 && python setup.py install
-
-python2_clean:
-	cd bindings/python2 && rm -rf build/
+	cd bindings/python && python setup.py install
 
 python3:
-	cd bindings/python3 && python3 setup.py build
+	cd bindings/python && python3 setup.py build
 
 python3_install:
-	cd bindings/python3 && python3 setup.py install
+	cd bindings/python && python3 setup.py install
 
-python3_clean:
-	cd bindings/python3 && rm -rf build/
+python_clean:
+	cd bindings/python && rm -rf build/
 
 
 preload:
@@ -35,13 +32,12 @@ preload:
 preload_clean:
 	$(MAKE) -C preload clean
 
-clean: python2_clean python3_clean
+clean: python_clean
 	$(MAKE) -C libfiu clean
 
 
 .PHONY: default all clean libfiu utils \
-	python2 python2_install python2_clean \
-	python3 python3_install python3_clean \
+	python2 python2_install python3 python3_install python_clean \
 	preload preload_clean
 
 

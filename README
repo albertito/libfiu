@@ -31,7 +31,8 @@ for installing. By default it installs into /usr/local, but you can provide an
 alternative prefix by running "make PREFIX=/my/prefix install".
 
 To build the Python bindings, use "make python2"; to install them you can run
-"make python2_install".
+"make python2_install". For the Python 3 bindings, use "make python3" and
+"make python3_install".
 
 
 Where to report bugs
