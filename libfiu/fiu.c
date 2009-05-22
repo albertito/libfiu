@@ -183,6 +183,13 @@ static double randd(void)
 	return (double) randd_xn / UINT_MAX;
 }
 
+/* Function that runs after the process has been forked, at the child. It's
+ * registered via pthread_atfork() in fiu_init(). */
+static void atfork_child(void)
+{
+
+}
+
 
 /*
  * Core API
@@ -205,6 +212,11 @@ int fiu_init(unsigned int flags)
 	enabled_fails_last = NULL;
 	enabled_fails_len = 0;
 	enabled_fails_nfree = 0;
+
+	if (pthread_atfork(NULL, NULL, atfork_child) != 0) {
+		ef_wunlock();
+		return -1;
+	}
 
 	initialized = 1;
 
