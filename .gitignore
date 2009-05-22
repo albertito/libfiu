@@ -8,3 +8,8 @@ libfiu/*.o
 libfiu/libfiu.a
 libfiu/libfiu.pc
 libfiu/libfiu.so
+preload/*.o
+preload/*.so
+preload/modules/*.o
+preload/modules/*.mod.c
+

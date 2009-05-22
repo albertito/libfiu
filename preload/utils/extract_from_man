@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+# encoding: utf8
+
+"""
+Extracts information from a manpage (read from stdin) that can be useful to
+create modules for the code generator.
+
+Example usage:
+	man 3posix chmod | extract_from_man
+
+Or, in a loop:
+
+	rm -f gen.mod;
+	for f in chmod chown chdir; do
+		man 3posix $f | extract_from_man >> gen.mod;
+	done
+
+"""
+
+import sys
+import re
+
+
+def wrap(s, cols, indent = 1):
+	ns = ''
+	line = ''
+	for w in s.split():
+		if len(line + ' ' + w) > cols:
+			ns += line + ' \\\n' + '\t' * indent
+			line = w
+		else:
+			if line:
+				line += ' ' + w
+			else:
+				line = w
+
+	ns += line
+
+	return ns.rstrip()
+
+
+def extract_sections(f):
+	"Reads a manpage from the file, returns a dictionary of sections."
+	sec_name = ''
+	sec_data = ''
+	sections = {}
+
+	for l in f:
+		if not l.strip():
+			continue
+
+		if l.startswith((' ', '\t')):
+			sec_data += l
+		else:
+			sections[sec_name] = sec_data
+			sec_name = l.strip()
+			sec_data = ''
+
+	sections[sec_name] = sec_data
+
+	return sections
+
+def get_ret_on_error(sections):
+	"Tries to find out what the function returns on error."
+	if 'RETURN VALUE' not in sections:
+		return None
+
+	# remove spaces and newlines to make it easier detect the patterns
+	s = ' '.join(sections['RETURN VALUE'].split())
+	print s
+
+	# Note: the '(-|‐)' regexp matches both the normal minus sign ('-')
+	# and the UTF-8 hypen sign ('‐', or \xe2\x80\x90); sadly both usually
+	# look the same
+	regexps = [
+		r'On error,? (?P<ev>[-\w]+) is returned',
+		r'On error,? .* returns? (?P<ev>[-\w]+).',
+		r'some error occurs,? (?P<ev>[-\w]+) is returned',
+		r'and (?P<ev>[-\w]+) if an error occurr(s|ed)',
+		r'[Oo]ther((-|‐) )?wise, (?P<ev>[-\w]+) shall be returned',
+		r'Other((-|‐) )?wise, the functions shall return (?P<ev>[-\w]+) and'
+	]
+	regexps = map(re.compile, regexps)
+
+	possible_errors = []
+	for regexp in regexps:
+		m = regexp.search(s)
+		if m:
+			possible_errors.append(m.group('ev'))
+	return possible_errors
+
+def get_possible_errnos(sections):
+	"""Tries to find out the possible valid errno values after the
+	function has failed."""
+	if 'ERRORS' not in sections:
+		return None
+
+	errnos = []
+
+	for l in sections['ERRORS'].split('\n'):
+		m = re.match(r'\s+(?P<e>([A-Z]{3,},? *)+)\s*', l)
+		if m:
+			s = m.group('e').strip()
+			if not s:
+				continue
+
+			s = [ x.strip() for x in s.split(',') ]
+			errnos.extend(s)
+
+	return errnos
+
+def get_defs(sections):
+	"Tries to find out the includes and function definitions."
+	if 'SYNOPSIS' not in sections:
+		return None
+
+	includes = []
+	funcs = []
+
+	fre = re.compile(r'\s+(?P<f>[\w,\*\s]+\(?(\w|,|\*|\s|\.\.\.)*\)?[,;])$')
+
+	for l in sections['SYNOPSIS'].split('\n'):
+		sl = l.strip()
+		if sl.startswith('#include'):
+			includes.append(sl.split(' ', 1)[1])
+
+		m = fre.match(l.rstrip())
+		if m:
+			f = m.group('f')
+
+			# long functions are split in multiple lines, this
+			# tries to detect that and append to the last seen
+			# function
+			if funcs and not funcs[-1].endswith(';'):
+				funcs[-1] += ' ' + f
+			else:
+				funcs.append(f)
+	return (includes, funcs)
+
+
+if __name__ == '__main__':
+
+	if len(sys.argv) > 1:
+		print __doc__
+		sys.exit(1)
+
+	s = extract_sections(sys.stdin)
+	on_error = get_ret_on_error(s)
+	errnos = get_possible_errnos(s)
+	incs, funcs = get_defs(s)
+
+	print '\n'.join( 'include: ' + i for i in incs)
+	print
+
+	print '\n'.join(funcs)
+
+	if on_error:
+		print '\ton error:', ' || '.join(on_error)
+
+	if errnos:
+		print '\tvalid errnos:', wrap(' '.join(errnos), 60,
+				indent = 2)
+
+

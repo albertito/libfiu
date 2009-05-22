@@ -1,0 +1,262 @@
+#!/usr/bin/env python
+
+"""
+Reads function information and generates code for the preloader library.
+
+The code is NOT nice. It just does the trick.
+"""
+
+import sys
+import re
+
+
+# Function definition regular expression
+func_def_re = re.compile(
+		r'(?P<ret_type>.*)\s+(?P<name>\w+).*\((?P<params>.*)\).*;')
+
+# Regular expression to extract the types and names of the parameters from a
+# string containing the definition parameters (e.g. from
+# "int a, const char *b" extracts [('int ', 'a'), ('const char *', 'b')]
+params_info_re = \
+	re.compile(r"(?:(?P<type>(?:[\w\*]+\s+\**)+)+(?P<name>\w+),?\s*)+?")
+
+
+class Context:
+	"""Represents the current context information within a module
+	definition file."""
+	def __init__(self):
+		self.fiu_name_base = 'UNKNOWN'
+
+
+class Function:
+	"Represents a function to be wrapped"
+
+	def __init__(self, definition, ctx):
+		"Constructor, takes the C definition as a string"
+		self.definition = definition
+		self.load_from_definition(definition)
+
+		# fiu name, constructed by default from the context but can be
+		# overriden by info
+		self.fiu_name = ctx.fiu_name_base + '/' + self.name
+
+		# what to return on error, by default set to None, which means
+		# "take it from failinfo"
+		self.on_error = None
+
+		# whether to set errno or not, and the list of valid errnos;
+		# in any case if failinfo is set we take the errno value from
+		# there
+		self.use_errno = False
+		self.valid_errnos = []
+
+	def load_from_definition(self, definition):
+		m = func_def_re.match(definition)
+		self.name = m.group("name")
+		self.ret_type = m.group("ret_type")
+		self.params =  m.group("params")
+		self.params_info = params_info_re.findall(self.params)
+
+	def load_info(self, info):
+		"Loads additional information from the given string"
+		if ':' in info:
+			s = info.split(':', 1)
+			k, v = s[0].strip(), s[1].strip()
+
+			if k == 'fiu name':
+				self.fiu_name = v
+			elif k == 'on error':
+				self.on_error = v
+			elif k == 'valid errnos':
+				self.use_errno = True
+				self.valid_errnos = v.split()
+			else:
+				raise SyntaxError, \
+					"Unknown information: " + k
+
+	def __repr__(self):
+		s = '<F %(rt)s %(n)s ( %(p)s ) -- %(fn)s %(oe)s %(ve)s>' % \
+			{
+				'rt': self.ret_type,
+				'n': self.name,
+				'p': self.params,
+				'fn': self.fiu_name,
+				'oe': self.on_error,
+				've': str(self.valid_errnos),
+			}
+		return s
+
+	def generate_to(self, f):
+		"""Generates code to the given file. Strongly related to
+		codegen.h."""
+		f.write('/* Wrapper for %s() */\n' % self.name)
+
+		# extract params names and types
+		paramst = ', '.join(i[0] for i in self.params_info)
+		paramsn = ', '.join(i[1] for i in self.params_info)
+
+		f.write('mkwrap_top(%s, %s, (%s), (%s), (%s))\n' % \
+				(self.ret_type, self.name, self.params,
+					paramsn, paramst) )
+
+		if self.use_errno:
+			if self.on_error is None:
+				desc = "%s uses errno but has no on_error" % \
+					self.name
+				raise RuntimeError, desc
+
+			# We can't put this as a macro parameter, so it has to
+			# be explicit 
+			valid_errnos = '{ ' + ', '.join(self.valid_errnos) \
+				+ ' }'
+			f.write("\tint valid_errnos[] = %s;\n" % valid_errnos)
+
+			f.write('mkwrap_body_errno("%s", %s, %d)\n' % \
+					(self.fiu_name, self.on_error,
+						len(self.valid_errnos)) )
+		elif self.on_error is not None:
+			f.write('mkwrap_body_hardcoded("%s", %s)\n' % \
+					(self.fiu_name, self.on_error) )
+		else:
+			f.write('mkwrap_body_failinfo("%s", %s)\n' % \
+					(self.fiu_name, self.ret_type) )
+
+		f.write('mkwrap_bottom(%s, (%s))\n' % (self.name, paramsn))
+		f.write('\n\n')
+
+
+class Include:
+	"Represents an include directive"
+	def __init__(self, path):
+		self.path = path
+
+	def __repr__(self):
+		return '<I %s>' % self.path
+
+	def generate_to(self, f):
+		f.write("#include %s\n" % self.path)
+
+
+class EmptyLine:
+	"Represents an empty line"
+	def __repr__(self):
+		return '<E>'
+
+	def generate_to(self, f):
+		f.write('\n')
+
+class Comment:
+	"Represents a full-line comment"
+	def __init__(self, line):
+		self.body = line.strip()[1:].strip()
+
+	def __repr__(self):
+		return '<C %s>' % self.body
+
+	def generate_to(self, f):
+		f.write("// %s \n" % self.body)
+
+
+def parse_module(path):
+	"Parses a module definition"
+
+	f = open(path)
+
+	directives = []
+	ctx = Context()
+	current_func = None
+
+	while True:
+		l = f.readline()
+
+		# handle EOF
+		if not l:
+			break
+
+		# handle \ at the end of the line
+		while l.endswith("\\\n"):
+			nl = f.readline()
+			l = l[:-2] + nl
+
+		if not l.strip():
+			directives.append(EmptyLine())
+			continue
+
+		if l.strip().startswith("#"):
+			directives.append(Comment(l))
+			continue
+
+
+		if not l.startswith(" ") and not l.startswith("\t"):
+			# either a new function or a directive, but in either
+			# case the current function is done
+			if current_func:
+				directives.append(current_func)
+			current_func = None
+
+			l = l.strip()
+
+			if ':' in l:
+				# directive
+				s = l.split(':', 1)
+				k, v = s[0].strip(), s[1].strip()
+				if k == 'fiu name base':
+					v = v.strip().strip('/')
+					ctx.fiu_name_base = v
+				elif k == 'include':
+					directives.append(Include(v))
+				else:
+					raise SyntaxError, \
+						("Unknown directive", l)
+			else:
+				current_func = Function(l, ctx)
+		else:
+			# function information
+			current_func.load_info(l.strip())
+
+	if current_func:
+		directives.append(current_func)
+
+	return directives
+
+
+#
+# Code generation
+#
+
+# Templates
+
+gen_header = """
+/*
+ * AUTOGENERATED FILE - DO NOT EDIT
+ *
+ * This file was automatically generated by libfiu, do not edit it directly,
+ * but see libfiu's "preload" directory.
+ */
+
+#include "codegen.h"
+
+"""
+
+
+def generate_code(directives, path):
+	"""Generates code to the file in the given path"""
+	f = open(path, 'w')
+
+	f.write(gen_header)
+
+	for directive in directives:
+		directive.generate_to(f)
+
+
+def main():
+	input_name = sys.argv[1]
+	output_name = sys.argv[2]
+	directives = parse_module(input_name)
+	#import pprint
+	#pprint.pprint(directives)
+	generate_code(directives, output_name)
+
+if __name__ == '__main__':
+	main()
+
