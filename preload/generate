@@ -12,7 +12,7 @@ import re
 
 # Function definition regular expression
 func_def_re = re.compile(
-		r'(?P<ret_type>.*)\s+(?P<name>\w+).*\((?P<params>.*)\).*;')
+	r'(?P<ret_type>(?:[\w\*]+\s+\**)+)+(?P<name>\w+).*\((?P<params>.*)\).*;')
 
 # Regular expression to extract the types and names of the parameters from a
 # string containing the definition parameters (e.g. from
