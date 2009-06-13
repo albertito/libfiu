@@ -62,7 +62,6 @@ extern int __thread _fiu_called;
 	{ 							\
 		RTYPE r;					\
 		int fstatus;					\
-		void *finfo;					\
 								\
 		/* cast it just to be sure */			\
 		if (_fiu_orig_##NAME == NULL)			\
@@ -106,7 +105,7 @@ extern int __thread _fiu_called;
 								\
 		fstatus = fiu_fail(FIU_NAME);			\
 		if (fstatus != 0) {				\
-			finfo = fiu_failinfo();			\
+			void *finfo = fiu_failinfo();		\
 			if (finfo == NULL) {			\
 				errno = valid_errnos[random() % NVERRNOS]; \
 			} else {				\

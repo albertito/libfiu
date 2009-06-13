@@ -21,7 +21,6 @@ int open(const char *pathname, int flags, ...)
 {
 	int r;
 	int fstatus;
-	void *finfo;
 
 	/* Differences from the generated code begin here */
 
