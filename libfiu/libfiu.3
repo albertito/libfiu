@@ -144,8 +144,9 @@ failure that begin with the given name (excluding the asterisk, of course).
 
 .TP
 .BI "fiu_enable_random(" name ", " failnum ", " failinfo ", " flags ", " probability ")"
-Enables the given point of failure, with the given probability. The rest of the
-parameters, as well as the return value, are the same as the ones in
+Enables the given point of failure, with the given probability (between 0 and
+1). The rest of the parameters, as well as the return value, are the same as
+the ones in
 .BR fiu_enable() .
 
 .TP
