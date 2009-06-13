@@ -29,8 +29,8 @@ supported at the moment:
 
 Where:
 
- - *name* is the failure point name (which, at the moment, cannot have spaces
-   inside).
+ - *name* is the name of the point of failure (which, at the moment, cannot
+   have spaces inside).
  - *failnum* the same as the *failnum* parameter of *fiu_enable()* (see the
    manpage for more details).
  - failinfo the same as the *failinfo* parameter of *fiu_enable()* (see the
