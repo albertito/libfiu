@@ -421,6 +421,12 @@ int fiu_disable(const char *name)
 	/* just find the point of failure and mark it as free by setting its
 	 * name to NULL */
 	ef_wlock();
+
+	if (enabled_fails == NULL) {
+		ef_wunlock();
+		return -1;
+	}
+
 	for (pf = enabled_fails; pf <= enabled_fails_last; pf++) {
 		if (name_matches(pf, name, 1)) {
 			disable_pf(pf);
