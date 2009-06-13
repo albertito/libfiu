@@ -52,8 +52,7 @@ runtime, some special considerations were taken to minimize the impact of the
 core API. First of all, if
 .I FIU_ENABLE
 is not defined, then fiu.h will define empty stubs for all the core API,
-effectively disabling fault injection completely, without any runtime
-performance.
+effectively disabling fault injection completely.
 
 Also, a special header
 .I fiu-local.h
