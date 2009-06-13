@@ -26,6 +26,7 @@ libfiu - Fault injection in userspace
 .BI "		void *" failinfo ", unsigned int " flags ","
 .BI "		external_cb_t *" external_cb ");"
 .BI "int fiu_disable(const char *" name ");"
+.BI "int fiu_rc_fifo(const char *" basename ");"
 .sp
 .fi
 .SH DESCRIPTION
@@ -161,6 +162,11 @@ same as the ones in
 Disables the given point of failure, undoing the actions of the
 .B fiu_enable*()
 functions.
+
+.TP
+.BI "fiu_rc_fifo(" basename ")"
+Enables remote control over named pipes with the given basename. See the
+remote control documentation that comes with the library for more detail.
 
 .SH BUGS
 

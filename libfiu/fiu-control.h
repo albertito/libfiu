@@ -3,7 +3,7 @@
  * Control API for libfiu
  */
 
-/* Flags */
+/* Flags for fiu_enable*() */
 #define FIU_ONETIME 1		/* Only fail once */
 
 
@@ -56,4 +56,13 @@ int fiu_enable_external(const char *name, int failnum, void *failinfo,
  * - name: point of failure name.
  * - returns: 0 if success, < 0 otherwise. */
 int fiu_disable(const char *name);
+
+/* Enables remote control over a named pipe that begins with the given
+ * basename. "-$PID" will be appended to it to form the final path. After the
+ * process dies, the pipe will be removed. If the process forks, a new pipe
+ * will be created.
+ *
+ * - basename: base path to use in the creation of the named pipes.
+ * - returns: 0 on success, -1 on errors. */
+int fiu_rc_fifo(const char *basename);
 

@@ -15,7 +15,7 @@ endif
 PREFIX=/usr/local
 
 
-OBJS = fiu.o
+OBJS = fiu.o fiu-rc.o
 
 
 ifneq ($(V), 1)

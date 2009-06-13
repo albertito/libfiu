@@ -72,4 +72,10 @@ def disable(name):
 	if r != 0:
 		raise RuntimeError(r)
 
+def rc_fifo(basename):
+	"""Enables remote control over a named pipe that begins with the given
+	basename. The final path will be "basename-$PID"."""
+	r = _ll.rc_fifo(basename)
+	if r != 0:
+		raise RuntimeError(r)
 

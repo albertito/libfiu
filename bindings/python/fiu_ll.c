@@ -168,6 +168,15 @@ static PyObject *disable(PyObject *self, PyObject *args)
 	return PyLong_FromLong(fiu_disable(name));
 }
 
+static PyObject *rc_fifo(PyObject *self, PyObject *args)
+{
+	char *basename;
+
+	if (!PyArg_ParseTuple(args, "s:rc_fifo", &basename))
+		return NULL;
+
+	return PyLong_FromLong(fiu_rc_fifo(basename));
+}
 
 static PyMethodDef fiu_methods[] = {
 	{ "fail", (PyCFunction) fail, METH_VARARGS, NULL },
@@ -176,6 +185,7 @@ static PyMethodDef fiu_methods[] = {
 	{ "enable_random", (PyCFunction) enable_random, METH_VARARGS, NULL },
 	{ "enable_external", (PyCFunction) enable_external, METH_VARARGS, NULL },
 	{ "disable", (PyCFunction) disable, METH_VARARGS, NULL },
+	{ "rc_fifo", (PyCFunction) rc_fifo, METH_VARARGS, NULL },
 	{ NULL }
 };
 
