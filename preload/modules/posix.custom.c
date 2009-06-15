@@ -17,6 +17,15 @@
 /* Wrapper for open(), we can't generate it because it has a variable number
  * of arguments */
 static int (*_fiu_orig_open) (const char *pathname, int flags, ...) = NULL;
+
+static void __attribute__((constructor(201))) _fiu_init_open(void)
+{
+	rec_inc();
+	_fiu_orig_open = (int (*) (const char *, int, ...))
+			 dlsym(_fiu_libc, "open");
+	rec_dec();
+}
+
 int open(const char *pathname, int flags, ...)
 {
 	int r;
@@ -35,11 +44,6 @@ int open(const char *pathname, int flags, ...)
 		/* set it to 0, it's ignored anyway */
 		mode = 0;
 	}
-
-	/* cast it just to be sure */
-	if (_fiu_orig_open == NULL)
-		_fiu_orig_open = (int (*) (const char *, int, ...)) \
-				dlsym(_fiu_libc, "open");
 
 	if (_fiu_called) {
 		printd("orig\n");

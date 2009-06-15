@@ -13,7 +13,7 @@ extern void *_fiu_libc;
 extern int __thread _fiu_called;
 
 /* Useful macros for recursion and debugging */
-#if 0
+#if 1
 	#define rec_inc() do { _fiu_called++; } while(0)
 	#define rec_dec() do { _fiu_called--; } while(0)
 	#define printd(...) do { } while(0)
@@ -58,14 +58,19 @@ extern int __thread _fiu_called;
 /* Generates the common top of the wrapped function */
 #define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST)	\
 	static RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
+								\
+	static void __attribute__((constructor(201))) _fiu_init_##NAME(void) \
+	{							\
+		rec_inc();					\
+		_fiu_orig_##NAME = (RTYPE (*) PARAMST)		\
+				dlsym(_fiu_libc, #NAME);	\
+		rec_dec();					\
+	}							\
+								\
 	RTYPE NAME PARAMS					\
 	{ 							\
 		RTYPE r;					\
 		int fstatus;					\
-								\
-		/* cast it just to be sure */			\
-		if (_fiu_orig_##NAME == NULL)			\
-			_fiu_orig_##NAME = (RTYPE (*) PARAMST) dlsym(_fiu_libc, #NAME); \
 								\
 		if (_fiu_called) {				\
 			printd("orig\n");			\
