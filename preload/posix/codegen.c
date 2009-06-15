@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <sys/time.h>
+#include <stdlib.h>
 #include "codegen.h"
 
 /* Dynamically load libc */
@@ -16,8 +17,8 @@ static void __attribute__((constructor(200))) _fiu_init(void)
 
 	_fiu_libc = dlopen("libc.so.6", RTLD_NOW);
 	if (_fiu_libc == NULL) {
-		printf("Error loading libc: %s\n", dlerror());
-		return;
+		fprintf(stderr, "Error loading libc: %s\n", dlerror());
+		exit(1);
 	}
 
 	printd("done\n");
