@@ -52,7 +52,7 @@ static struct pf_info *enabled_fails = NULL;
 static struct pf_info *enabled_fails_last = NULL;
 static size_t enabled_fails_len = 0;
 static size_t enabled_fails_nfree = 0;
-static pthread_rwlock_t enabled_fails_lock;
+static pthread_rwlock_t enabled_fails_lock = PTHREAD_RWLOCK_INITIALIZER;
 #define ef_rlock() do { pthread_rwlock_rdlock(&enabled_fails_lock); } while (0)
 #define ef_wlock() do { pthread_rwlock_wrlock(&enabled_fails_lock); } while (0)
 #define ef_runlock() do { pthread_rwlock_unlock(&enabled_fails_lock); } while (0)
