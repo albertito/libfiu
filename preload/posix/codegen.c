@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <dlfcn.h>
+#include <sys/time.h>
 #include "codegen.h"
 
 /* Dynamically load libc */
@@ -20,5 +21,21 @@ static void __attribute__((constructor(200))) _fiu_init(void)
 	}
 
 	printd("done\n");
+}
+
+/* this runs after all function-specific constructors */
+static void __attribute__((constructor(250))) _fiu_init_final(void)
+{
+	struct timeval tv;
+
+	rec_inc();
+
+	fiu_init(0);
+
+	/* since we use random() in the wrappers, we need to seed it */
+	gettimeofday(&tv, NULL);
+	srandom(tv.tv_usec);
+
+	rec_dec();
 }
 
