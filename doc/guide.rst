@@ -104,7 +104,7 @@ it's a testing library.
 
 To that end, you should copy *fiu-local.h* into your source tree, and then
 create an option to do a *fault injection build* that #defines the constant
-*ENABLE_FIU* (usually done by adding ``-DFIU_ENABLE=1`` to your compiler
+*FIU_ENABLE* (usually done by adding ``-DFIU_ENABLE=1`` to your compiler
 flags) and links against libfiu (usually done by adding ``-lfiu`` to your
 linker flags).
 
