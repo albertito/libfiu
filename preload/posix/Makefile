@@ -11,6 +11,9 @@ ifdef PROFILE
 ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
 endif
 
+# prefix for installing the binaries
+PREFIX=/usr/local
+
 
 GEN_C = $(addsuffix .c,$(wildcard modules/*.mod))
 GEN_OBJS = $(addsuffix .o,$(wildcard modules/*.mod))
@@ -43,10 +46,14 @@ fiu_posix_preload.so: $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu -ldl \
 		-o fiu_posix_preload.so
 
+install: fiu_posix_preload.so
+	install -d $(PREFIX)/lib
+	install -m 0755 fiu_posix_preload.so $(PREFIX)/lib
+
 clean:
 	rm -f $(OBJS) $(GEN_OBJS:.o=.c) fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default clean
+.PHONY: default install clean
 
 
