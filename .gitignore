@@ -9,4 +9,6 @@ preload/posix/*.o
 preload/posix/*.so
 preload/posix/modules/*.o
 preload/posix/modules/*.mod.c
+preload/run/*.o
+preload/run/*.so
 
