@@ -1,8 +1,8 @@
 
 
-default: libfiu
+default: all
 
-install: libfiu_install
+install: all_install
 
 all: libfiu preload
 
