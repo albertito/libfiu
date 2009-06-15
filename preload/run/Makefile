@@ -27,7 +27,7 @@ endif
 
 default: all
 	
-all: fiu_run_preload.so
+all: fiu_run_preload.so fiu-run
 
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
@@ -36,12 +36,20 @@ fiu_run_preload.so: $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu -ldl \
 		-o fiu_run_preload.so
 
-install: fiu_run_preload.so
+fiu-run: fiu-run.in
+	cat fiu-run.in | sed "s+@@PREFIX@@+$(PREFIX)+g" > fiu-run
+	chmod +x fiu-run
+
+install: fiu_run_preload.so fiu-run
 	install -d $(PREFIX)/lib
 	install -m 0755 fiu_run_preload.so $(PREFIX)/lib
+	install -d $(PREFIX)/bin
+	install -m 0755 fiu-run $(PREFIX)/bin
+	install -d $(PREFIX)/man/man1
+	install -m 0644 fiu-run.1 $(PREFIX)/man/man1/
 
 clean:
-	rm -f $(OBJS) fiu_run_preload.so
+	rm -f $(OBJS) fiu_run_preload.so fiu-run
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
 .PHONY: default install clean

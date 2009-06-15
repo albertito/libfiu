@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# This script aims to make the use of the fiu_run_preload library a little
+# easier by providing a more friendly user interface, and abstracting the
+# environment variables used to communicate with it.
+
+# default remote control over named pipes prefix
+FIFO_PREFIX="${TMPDIR:-/tmp}/fiu-ctrl"
+
+# default library path to look for preloader libraries
+PLIBPATH="@@PREFIX@@/lib"
+
+# the enable string to pass to the preload library (via the FIU_ENABLE
+# environment variable)
+ENABLE=""
+
+# additional preloader libraries to use
+PRELOAD_LIBS=""
+
+
+HELP_MSG="
+Usage: fiu-run [options] program [arguments]
+
+The following options are supported:
+
+  -e fpname	Enable the given failure point name.
+  -p prob	... with the given probability (defaults to 100%).
+  -u failnum	... and this failnum (must be != 0) (defaults to 1).
+  -i failinfo	... and this failinfo (defaults to 0).
+  -x		Use POSIX libfiu preload library, allows simulate failures in
+		the POSIX and C standard library functions.
+  -f ctrlpath	Enable remote control over named pipes with the given path as
+		base name, the process id will be appended (defaults to
+		\"$FIFO_PREFIX\", set to \"\" to disable).
+  -l path	Path where to find the libfiu preload libraries, defaults to
+		$PLIBPATH (which is usually correct).
+
+The -p, -u and -i options must come after the -e they affect.
+
+For example:
+
+  fiu-run -x -e 'posix/io/*' -p 25 -e libc/mm/malloc -p 5 ls -l
+
+will run \"ls -l\" enabling all failure points that begin with 'posix/io/'
+with a 25% of probability to fail, and the failure point libc/mm/malloc with a
+5% of probability to fail.
+"
+
+
+#
+# Parse the options
+#
+
+if [ $# -lt 1 ]; then
+	echo "$HELP_MSG"
+	exit 1
+fi
+
+function opts_reset() {
+	# variables to store what we know so far; after a new name is found
+	# the old one is added to $ENABLE
+	NAME=""
+	PROB=-1
+	FAILNUM=1
+	FAILINFO=0
+}
+
+opts_reset;
+while getopts "+e:p:u:i:f:l:xh" opt; do
+	case $opt in
+	e)
+		# add the current one, if any
+		if [ "$NAME" != "" ]; then
+			ENABLE="$ENABLE:$NAME,$PROB,$FAILNUM,$FAILINFO"
+			opts_reset;
+		fi
+		NAME="$OPTARG"
+		;;
+	p)
+		PROB="$OPTARG"
+		;;
+	u)
+		FAILNUM="$OPTARG"
+		;;
+	i)
+		FAILINFO="$OPTARG"
+		;;
+	f)
+		FIFO_PREFIX="$OPTARG"
+		;;
+	l)
+		PLIBPATH="$OPTARG"
+		;;
+	x)
+		PRELOAD_LIBS="$PRELOAD_LIBS $PLIBPATH/fiu_posix_preload.so"
+		;;
+	h|*)
+		echo "$HELP_MSG"
+		exit 1
+		;;
+	esac;
+done
+
+# add leftovers
+if [ "$NAME" != "" ]; then
+	ENABLE="$ENABLE:$NAME,$PROB,$FAILNUM,$FAILINFO"
+	opts_reset;
+fi
+
+# eat the parameters we already processed
+shift $(( $OPTIND - 1 ))
+
+
+#
+# Run the application
+#
+
+export FIU_ENABLE="$ENABLE"
+export FIU_CTRL_FIFO="$FIFO_PREFIX"
+export LD_PRELOAD="$PLIBPATH/fiu_run_preload.so $PRELOAD_LIBS"
+exec "$@"
+

@@ -1,0 +1,80 @@
+.TH fiu-run 1 "16/Jun/2009"
+.SH NAME
+fiu-run - a script to launch programs using libfiu
+.SH SYNOPSIS
+fiu-run [options] program [program arguments]
+
+.SH DESCRIPTION
+fiu-run is a script to make it easier to launch programs using
+\fBlibfiu\fR(3). It can enable failure points and start libfiu's remote
+control capabilities before starting to execute the program, avoiding the need
+to write a special launcher to inject failures.
+
+It is specially useful when used to inject failures in the POSIX/libc
+functions, because it does not require any program modifications.
+
+After launching programs with fiu-run, \fBfiu-ctrl\fR(1) can be used to enable
+and disable their failure points at runtme.
+
+For additional documentation, go to the project's website at
+.IR http://blitiri.com.ar/p/libfiu .
+
+.SH OPTIONS
+.TP
+.B "-e fpname"
+Enable the given failure point name.
+.TP
+.B "-p prob"
+Use the given probability for the previous failure point. In percent, defaults
+to 100, which means "always enabled". Must come \fIafter\fR the \fB-e\fR it
+affects.
+.TP
+.B "-u failnum"
+Use the given number as the failnum for the previous failure point. Must be !=
+0, defaults to 1. Must come \fIafter\fR the \fB-e\fR it affects.
+.TP
+.B "-i failinfo"
+Use the given number as the failinfo for the previous failure point. Defaults
+to 0. Must come \fIafter\fR the \fB-e\fR it affects.
+.TP
+.B -x
+Use the POSIX libfiu preload library, allows simulate failures in the POSIX
+and C standard library functions.
+.TP
+.B "-f ctrlpath"
+Enable remote control over named pipes with the given path as base name, the
+process id will be appended (defaults to "$TMPDIR/fiu-ctrl", or
+"/tmp/fiu-ctrl" if "$TMPDIR" is not set). Set to "" to disable remote control
+over named pipes.
+.TP
+.B "-l path"
+Path where to find the libfiu preload libraries. Defaults to the path where
+they were installed, so it is usually correct.
+
+.P
+You can enable any number of failure points by using \fB-e\fR repeatedly.
+
+.SH EXAMPLES
+The following will run the \fBfortune\fR(1) program simulating faults in all
+the POSIX I/O functions with a 10% probability, and in malloc() with 5%
+probability (note that the \fB-x\fR parameter is required in this case to
+enable failure points in the POSIX and libc functions):
+
+.RS
+.nf
+fiu-run -x -e posix/io/* -p 10 -e libc/mm/malloc -p 5 fortune
+.fi
+.RE
+
+By running it multiple times you will see that sometimes it works, but most of
+the time you get different errors, resulting from the simulated failures.
+
+.SH SEE ALSO
+.BR libfiu (3),
+.BR fiu-ctrl (1).
+
+.SH BUGS
+If you want to report bugs, or have any questions or comments, just let me
+know at albertito@blitiri.com.ar. For more information about libfiu, you can
+go to http://blitiri.com.ar/p/libfiu.
+
