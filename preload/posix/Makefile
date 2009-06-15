@@ -28,7 +28,7 @@ endif
 
 default: all
 	
-all: fiu_preload.so
+all: fiu_posix_preload.so
 
 $(GEN_OBJS): $(GEN_C)
 
@@ -38,12 +38,12 @@ $(GEN_OBJS): $(GEN_C)
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
-fiu_preload.so: $(OBJS)
+fiu_posix_preload.so: $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu -ldl \
-		-o fiu_preload.so
+		-o fiu_posix_preload.so
 
 clean:
-	rm -f $(OBJS) $(GEN_OBJS:.o=.c) fiu_preload.so
+	rm -f $(OBJS) $(GEN_OBJS:.o=.c) fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
 .PHONY: default clean
