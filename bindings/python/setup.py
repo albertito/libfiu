@@ -8,9 +8,14 @@ elif sys.version_info[0] == 3:
 	ver_define = ('PYTHON3', '1')
 
 fiu_ll = Extension("fiu_ll",
-		libraries = ['fiu'],
 		sources = ['fiu_ll.c'],
-		define_macros = [ver_define])
+		define_macros = [ver_define],
+		libraries = ['fiu'],
+
+		# these two allow us to build without having libfiu installed,
+		# assuming we're in the libfiu source tree
+		include_dirs = ['../../libfiu/'],
+		library_dirs=['../../libfiu/'])
 
 setup(
 	name = 'fiu',
