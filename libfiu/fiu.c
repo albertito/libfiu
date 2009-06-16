@@ -53,10 +53,24 @@ static struct pf_info *enabled_fails_last = NULL;
 static size_t enabled_fails_len = 0;
 static size_t enabled_fails_nfree = 0;
 static pthread_rwlock_t enabled_fails_lock = PTHREAD_RWLOCK_INITIALIZER;
+
 #define ef_rlock() do { pthread_rwlock_rdlock(&enabled_fails_lock); } while (0)
 #define ef_wlock() do { pthread_rwlock_wrlock(&enabled_fails_lock); } while (0)
 #define ef_runlock() do { pthread_rwlock_unlock(&enabled_fails_lock); } while (0)
 #define ef_wunlock() do { pthread_rwlock_unlock(&enabled_fails_lock); } while (0)
+
+/* To prevent unwanted recursive calls that would deadlock, we use a
+ * thread-local recursion count. Unwanted recursive calls can result from
+ * using functions that have been modified to call fiu_fail(), which can
+ * happen when using the POSIX preloader library: fiu_enable() takes the lock
+ * for writing, and can call malloc() (for example), which can in turn call
+ * fiu_fail() which can take the lock for reading.
+ *
+ * Sadly, we have to use the GNU extension for TLS, so we do not resort to
+ * pthread_[get|set]specific() which could be wrapped. Luckily it's available
+ * almost everywhere. */
+static __thread int rec_count = 0;
+
 
 /* Maximum number of free elements in enabled_fails (used to decide when to
  * shrink). */
@@ -201,9 +215,11 @@ static void atfork_child(void)
  * time without clashes. */
 int fiu_init(unsigned int flags)
 {
+	rec_count++;
 	ef_wlock();
 	if (initialized) {
 		ef_wunlock();
+		rec_count--;
 		return 0;
 	}
 
@@ -216,6 +232,7 @@ int fiu_init(unsigned int flags)
 
 	if (pthread_atfork(NULL, NULL, atfork_child) != 0) {
 		ef_wunlock();
+		rec_count--;
 		return -1;
 	}
 
@@ -224,6 +241,7 @@ int fiu_init(unsigned int flags)
 	initialized = 1;
 
 	ef_wunlock();
+	rec_count--;
 	return 0;
 }
 
@@ -235,10 +253,20 @@ int fiu_fail(const char *name)
 	struct pf_info *pf;
 	int failnum;
 
+	rec_count++;
+
+	/* we must do this before acquiring the lock and calling any
+	 * (potentially wrapped) functions */
+	if (rec_count > 1) {
+		rec_count--;
+		return 0;
+	}
+
 	ef_rlock();
 
 	if (enabled_fails == NULL) {
 		ef_runlock();
+		rec_count--;
 		return 0;
 	}
 
@@ -268,6 +296,7 @@ int fiu_fail(const char *name)
 	}
 
 	ef_runlock();
+	rec_count--;
 	return 0;
 
 exit_fail:
@@ -281,6 +310,7 @@ exit_fail:
 	}
 
 	ef_runlock();
+	rec_count--;
 	return failnum;
 }
 
@@ -336,6 +366,8 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 
 	rv = -1;
 
+	rec_count++;
+
 	/* See if it's already there and update the data if so, or if we have
 	 * a free spot where to put it */
 	ef_wlock();
@@ -386,6 +418,7 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 
 exit:
 	ef_wunlock();
+	rec_count--;
 	return rv;
 }
 
@@ -418,12 +451,15 @@ int fiu_disable(const char *name)
 {
 	struct pf_info *pf;
 
+	rec_count++;
+
 	/* just find the point of failure and mark it as free by setting its
 	 * name to NULL */
 	ef_wlock();
 
 	if (enabled_fails == NULL) {
 		ef_wunlock();
+		rec_count--;
 		return -1;
 	}
 
@@ -434,11 +470,13 @@ int fiu_disable(const char *name)
 			if (enabled_fails_nfree > EF_MAX_FREE)
 				shrink_enabled_fails();
 			ef_wunlock();
+			rec_count--;
 			return 0;
 		}
 	}
 
 	ef_wunlock();
+	rec_count--;
 	return -1;
 }
 
