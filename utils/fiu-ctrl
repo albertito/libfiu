@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# This scripts present a friendly interface to the fiu remote control
+# capabilities. Currently, it supports only the named pipe method (the only
+# one implemented).
+
+# default remote control over named pipes prefix; we use the same one as
+# fiu-run so it's easier to use
+FIFO_PREFIX="${TMPDIR:-/tmp}/fiu-ctrl"
+
+# commands to send, will be filled by options processing; must be in the
+# format supported by the fiu remote control (see fiu-rc.c for more details)
+declare -a CMDS
+
+
+HELP_MSG="
+Usage: fiu-ctrl [options] PID [PID ...]
+
+The following options are supported:
+
+  -e fpname	Enable the given failure point name.
+  -p prob	... with the given probability (defaults to 100%).
+  -u failnum	... and this failnum (must be != 0) (defaults to 1).
+  -i failinfo	... and this failinfo (defaults to 0).
+  -d fpname	Disable the given failure point name.
+  -f ctrlpath	Set the default prefix for remote control over named pipes.
+		(defaults to \"$FIFO_PREFIX\", which is usually correct if
+		the program was run using fiu-run(1)).
+
+The -p, -u and -i options must come after the -e they affect.
+
+For example:
+
+  fiu-ctrl -e posix/io/read -p 25 -e libc/mm/malloc -p 5 12345
+
+will tell the process with pid 12345 to enable the failure point
+'posix/io/read' with a 25% of probability to fail, and the failure point
+'libc/mm/malloc' with a 5% of probability to fail. And:
+
+  fiu-ctrl -d posix/io/read 12345
+
+will tell the same process to disable the previously enabled failure point.
+
+You can control multiple processes at once by specifiying more than one
+process ID.
+"
+
+
+#
+# Parse the options
+#
+
+if [ $# -lt 1 ]; then
+	echo "$HELP_MSG"
+	exit 1
+fi
+
+function opts_reset() {
+	# variables to store what we know so far; after a new name is found
+	# the old one is added to $ENABLE
+	NAME=""
+	PROB=-1
+	FAILNUM=1
+	FAILINFO=0
+}
+
+function add_cmd() {
+	if [ "$NAME" != "" ]; then
+		if [ $PROB -ge 0 ]; then
+			CMDS+="enable_random $NAME $PROB $FAILNUM $FAILINFO"
+		else
+			CMDS+="enable $NAME $FAILNUM $FAILINFO"
+		fi
+		opts_reset;
+	fi
+}
+
+opts_reset;
+while getopts "+e:p:u:i:d:f:h" opt; do
+	case $opt in
+	e)
+		# add the current one, if any
+		add_cmd;
+		opts_reset;
+		NAME="$OPTARG"
+		;;
+	p)
+		PROB="$OPTARG"
+		;;
+	u)
+		FAILNUM="$OPTARG"
+		;;
+	i)
+		FAILINFO="$OPTARG"
+		;;
+	f)
+		FIFO_PREFIX="$OPTARG"
+		;;
+	d)
+		CMDS+="disable $OPTARG"
+		opts_reset;
+		;;
+	h|*)
+		echo "$HELP_MSG"
+		exit 1
+		;;
+	esac;
+done
+
+# add leftovers
+if [ "$NAME" != "" ]; then
+	add_cmd;
+fi
+
+# eat the parameters we already processed
+shift $(( $OPTIND - 1 ))
+
+PIDS=""
+PREFIXES=""
+
+for i in "$@"; do
+	if test -p "$i.out"; then
+		PREFIXES="$PREFIXES $i"
+	elif kill -0 $i > /dev/null 2> /dev/null && \
+			test -p	"$FIFO_PREFIX-$i.out"; then
+		PIDS="$PIDS $i"
+	else
+		echo "Error: unknown pid or named pipe $i, skipping"
+		echo "Note that options must come before the PID"
+	fi
+done
+
+#
+# Send the commands
+#
+
+function send_cmd_fifo() {
+	# $1 = complete fifo prefix
+	# $2+ = command to send
+	# echoes the reply
+	P=$1
+	shift 1
+	echo $@ > $P.in
+	R="`cat $P.out`"
+	if [ "$R" -eq -1 ]; then
+		echo "$P: Command returned error"
+	fi
+}
+
+for c in "${CMDS[@]}"; do
+	for i in $PIDS; do
+		send_cmd_fifo $FIFO_PREFIX-$i "$c"
+	done
+	for i in $PREFIXES; do
+		send_cmd_fifo $i "$c"
+	done
+done
+

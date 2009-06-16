@@ -1,0 +1,73 @@
+.TH fiu-ctrl 1 "16/Jun/2009"
+.SH NAME
+fiu-ctrl - a script to remote control programs using libfiu
+.SH SYNOPSIS
+fiu-ctrl [options] PID [PID ...]
+
+.SH DESCRIPTION
+fiu-ctrl is a script to enable/disable failure points in running programs that
+are using \fBlibfiu\fR(3).
+
+Programs are usually launched using \fBfiu-run\fR(1), which enables
+libfiu's remote control capabilities without the need to modify the
+program's code.
+
+For additional documentation, go to the project's website at
+.IR http://blitiri.com.ar/p/libfiu .
+
+.SH OPTIONS
+.TP
+.B "-e fpname"
+Enable the given failure point name.
+.TP
+.B "-p prob"
+Use the given probability for the previous failure point. In percent, defaults
+to 100, which means "always enabled". Must come \fIafter\fR the \fB-e\fR it
+affects.
+.TP
+.B "-u failnum"
+Use the given number as the failnum for the previous failure point. Must be !=
+0, defaults to 1. Must come \fIafter\fR the \fB-e\fR it affects.
+.TP
+.B "-i failinfo"
+Use the given number as the failinfo for the previous failure point. Defaults
+to 0. Must come \fIafter\fR the \fB-e\fR it affects.
+.TP
+.B -d
+Disable the given failure point name.
+.TP
+.B "-f ctrlpath"
+Set the default prefix for remote control over named pipes. Defaults to
+"$TMPDIR/fiu-ctrl", or "/tmp/fiu-ctrl" if "$TMPDIR" is not set, which is the
+usually correct for programs launched using \fBfiu-run\fR(1).
+
+
+.SH EXAMPLES
+The following command will tell the process running with PID 12345 to enable
+the failure point \fIposix/io/read\fR with a 25% of probability to fail, and the
+failure point \fIlibc/mm/malloc\fR with a 5% of probability to fail:
+
+.RS
+.nf
+fiu-ctrl -e posix/io/read -p 25 -e libc/mm/malloc -p 5 12345
+.fi
+.RE
+
+And the following will tell the same process to disable the previously enabled
+failure point \fIposix/io/read\fR:
+
+.RS
+.nf
+fiu-ctrl -d posix/io/read 12345
+.fi
+.RE
+
+.SH SEE ALSO
+.BR libfiu (3),
+.BR fiu-run (1).
+
+.SH BUGS
+If you want to report bugs, or have any questions or comments, just let me
+know at albertito@blitiri.com.ar. For more information about libfiu, you can
+go to http://blitiri.com.ar/p/libfiu.
+

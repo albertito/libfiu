@@ -4,9 +4,9 @@ default: all
 
 install: all_install
 
-all: libfiu preload
+all: libfiu preload utils
 
-all_install: libfiu_install preload_install
+all_install: libfiu_install preload_install utils_install
 
 
 libfiu:
@@ -28,6 +28,16 @@ preload_clean:
 
 preload_install: preload
 	$(MAKE) -C preload install
+
+
+utils:
+	$(MAKE) -C utils
+
+utils_clean:
+	$(MAKE) -C utils clean
+
+utils_install: utils
+	$(MAKE) -C utils install
 
 
 bindings: python2 python3
@@ -52,13 +62,14 @@ python_clean:
 	cd bindings/python && rm -rf build/
 
 
-clean: python_clean preload_clean libfiu_clean
+clean: python_clean preload_clean libfiu_clean utils_clean
 
 
 .PHONY: default all clean install all_install \
 	libfiu libfiu_clean libfiu_install \
 	python2 python2_install python3 python3_install python_clean \
 	bindings bindings_install bindings_clean \
-	preload preload_clean preload_install
+	preload preload_clean preload_install \
+	utils utils_clean utils_install
 
 
