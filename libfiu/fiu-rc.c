@@ -18,6 +18,7 @@
 #define FIU_ENABLE 1
 
 #include "fiu-control.h"
+#include "internal.h"
 
 
 /* Max length of a line containing a control directive */
@@ -181,6 +182,11 @@ static void *rc_fifo_thread(void *unused)
 {
 	int fdr, fdw, r;
 
+	/* increment the recursion count so we're not affected by libfiu,
+	 * otherwise we could make the remote control useless by enabling all
+	 * failure points */
+	rec_count++;
+
 reopen:
 	fdr = open(npipe_path_in, O_RDONLY);
 	if (fdr < 0)
@@ -196,7 +202,9 @@ reopen:
 		r = rc_do_command(fdr, fdw);
 		if (r < 0 && errno != EPIPE) {
 			perror("libfiu: Error reading from remote control");
-			break;
+			close(fdr);
+			close(fdw);
+			goto reopen;
 		} else if (r == 0 || (r < 0 && errno == EPIPE)) {
 			/* one of the ends of the pipe was closed */
 			close(fdr);
@@ -221,25 +229,33 @@ static int _fiu_rc_fifo(const char *basename)
 {
 	pthread_t thread;
 
+	/* see rc_fifo_thread() */
+	rec_count++;
+
 	snprintf(npipe_path_in, PATH_MAX,"%s-%d.in", basename, getpid());
 	snprintf(npipe_path_out, PATH_MAX,"%s-%d.out", basename, getpid());
 
-	if (mknod(npipe_path_in, S_IFIFO | 0600, 0) != 0)
+	if (mknod(npipe_path_in, S_IFIFO | 0600, 0) != 0) {
+		rec_count--;
 		return -1;
+	}
 
 	if (mknod(npipe_path_out, S_IFIFO | 0600, 0) != 0) {
 		unlink(npipe_path_in);
+		rec_count--;
 		return -1;
 	}
 
 	if (pthread_create(&thread, NULL, rc_fifo_thread, NULL) != 0) {
 		unlink(npipe_path_in);
 		unlink(npipe_path_out);
+		rec_count--;
 		return -1;
 	}
 
 	atexit(fifo_atexit);
 
+	rec_count--;
 	return 0;
 }
 

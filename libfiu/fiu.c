@@ -11,6 +11,7 @@
 
 #include "fiu.h"
 #include "fiu-control.h"
+#include "internal.h"
 
 
 /* Different methods to decide when a point of failure fails */
@@ -66,10 +67,13 @@ static pthread_rwlock_t enabled_fails_lock = PTHREAD_RWLOCK_INITIALIZER;
  * for writing, and can call malloc() (for example), which can in turn call
  * fiu_fail() which can take the lock for reading.
  *
+ * It is also modified at fiu-rc.c, to prevent failing within the remote
+ * control thread.
+ *
  * Sadly, we have to use the GNU extension for TLS, so we do not resort to
  * pthread_[get|set]specific() which could be wrapped. Luckily it's available
  * almost everywhere. */
-static __thread int rec_count = 0;
+__thread int rec_count = 0;
 
 
 /* Maximum number of free elements in enabled_fails (used to decide when to
