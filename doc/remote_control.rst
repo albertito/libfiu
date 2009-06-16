@@ -12,7 +12,8 @@ pipes.
 Remote control must be enabled by the controlled process using *fiu_rc_fifo()*
 (for named pipes). A set of utilities are provided to enable remote control
 without having to alter the application's source code, which can be useful for
-performing failure injection in libraries.
+performing fault injection in libraries, see *fiu-run* and *fiu-ctrl* for more
+information.
 
 
 Remote control protocol
