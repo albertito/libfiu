@@ -136,6 +136,16 @@ class Include:
 	def generate_to(self, f):
 		f.write("#include %s\n" % self.path)
 
+class Verbatim:
+	"Represent a verbatim directive"
+	def __init__(self, line):
+		self.line = line
+
+	def __repr__(self):
+		return '<V %s>' % self.line
+
+	def generate_to(self, f):
+		f.write(self.line + '\n')
 
 class EmptyLine:
 	"Represents an empty line"
@@ -205,6 +215,8 @@ def parse_module(path):
 					ctx.fiu_name_base = v
 				elif k == 'include':
 					directives.append(Include(v))
+				elif k == 'v':
+					directives.append(Verbatim(v))
 				else:
 					raise SyntaxError, \
 						("Unknown directive", l)
