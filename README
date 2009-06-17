@@ -7,7 +7,7 @@ libfiu is a C library for fault injection. It provides functions to mark
 enable/disable the failure of those points (the "control API"). It's in the
 public domain, see the LICENSE file for more information.
 
-The core API is used inside the code wanting to perform failure injection on.
+The core API is used inside the code wanting to perform fault injection on.
 The control API is used inside the testing code, in order to control the
 injection of failures.
 

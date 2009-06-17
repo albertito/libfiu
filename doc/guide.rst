@@ -80,7 +80,7 @@ you can test how your code behaves under that condition, which was otherwise
 hard to trigger.
 
 As you can see, libfiu's API has to "sides": a core API and a control API. The
-core API is used inside the code wanting to perform failure injection on. The
+core API is used inside the code wanting to perform fault injection on. The
 control API is used inside the testing code, in order to control the injection
 of failures.
 
