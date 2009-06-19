@@ -84,6 +84,28 @@ int closedir(DIR *dirp);
 	valid errnos: EBADF
 
 
+fiu name base: posix/io/stat/
+
+include: <sys/types.h>
+include: <sys/stat.h>
+include: <unistd.h>
+
+int stat(const char *path, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+
+int fstat(int fd, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+
+int lstat(const char *path, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+
+
 fiu name base: posix/io/net/
 
 int socket(int domain, int type, int protocol);
