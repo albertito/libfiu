@@ -7,8 +7,10 @@ libfiu/libfiu.pc
 libfiu/libfiu.so
 preload/posix/*.o
 preload/posix/*.so
+preload/posix/function_list
 preload/posix/modules/*.o
 preload/posix/modules/*.mod.c
+preload/posix/modules/*.mod.fl
 preload/run/*.o
 preload/run/*.so
 preload/run/fiu-run

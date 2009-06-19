@@ -261,13 +261,32 @@ def generate_code(directives, path):
 		directive.generate_to(f)
 
 
+def write_function_list(directives, path):
+	"Writes the function list to the given path"
+	f = open(path, 'a')
+	for d in directives:
+		if isinstance(d, Function):
+			f.write("%-32s%s\n" % (d.name, d.fiu_name))
+
+
+def usage():
+	print "Use: ./generate input.mod output.c file_list.fl"
+
 def main():
+	if len(sys.argv) < 4:
+		usage()
+		sys.exit(1)
+
 	input_name = sys.argv[1]
 	output_name = sys.argv[2]
+	filelist_name = sys.argv[3]
+
 	directives = parse_module(input_name)
 	#import pprint
 	#pprint.pprint(directives)
+
 	generate_code(directives, output_name)
+	write_function_list(directives, filelist_name)
 
 if __name__ == '__main__':
 	main()

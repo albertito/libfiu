@@ -1,0 +1,18 @@
+
+What follows is a list with the POSIX functions and their corresponding
+failure point names, as implemented in the preload library.
+
+It is not set in stone, although it shouldn't change frequently.
+
+
+Manually written
+----------------
+
+malloc				libc/mm/malloc
+realloc				libc/mm/realloc
+open				posix/io/oc/open
+
+
+Automatically generated
+-----------------------
+
