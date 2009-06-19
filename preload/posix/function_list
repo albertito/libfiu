@@ -1,0 +1,41 @@
+
+What follows is a list with the POSIX functions and their corresponding
+failure point names, as implemented in the preload library.
+
+It is not set in stone, although it shouldn't change frequently.
+
+
+Function		Failure point name
+--------		------------------
+
+malloc			libc/mm/malloc
+realloc			libc/mm/realloc
+
+open			posix/io/oc/open
+close			posix/io/oc/close
+
+fsync			posix/io/sync/fsync
+fdatasync		posix/io/sync/fdatasync
+
+read			posix/io/rw/read
+pread			posix/io/rw/pread
+readv			posix/io/rw/readv
+write			posix/io/rw/write
+pwrite			posix/io/rw/pwrite
+writev			posix/io/rw/writev
+
+socket			posix/io/net/socket
+bind			posix/io/net/bind
+listen			posix/io/net/listen
+accept			posix/io/net/accept
+connect			posix/io/net/connect
+recv			posix/io/net/recv
+recvfrom		posix/io/net/recvfrom
+recvmsg			posix/io/net/recvmsg
+send			posix/io/net/send
+sendto			posix/io/net/sendto
+sendmsg			posix/io/net/sendmsg
+shutdown		posix/io/net/shutdown
+sync_file_range		linux/io/sync_file_range (Linux-only)
+
+
