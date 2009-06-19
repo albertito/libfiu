@@ -58,6 +58,30 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 	valid errnos: EBADFD EFAULT EFBIG EINTR EINVAL EIO ENOSPC
 
 
+fiu name base: posix/io/dir/
+
+include: <dirent.h>
+
+DIR *opendir(const char *name);
+	on error: NULL
+	valid errnos: EACCES EBADF EMFILE ENFILE ENOENT ENOMEM ENOTDIR
+
+DIR *fdopendir(int fd);
+	on error: NULL
+	valid errnos: EACCES EBADF EMFILE ENFILE ENOENT ENOMEM ENOTDIR
+
+struct dirent *readdir(DIR *dirp);
+	on error: NULL
+	valid errnos: EBADF
+
+int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
+	on error: 1
+
+int closedir(DIR *dirp);
+	on error: -1
+	valid errnos: EBADF
+
+
 fiu name base: posix/io/net/
 
 int socket(int domain, int type, int protocol);

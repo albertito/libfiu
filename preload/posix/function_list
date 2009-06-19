@@ -36,6 +36,22 @@ send			posix/io/net/send
 sendto			posix/io/net/sendto
 sendmsg			posix/io/net/sendmsg
 shutdown		posix/io/net/shutdown
-sync_file_range		linux/io/sync_file_range (Linux-only)
 
+opendir			posix/io/dir/opendir
+fdopendir		posix/io/dir/fdopendir
+readdir			posix/io/dir/readdir
+readdir_r		posix/io/dir/readdir_r
+closedir		posix/io/dir/closedir
+
+mmap			posix/mm/mmap
+munmap			posix/mm/munmap
+msync			posix/mm/msync
+mprotect		posix/mm/mprotect
+madvise			posix/mm/madvise
+mlock			posix/mm/mlock
+munlock			posix/mm/munlock
+mlockall		posix/mm/mlockall
+munlockall		posix/mm/munlockall
+
+sync_file_range		linux/io/sync_file_range (Linux-only)
 
