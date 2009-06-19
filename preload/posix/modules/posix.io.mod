@@ -6,6 +6,8 @@ include: <sys/uio.h>
 include: <unistd.h>
 include: <sys/socket.h>
 include: <sys/stat.h>
+include: <sys/select.h>
+include: <poll.h>
 include: <fcntl.h>
 include: <errno.h>
 
@@ -153,5 +155,19 @@ ssize_t sendmsg(int socket, const struct msghdr *message, int flags);
 int shutdown(int socket, int how);
 	on error: -1
 	valid errnos:  EBADF EINVAL ENOTCONN ENOTSOCK ENOBUFS
+
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, \
+		struct timeval *timeout);
+	on error: -1
+	valid errnos: EBADF EINTR EINVAL ENOMEM
+
+int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, \
+		const struct timespec *timeout, const sigset_t *sigmask);
+	on error: -1
+	valid errnos: EBADF EINTR EINVAL ENOMEM
+
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+	on error: -1
+	valid errnos: EBADF EFAULT EINTR EINVAL ENOMEM
 
 

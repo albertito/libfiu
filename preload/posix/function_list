@@ -36,6 +36,9 @@ send			posix/io/net/send
 sendto			posix/io/net/sendto
 sendmsg			posix/io/net/sendmsg
 shutdown		posix/io/net/shutdown
+select			posix/io/net/select
+pselect			posix/io/net/pselect
+poll			posix/io/net/poll
 
 opendir			posix/io/dir/opendir
 fdopendir		posix/io/dir/fdopendir
