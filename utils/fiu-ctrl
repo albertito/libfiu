@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This scripts present a friendly interface to the fiu remote control
 # capabilities. Currently, it supports only the named pipe method (the only

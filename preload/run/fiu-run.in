@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script aims to make the use of the fiu_run_preload library a little
 # easier by providing a more friendly user interface, and abstracting the
