@@ -88,9 +88,6 @@ __thread int rec_count = 0;
 /* Used to keep the last failinfo via TLS */
 static pthread_key_t last_failinfo_key;
 
-/* Used to avoid re-initialization, protected by enabled_fails_lock */
-static int initialized = 0;
-
 
 /*
  * Miscelaneous internal functions
@@ -219,6 +216,9 @@ static void atfork_child(void)
  * time without clashes. */
 int fiu_init(unsigned int flags)
 {
+	/* Used to avoid re-initialization, protected by enabled_fails_lock */
+	static int initialized = 0;
+
 	rec_count++;
 	ef_wlock();
 	if (initialized) {
