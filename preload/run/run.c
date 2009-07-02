@@ -71,9 +71,7 @@ static void parse_enable(const char *s, struct enable_option *enopt)
 	enopt->failinfo = atol(tok);
 }
 
-/* We set the constructor with priority 300 so it runs after the other
- * libfiu preloaders (if they're enabled), which use the 200 range */
-static void __attribute__((constructor(300))) fiu_run_init(void)
+static void __attribute__((constructor)) fiu_run_init(void)
 {
 	int r;
 	struct enable_option enopt;

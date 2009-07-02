@@ -11,7 +11,13 @@ void *_fiu_libc;
 /* Recursion counter, per-thread */
 int __thread _fiu_called;
 
-static void __attribute__((constructor(200))) _fiu_init(void)
+/* Let the user know if there is no constructor priorities support, just in
+ * case there are bugs when building/running without them */
+#ifdef NO_CONSTRUCTOR_PRIORITIES
+#warning "Building without using constructor priorities"
+#endif
+
+static void constructor_attr(200) _fiu_init(void)
 {
 	_fiu_called = 0;
 
@@ -25,7 +31,7 @@ static void __attribute__((constructor(200))) _fiu_init(void)
 }
 
 /* this runs after all function-specific constructors */
-static void __attribute__((constructor(250))) _fiu_init_final(void)
+static void constructor_attr(250) _fiu_init_final(void)
 {
 	struct timeval tv;
 

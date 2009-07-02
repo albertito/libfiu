@@ -18,7 +18,7 @@
  * of arguments */
 static int (*_fiu_orig_open) (const char *pathname, int flags, ...) = NULL;
 
-static void __attribute__((constructor(201))) _fiu_init_open(void)
+static void constructor_attr(201) _fiu_init_open(void)
 {
 	rec_inc();
 	_fiu_orig_open = (int (*) (const char *, int, ...))

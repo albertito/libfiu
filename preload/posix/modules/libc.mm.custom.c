@@ -34,7 +34,7 @@ static void *fiu_realloc_hook(void *ptr, size_t size, const void *caller);
  * will run after them just to make things tidier (NOT because it is
  * necessary). */
 
-static void __attribute__((constructor(202))) fiu_init_malloc(void)
+static void constructor_attr(202) fiu_init_malloc(void)
 {
 	/* Save original hooks, used in ours to prevent unwanted recursion */
 	old_malloc_hook = __malloc_hook;

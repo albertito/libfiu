@@ -12,6 +12,17 @@ extern void *_fiu_libc;
 /* Recursion counter, per-thread */
 extern int __thread _fiu_called;
 
+/* GCC >= 4.3 supports constructor priorities only on some platforms. Since we
+ * don't rely on them, but use them for clarity purposes, use a macro so
+ * libfiu builds on systems where they're not supported. */
+#if (defined __linux__) && (defined __GNUC__) \
+	&& __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+  #define constructor_attr(prio) __attribute__((constructor(prio)))
+#else
+  #define NO_CONSTRUCTOR_PRIORITIES 1
+  #define constructor_attr(prio) __attribute__((constructor))
+#endif
+
 /* Useful macros for recursion and debugging */
 #if 1
 	#define rec_inc() do { _fiu_called++; } while(0)
@@ -59,7 +70,7 @@ extern int __thread _fiu_called;
 #define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST)	\
 	static RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
 								\
-	static void __attribute__((constructor(201))) _fiu_init_##NAME(void) \
+	static void constructor_attr(201) _fiu_init_##NAME(void) \
 	{							\
 		rec_inc();					\
 		_fiu_orig_##NAME = (RTYPE (*) PARAMST)		\
