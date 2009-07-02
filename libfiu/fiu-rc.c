@@ -6,7 +6,7 @@
 #include <stdio.h>		/* snprintf() */
 #include <string.h>		/* strncpy() */
 #include <stdlib.h>		/* malloc()/free() */
-#include <sys/param.h>		/* PATH_MAX */
+#include <limits.h>		/* PATH_MAX */
 #include <sys/types.h>		/* getpid(), mknod() */
 #include <unistd.h>		/* getpid(), mknod() */
 #include <sys/stat.h>		/* mknod() */
