@@ -49,8 +49,12 @@ $(GEN_OBJS): $(GEN_C)
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
+# some platforms do not have libdl, we only use it if available
+NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
+	rm -f dlcheck.so)
+
 fiu_posix_preload.so: $(OBJS)
-	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu -ldl \
+	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
 		-o fiu_posix_preload.so
 
 # this should only be needed when building the function list and not the
