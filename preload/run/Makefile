@@ -14,6 +14,9 @@ endif
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# install utility, we assume it's GNU/BSD compatible
+INSTALL=install
+
 
 OBJS = run.o
 
@@ -41,12 +44,12 @@ fiu-run: fiu-run.in
 	chmod +x fiu-run
 
 install: fiu_run_preload.so fiu-run
-	install -d $(PREFIX)/lib
-	install -m 0755 fiu_run_preload.so $(PREFIX)/lib
-	install -d $(PREFIX)/bin
-	install -m 0755 fiu-run $(PREFIX)/bin
-	install -d $(PREFIX)/man/man1
-	install -m 0644 fiu-run.1 $(PREFIX)/man/man1/
+	$(INSTALL) -d $(PREFIX)/lib
+	$(INSTALL) -m 0755 fiu_run_preload.so $(PREFIX)/lib
+	$(INSTALL) -d $(PREFIX)/bin
+	$(INSTALL) -m 0755 fiu-run $(PREFIX)/bin
+	$(INSTALL) -d $(PREFIX)/man/man1
+	$(INSTALL) -m 0644 fiu-run.1 $(PREFIX)/man/man1/
 
 clean:
 	rm -f $(OBJS) fiu_run_preload.so fiu-run

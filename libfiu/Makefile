@@ -14,6 +14,9 @@ endif
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# install utility, we assume it's GNU/BSD compatible
+INSTALL=install
+
 
 OBJS = fiu.o fiu-rc.o
 
@@ -45,22 +48,22 @@ libfiu.a: fiu.h $(OBJS)
 
 
 install-lib: libs libfiu.pc
-	install -d $(PREFIX)/lib
-	install -m 0755 libfiu.so $(PREFIX)/lib
-	install -m 0755 libfiu.a $(PREFIX)/lib
-	install -d $(PREFIX)/include
-	install -m 0644 fiu.h $(PREFIX)/include
-	install -m 0644 fiu-control.h $(PREFIX)/include
-	install -m 0644 fiu-local.h $(PREFIX)/include
-	install -d $(PREFIX)/lib/pkgconfig
-	install -m 644 libfiu.pc $(PREFIX)/lib/pkgconfig
+	$(INSTALL) -d $(PREFIX)/lib
+	$(INSTALL) -m 0755 libfiu.so $(PREFIX)/lib
+	$(INSTALL) -m 0755 libfiu.a $(PREFIX)/lib
+	$(INSTALL) -d $(PREFIX)/include
+	$(INSTALL) -m 0644 fiu.h $(PREFIX)/include
+	$(INSTALL) -m 0644 fiu-control.h $(PREFIX)/include
+	$(INSTALL) -m 0644 fiu-local.h $(PREFIX)/include
+	$(INSTALL) -d $(PREFIX)/lib/pkgconfig
+	$(INSTALL) -m 644 libfiu.pc $(PREFIX)/lib/pkgconfig
 	@echo
 	@echo "Please run ldconfig to update your library cache"
 	@echo
 
 install-man:
-	install -d $(PREFIX)/man/man3
-	install -m 0644 libfiu.3 $(PREFIX)/man/man3/
+	$(INSTALL) -d $(PREFIX)/man/man3
+	$(INSTALL) -m 0644 libfiu.3 $(PREFIX)/man/man3/
 
 install: install-lib install-man
 

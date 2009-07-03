@@ -35,6 +35,9 @@ To build the Python bindings, use "make python2"; to install them you can run
 "make python3_install".
 
 
+Solaris users must use "gmake INSTALL=ginstall" instead of "make".
+
+
 Where to report bugs
 --------------------
 

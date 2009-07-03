@@ -14,6 +14,10 @@ endif
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# install utility, we assume it's GNU/BSD compatible
+INSTALL=install
+
+
 MODS = $(wildcard modules/*.mod)
 GEN_C = $(addsuffix .c,$(MODS))
 GEN_OBJS = $(addsuffix .o,$(MODS))
@@ -60,8 +64,8 @@ function_list: $(GEN_FL) function_list.skel
 	$(Q) for i in $(GEN_FL); do cat $$i >> function_list; done
 
 install: fiu_posix_preload.so
-	install -d $(PREFIX)/lib
-	install -m 0755 fiu_posix_preload.so $(PREFIX)/lib
+	$(INSTALL) -d $(PREFIX)/lib
+	$(INSTALL) -m 0755 fiu_posix_preload.so $(PREFIX)/lib
 
 clean:
 	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL)

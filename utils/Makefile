@@ -2,14 +2,17 @@
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# install utility, we assume it's GNU/BSD compatible
+INSTALL=install
+
 
 default:
 	
 install:
-	install -d $(PREFIX)/bin
-	install -m 0755 fiu-ctrl $(PREFIX)/bin
-	install -d $(PREFIX)/man/man1
-	install -m 0644 fiu-ctrl.1 $(PREFIX)/man/man1/
+	$(INSTALL) -d $(PREFIX)/bin
+	$(INSTALL) -m 0755 fiu-ctrl $(PREFIX)/bin
+	$(INSTALL) -d $(PREFIX)/man/man1
+	$(INSTALL) -m 0644 fiu-ctrl.1 $(PREFIX)/man/man1/
 
 clean:
 
