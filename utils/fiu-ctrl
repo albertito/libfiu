@@ -67,9 +67,10 @@ function opts_reset() {
 function add_cmd() {
 	if [ "$NAME" != "" ]; then
 		if [ $PROB -ge 0 ]; then
-			CMDS+="enable_random $NAME $PROB $FAILNUM $FAILINFO"
+			C="enable_random $NAME $PROB $FAILNUM $FAILINFO"
+			CMDS[${#CMDS[*]}]="$C"
 		else
-			CMDS+="enable $NAME $FAILNUM $FAILINFO"
+			CMDS[${#CMDS[*]}]="enable $NAME $FAILNUM $FAILINFO"
 		fi
 		opts_reset;
 	fi
@@ -97,7 +98,7 @@ while getopts "+e:p:u:i:d:f:h" opt; do
 		FIFO_PREFIX="$OPTARG"
 		;;
 	d)
-		CMDS+="disable $OPTARG"
+		CMDS[${#CMDS[*]}]="disable $OPTARG"
 		opts_reset;
 		;;
 	h|*)
