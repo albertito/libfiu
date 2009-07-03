@@ -140,7 +140,7 @@ function send_cmd_fifo() {
 	# echoes the reply
 	P=$1
 	shift 1
-	echo $@ > $P.in
+	echo "$@" > $P.in
 	R="`cat $P.out`"
 	if [ "$R" -eq -1 ]; then
 		echo "$P: Command returned error"
