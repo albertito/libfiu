@@ -7,10 +7,10 @@
 #include <string.h>		/* strncpy() */
 #include <stdlib.h>		/* malloc()/free() */
 #include <limits.h>		/* PATH_MAX */
-#include <sys/types.h>		/* getpid(), mknod() */
-#include <unistd.h>		/* getpid(), mknod() */
-#include <sys/stat.h>		/* mknod() */
-#include <fcntl.h>		/* mknod() */
+#include <sys/types.h>		/* getpid(), mkfifo() */
+#include <unistd.h>		/* getpid() */
+#include <sys/stat.h>		/* mkfifo() */
+#include <fcntl.h>		/* open() and friends */
 #include <pthread.h>		/* pthread_create() and friends */
 #include <errno.h>		/* errno and friends */
 
@@ -232,15 +232,15 @@ static int _fiu_rc_fifo(const char *basename)
 	/* see rc_fifo_thread() */
 	rec_count++;
 
-	snprintf(npipe_path_in, PATH_MAX,"%s-%d.in", basename, getpid());
-	snprintf(npipe_path_out, PATH_MAX,"%s-%d.out", basename, getpid());
+	snprintf(npipe_path_in, PATH_MAX, "%s-%d.in", basename, getpid());
+	snprintf(npipe_path_out, PATH_MAX, "%s-%d.out", basename, getpid());
 
-	if (mknod(npipe_path_in, S_IFIFO | 0600, 0) != 0) {
+	if (mkfifo(npipe_path_in, 0600) != 0) {
 		rec_count--;
 		return -1;
 	}
 
-	if (mknod(npipe_path_out, S_IFIFO | 0600, 0) != 0) {
+	if (mkfifo(npipe_path_out, 0600) != 0) {
 		unlink(npipe_path_in);
 		rec_count--;
 		return -1;
