@@ -81,8 +81,11 @@ static void __attribute__((constructor)) fiu_run_init(void)
 	fiu_init(0);
 
 	fiu_fifo_env = getenv("FIU_CTRL_FIFO");
-	if (fiu_fifo_env != NULL && *fiu_fifo_env != '\0')
-		fiu_rc_fifo(fiu_fifo_env);
+	if (fiu_fifo_env != NULL && *fiu_fifo_env != '\0') {
+		if (fiu_rc_fifo(fiu_fifo_env) < 0) {
+			perror("fiu_run_preload: Error opening RC fifo");
+		}
+	}
 
 	fiu_enable_env = getenv("FIU_ENABLE");
 	if (fiu_enable_env == NULL)
