@@ -107,9 +107,7 @@ class Function:
 
 			# We can't put this as a macro parameter, so it has to
 			# be explicit 
-			valid_errnos = '{ ' + ', '.join(self.valid_errnos) \
-				+ ' }'
-			f.write("\tint valid_errnos[] = %s;\n" % valid_errnos)
+			self.write_valid_errnos(f)
 
 			f.write('mkwrap_body_errno("%s", %s, %d)\n' % \
 					(self.fiu_name, self.on_error,
@@ -123,6 +121,15 @@ class Function:
 
 		f.write('mkwrap_bottom(%s, (%s))\n' % (self.name, paramsn))
 		f.write('\n\n')
+
+	def write_valid_errnos(self, f):
+		"Generates the code for the static list of valid errnos."
+		f.write("\tint valid_errnos[] = {\n")
+		for e in self.valid_errnos:
+			f.write("\t  #ifdef %s\n" % e)
+			f.write("\t\t%s,\n" % e)
+			f.write("\t  #endif\n")
+		f.write("\t};\n");
 
 
 class Include:
