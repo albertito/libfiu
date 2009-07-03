@@ -116,7 +116,7 @@ static int rc_process_cmd(char *cmd)
 			tok = strtok_r(NULL, " ", &state);
 			if (tok == NULL)
 				return -1;
-			probability = strtof(tok, NULL);
+			probability = strtod(tok, NULL);
 			if (probability < 0 || probability > 1)
 				return -1;
 		}
