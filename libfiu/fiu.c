@@ -396,7 +396,7 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 
 	/* There are no free slots in enabled_fails, so we must grow it */
 	enabled_fails = realloc(enabled_fails,
-			enabled_fails_len + EF_GROW * sizeof(struct pf_info));
+			(enabled_fails_len + EF_GROW) * sizeof(struct pf_info));
 	if (enabled_fails == NULL) {
 		enabled_fails_last = NULL;
 		enabled_fails_len = 0;
