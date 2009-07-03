@@ -32,9 +32,9 @@ default: all
 
 all: libs libfiu.pc
 
-libfiu.pc: libfiu.skel.pc
+libfiu.pc: libfiu.pc.in
 	@echo "generating libfiu.pc"
-	@cat libfiu.skel.pc | \
+	@cat libfiu.pc.in | \
 		sed 's@++PREFIX++@$(PREFIX)@g' \
 		> libfiu.pc
 

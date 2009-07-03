@@ -62,9 +62,9 @@ fiu_posix_preload.so: $(OBJS)
 %.mod.fl: %.mod
 	$(NICE_GEN) $< $<.c $@
 
-function_list: $(GEN_FL) function_list.skel
+function_list: $(GEN_FL) function_list.in
 	@echo "  function_list"
-	$(Q) cp function_list.skel function_list
+	$(Q) cp function_list.in function_list
 	$(Q) for i in $(GEN_FL); do cat $$i >> function_list; done
 
 install: fiu_posix_preload.so
