@@ -17,6 +17,8 @@ ENABLE=""
 # additional preloader libraries to use
 PRELOAD_LIBS=""
 
+# use the POSIX preload library?
+USE_POSIX_PRELOAD=0
 
 HELP_MSG="
 Usage: fiu-run [options] program [arguments]
@@ -92,7 +94,7 @@ while getopts "+e:p:u:i:f:l:xh" opt; do
 		PLIBPATH="$OPTARG"
 		;;
 	x)
-		PRELOAD_LIBS="$PRELOAD_LIBS $PLIBPATH/fiu_posix_preload.so"
+		USE_POSIX_PRELOAD=1
 		;;
 	h|*)
 		echo "$HELP_MSG"
@@ -110,6 +112,10 @@ fi
 # eat the parameters we already processed
 shift $(( $OPTIND - 1 ))
 
+# Allow user to give -l and -x in any order.
+if [ $USE_POSIX_PRELOAD -eq 1 ] ; then
+	PRELOAD_LIBS="$PRELOAD_LIBS $PLIBPATH/fiu_posix_preload.so"
+fi
 
 #
 # Run the application
