@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Lists processes that can be controlled with fiu-ctrl.
+
+# default remote control over named pipes prefix; we use the same one as
+# fiu-run so it's easier to use
+FIFO_PREFIX="${TMPDIR:-/tmp}/fiu-ctrl"
+
+declare -a PIDS
+
+HELP_MSG="
+Usage: fiu-ls [options]
+
+The following options are supported:
+
+  -f ctrlpath	Set the default prefix for remote control over named pipes.
+		(defaults to \"$FIFO_PREFIX\", which is usually correct if
+		the program was run using fiu-run(1)).
+"
+
+while getopts "f:h" opt; do
+	case $opt in
+	f)
+		FIFO_PREFIX="$OPTARG"
+		;;
+	h|*)
+		echo "$HELP_MSG"
+		exit 1
+		;;
+	esac;
+done
+
+for P in `ls -1 $FIFO_PREFIX-*.in 2>/dev/null` ; do
+	if [ -n "$P" ] ; then
+		OUT="`echo $P | cut -d. -f1`.out"
+		if [ -p "$P" -a -w "$P" -a -p "$OUT" -a -r "$OUT" ] ; then
+			PID="`echo $P | cut -d- -f3 | cut -d. -f1`"
+			if [ -n "$PID" ] && \
+			   kill -0 "$PID" >/dev/null 2>/dev/null ; then
+				PIDS[${#PIDS[*]}]="$PID"
+			fi
+		fi
+	fi
+done
+
+for P in "${PIDS[@]}"; do
+	CMDLINE="`tr '\0' ' ' < /proc/$P/cmdline 2>/dev/null`"
+	printf "%5d: %s\n" "$P" "$CMDLINE"
+done

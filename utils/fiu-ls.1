@@ -1,0 +1,31 @@
+.TH fiu-ls 1 "7/Jul/2009"
+.SH NAME
+fiu-ls - list processes available for libfiu remote control
+.SH SYNOPSIS
+fiu-ls [options]
+
+.SH DESCRIPTION
+fiu-ls lists process that are available to be controlled using the libfiu
+\fBfiu-ctrl\fR(1) utility. Such processes have the remote control pipes
+available.
+
+For additional documentation, go to the project's website at
+.IR http://blitiri.com.ar/p/libfiu .
+
+.SH OPTIONS
+.TP
+.B "-f ctrlpath"
+Set the default prefix for remote control over named pipes. Defaults to
+"$TMPDIR/fiu-ctrl", or "/tmp/fiu-ctrl" if "$TMPDIR" is not set, which is the
+usually correct for programs launched using \fBfiu-run\fR(1).
+
+.SH SEE ALSO
+.BR libfiu (3),
+.BR fiu-ctrl (1),
+.BR fiu-run (1).
+
+.SH BUGS
+If you want to report bugs, or have any questions or comments, just let me
+know at albertito@blitiri.com.ar. For more information about libfiu, you can
+go to http://blitiri.com.ar/p/libfiu.
+
