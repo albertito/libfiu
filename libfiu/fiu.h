@@ -15,6 +15,11 @@
 /* Controls whether the external code enables libfiu or not. */
 #ifdef FIU_ENABLE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /* Initializes the library.
  *
  * - flags: unused.
@@ -49,6 +54,10 @@ void *fiu_failinfo(void);
  * fails. */
 #define fiu_return_on(name, retval) fiu_do_on(name, return retval)
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #else
 /* fiu not enabled, this should match fiu-local.h but we don't include it

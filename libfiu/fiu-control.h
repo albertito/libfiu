@@ -1,4 +1,11 @@
 
+#ifndef _FIU_CONTROL_H
+#define _FIU_CONTROL_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Control API for libfiu
  */
@@ -65,4 +72,11 @@ int fiu_disable(const char *name);
  * - basename: base path to use in the creation of the named pipes.
  * - returns: 0 on success, -1 on errors. */
 int fiu_rc_fifo(const char *basename);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _FIU_CONTROL_H
 
