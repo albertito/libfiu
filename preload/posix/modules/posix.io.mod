@@ -59,6 +59,16 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 	on error: -1
 	valid errnos: EBADFD EFAULT EFBIG EINTR EINVAL EIO ENOSPC
 
+int truncate(const char *path, off_t length);
+	on error: -1
+	valid errnos: EACCES EFAULT EFBIG EINTR EINVAL EIO EISDIR ELOOP \
+		ENAMETOOLONG ENOENT ENOTDIR EPERM EROFS ETXTBSY
+
+int ftruncate(int fd, off_t length);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT EFBIG EINTR EINVAL EIO EISDIR ELOOP \
+		ENAMETOOLONG ENOENT ENOTDIR EPERM EROFS ETXTBSY
+
 
 fiu name base: posix/io/dir/
 
@@ -82,6 +92,16 @@ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 int closedir(DIR *dirp);
 	on error: -1
 	valid errnos: EBADF
+
+int unlink(const char *pathname);
+        on error: -1
+	valid errnos: EACCES EBUSY EFAULT EIO EISDIR ELOOP ENAMETOOLONG ENOENT \
+		ENOMEM ENOTDIR EPERM EROFS
+
+int rename(const char *oldpath, const char *newpath);
+	on error: -1
+	valid errnos: EACCES EBUSY EFAULT EINVAL EISDIR ELOOP EMLINK ENAMETOOLONG \
+		ENOENT ENOMEM ENOSPC ENOTDIR ENOTEMPTY EPERM EROFS EXDEV
 
 
 fiu name base: posix/io/stat/
