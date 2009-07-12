@@ -158,7 +158,7 @@ if __name__ == '__main__':
 		print '\ton error:', ' || '.join(on_error)
 
 	if errnos:
-		print '\tvalid errnos:', wrap(' '.join(errnos), 60,
-				indent = 2)
+		print '\tvalid errnos:', wrap(' '.join(sorted(set(errnos))),
+				60, indent = 2)
 
 
