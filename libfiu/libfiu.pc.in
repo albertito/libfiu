@@ -6,7 +6,7 @@ includedir=${prefix}/include
 Name: libfiu
 Description: Fault injection in userspace
 URL: http://blitiri.com.ar/p/libfiu/
-Version: 0.11
+Version: 0.12
 Libs: -L${libdir} -lfiu
 Cflags: -I${includedir}
 
