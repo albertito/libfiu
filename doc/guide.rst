@@ -79,10 +79,9 @@ failure. As the point of failure is enabled, *free_space()* will return 0, so
 you can test how your code behaves under that condition, which was otherwise
 hard to trigger.
 
-As you can see, libfiu's API has to "sides": a core API and a control API. The
-core API is used inside the code wanting to perform fault injection on. The
-control API is used inside the testing code, in order to control the injection
-of failures.
+As you can see, libfiu's API has two "sides": a core API and a control API.
+The core API is used inside the code to be fault injected. The control API is
+used inside the testing code, in order to control the injection of failures.
 
 In the example above, *fiu_return_on()* is a part of the core API, and
 *fiu_enable()* is a part of the control API.
@@ -122,9 +121,9 @@ First, you should ``#include "fiu-local.h"`` in the files you want to add
 points of failure to. That header allows you to avoid libfiu as a build-time
 dependency, as mentioned in the last section.
 
-Then, you to insert points of failure, you sprinkle your code with calls like
+Then, to insert points of failure, you sprinkle your code with calls like
 ``fiu_return_on("name", -1)``, ``fiu_exit_on("name")``, or more complex code
-using ``fiu_fail("name")``. Consult the libfiu's manpage for the details on
+using ``fiu_fail("name")``. See the libfiu's manpage for the details on
 the API.
 
 It is recommended that you use meaningful names for your points of failure, to
@@ -165,7 +164,7 @@ of failure that begin with the given name (excluding the asterisk, of course).
 
 Check libfiu's manpage for more details about the API.
 
-Using the Python bindings, you can also write and/or control your tests using
-Python.
+If you prefer to avoid writing the test code in C, you can use the Python
+bindings, and/or the *fiu-run* and *fiu-ctrl* utilities.
 
 
