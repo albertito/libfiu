@@ -5,8 +5,10 @@ libfiu/*.o
 libfiu/libfiu.a
 libfiu/libfiu.pc
 libfiu/libfiu.so
+libfiu/build-flags
 preload/posix/*.o
 preload/posix/*.so
+preload/posix/build-flags
 preload/posix/function_list
 preload/posix/modules/*.o
 preload/posix/modules/*.mod.c
@@ -14,4 +16,5 @@ preload/posix/modules/*.mod.fl
 preload/run/*.o
 preload/run/*.so
 preload/run/fiu-run
+preload/run/build-flags
 

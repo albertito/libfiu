@@ -32,6 +32,17 @@ default: all
 	
 all: fiu_run_preload.so fiu-run
 
+BF = $(ALL_CFLAGS) ~ $(PREFIX)
+build-flags: .force-build-flags
+	@if [ x"$(BF)" != x"`cat build-flags 2>/dev/null`" ]; then \
+		if [ -f build-flags ]; then \
+			echo "build flags changed, rebuilding"; \
+		fi; \
+		echo "$(BF)" > build-flags; \
+	fi
+
+$(OBJS): build-flags
+
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
@@ -39,11 +50,11 @@ all: fiu_run_preload.so fiu-run
 NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
 	rm -f dlcheck.so)
 
-fiu_run_preload.so: $(OBJS)
+fiu_run_preload.so: build-flags $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
 		-o fiu_run_preload.so
 
-fiu-run: fiu-run.in
+fiu-run: build-flags fiu-run.in
 	cat fiu-run.in | sed "s+@@PREFIX@@+$(PREFIX)+g" > fiu-run
 	chmod +x fiu-run
 
@@ -56,9 +67,9 @@ install: fiu_run_preload.so fiu-run
 	$(INSTALL) -m 0644 fiu-run.1 $(PREFIX)/man/man1/
 
 clean:
-	rm -f $(OBJS) fiu_run_preload.so fiu-run
+	rm -f $(OBJS) fiu_run_preload.so fiu-run build-flags
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default install clean
+.PHONY: default install clean .force-build-flags
 
 

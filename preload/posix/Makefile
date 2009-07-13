@@ -41,7 +41,18 @@ default: all
 	
 all: fiu_posix_preload.so function_list
 
+BF = $(ALL_CFLAGS) ~ $(PREFIX)
+build-flags: .force-build-flags
+	@if [ x"$(BF)" != x"`cat build-flags 2>/dev/null`" ]; then \
+		if [ -f build-flags ]; then \
+			echo "build flags changed, rebuilding"; \
+		fi; \
+		echo "$(BF)" > build-flags; \
+	fi
+
 $(GEN_OBJS): $(GEN_C)
+
+$(OBJS): build-flags
 
 %.mod.c: %.mod
 	$(NICE_GEN) $< $@ $<.fl
@@ -53,7 +64,7 @@ $(GEN_OBJS): $(GEN_C)
 NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
 	rm -f dlcheck.so)
 
-fiu_posix_preload.so: $(OBJS)
+fiu_posix_preload.so: build-flags $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
 		-o fiu_posix_preload.so
 
@@ -72,10 +83,10 @@ install: fiu_posix_preload.so
 	$(INSTALL) -m 0755 fiu_posix_preload.so $(PREFIX)/lib
 
 clean:
-	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL)
+	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL) build-flags
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default install clean
+.PHONY: default install clean .force-build-flags
 
 

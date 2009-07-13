@@ -32,7 +32,7 @@ default: all
 
 all: libs libfiu.pc
 
-libfiu.pc: libfiu.pc.in
+libfiu.pc: build-flags libfiu.pc.in
 	@echo "generating libfiu.pc"
 	@cat libfiu.pc.in | \
 		sed 's@++PREFIX++@$(PREFIX)@g' \
@@ -40,10 +40,10 @@ libfiu.pc: libfiu.pc.in
 
 libs: libfiu.so libfiu.a
 
-libfiu.so: fiu.h $(OBJS)
+libfiu.so: build-flags fiu.h $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lpthread -o libfiu.so
 
-libfiu.a: fiu.h $(OBJS)
+libfiu.a: build-flags fiu.h $(OBJS)
 	$(AR) cr libfiu.a $(OBJS)
 
 
@@ -67,14 +67,25 @@ install-man:
 
 install: install-lib install-man
 
+BF = $(ALL_CFLAGS) ~ $(PREFIX)
+build-flags: .force-build-flags
+	@if [ x"$(BF)" != x"`cat build-flags 2>/dev/null`" ]; then \
+		if [ -f build-flags ]; then \
+			echo "build flags changed, rebuilding"; \
+		fi; \
+		echo "$(BF)" > build-flags; \
+	fi
+
+$(OBJS): build-flags
 
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
 clean:
-	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.a
+	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.a build-flags
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default all libs install-lib install-man install clean
+.PHONY: default all libs install-lib install-man install clean \
+	.force-build-flags
 
 
