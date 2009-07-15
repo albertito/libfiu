@@ -60,7 +60,47 @@ int open(const char *pathname, int flags, ...)
 	/* Use the normal macros to complete the function, now that we have a
 	 * set mode to something */
 
-	int valid_errnos[] = { EACCES, EFAULT, EFBIG, EOVERFLOW, ELOOP, EMFILE, ENAMETOOLONG, ENFILE, ENOENT, ENOMEM, ENOSPC, ENOTDIR, EROFS };
+	int valid_errnos[] = {
+	  #ifdef EACCESS
+		EACCES,
+	  #endif
+	  #ifdef EFAULT
+		EFAULT,
+	  #endif
+	  #ifdef EFBIG
+		EFBIG,
+	  #endif
+	  #ifdef EOVERFLOW
+		EOVERFLOW,
+	  #endif
+	  #ifdef ELOOP
+		ELOOP,
+	  #endif
+	  #ifdef EMFILE
+		EMFILE,
+	  #endif
+	  #ifdef ENAMETOOLONG
+		ENAMETOOLONG,
+	  #endif
+	  #ifdef ENFILE
+		ENFILE,
+	  #endif
+	  #ifdef ENOENT
+		ENOENT,
+	  #endif
+	  #ifdef ENOMEM
+		ENOMEM,
+	  #endif
+	  #ifdef ENOSPC
+		ENOSPC,
+	  #endif
+	  #ifdef ENOTDIR
+		ENOTDIR,
+	  #endif
+	  #ifdef EROFS
+		EROFS
+	  #endif
+	};
 mkwrap_body_errno("posix/io/oc/open", -1)
 mkwrap_bottom(open, (pathname, flags, mode))
 
