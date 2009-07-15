@@ -50,6 +50,9 @@ class Function:
 		self.use_errno = False
 		self.valid_errnos = []
 
+		# if the given parameter should be reduced by a random amount
+		self.reduce = None
+
 	def load_from_definition(self, definition):
 		m = func_def_re.match(definition)
 		self.name = m.group("name")
@@ -70,6 +73,8 @@ class Function:
 			elif k == 'valid errnos':
 				self.use_errno = True
 				self.valid_errnos = v.split()
+			elif k == 'reduce':
+				self.reduce = v
 			else:
 				raise SyntaxError, \
 					"Unknown information: " + k
@@ -98,6 +103,10 @@ class Function:
 		f.write('mkwrap_top(%s, %s, (%s), (%s), (%s))\n' % \
 				(self.ret_type, self.name, self.params,
 					paramsn, paramst) )
+
+		if self.reduce:
+			f.write('mkwrap_body_reduce("%s/reduce", %s)\n' % \
+					(self.fiu_name, self.reduce) )
 
 		if self.use_errno:
 			if self.on_error is None:
@@ -129,6 +138,12 @@ class Function:
 			f.write("\t\t%s,\n" % e)
 			f.write("\t  #endif\n")
 		f.write("\t};\n");
+
+	def fiu_names(self):
+		n = [self.fiu_name]
+		if self.reduce:
+			n.append(self.fiu_name + '/reduce')
+		return n
 
 
 class Include:
@@ -272,7 +287,8 @@ def write_function_list(directives, path):
 	f = open(path, 'a')
 	for d in directives:
 		if isinstance(d, Function):
-			f.write("%-32s%s\n" % (d.name, d.fiu_name))
+			f.write("%-32s%s\n" % (d.name, \
+				', '.join(d.fiu_names())) )
 
 
 def usage():
