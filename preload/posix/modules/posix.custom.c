@@ -61,7 +61,7 @@ int open(const char *pathname, int flags, ...)
 	 * set mode to something */
 
 	int valid_errnos[] = { EACCES, EFAULT, EFBIG, EOVERFLOW, ELOOP, EMFILE, ENAMETOOLONG, ENFILE, ENOENT, ENOMEM, ENOSPC, ENOTDIR, EROFS };
-mkwrap_body_errno("posix/io/oc/open", -1, 13)
+mkwrap_body_errno("posix/io/oc/open", -1)
 mkwrap_bottom(open, (pathname, flags, mode))
 
 

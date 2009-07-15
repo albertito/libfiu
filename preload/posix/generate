@@ -109,9 +109,8 @@ class Function:
 			# be explicit 
 			self.write_valid_errnos(f)
 
-			f.write('mkwrap_body_errno("%s", %s, %d)\n' % \
-					(self.fiu_name, self.on_error,
-						len(self.valid_errnos)) )
+			f.write('mkwrap_body_errno("%s", %s)\n' % \
+					(self.fiu_name, self.on_error) )
 		elif self.on_error is not None:
 			f.write('mkwrap_body_hardcoded("%s", %s)\n' % \
 					(self.fiu_name, self.on_error) )

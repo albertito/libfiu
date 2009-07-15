@@ -117,13 +117,14 @@ extern int __thread _fiu_called;
 /* Generates the body of the function for functions that affect errno. The
  * return value is hardcoded. Assumes int valid_errnos[] exist was properly
  * defined. */
-#define mkwrap_body_errno(FIU_NAME, FAIL_RET, NVERRNOS) \
+#define mkwrap_body_errno(FIU_NAME, FAIL_RET) \
 								\
 		fstatus = fiu_fail(FIU_NAME);			\
 		if (fstatus != 0) {				\
 			void *finfo = fiu_failinfo();		\
 			if (finfo == NULL) {			\
-				errno = valid_errnos[random() % NVERRNOS]; \
+				errno = valid_errnos[random() % \
+					sizeof(valid_errnos) / sizeof(int)]; \
 			} else {				\
 				errno = (long) finfo;		\
 			}					\
