@@ -180,14 +180,22 @@ static char npipe_path_out[PATH_MAX];
 
 static void *rc_fifo_thread(void *unused)
 {
-	int fdr, fdw, r;
+	int fdr, fdw, r, errcount;
 
 	/* increment the recursion count so we're not affected by libfiu,
 	 * otherwise we could make the remote control useless by enabling all
 	 * failure points */
 	rec_count++;
 
+	errcount = 0;
+
 reopen:
+	if (errcount > 10) {
+		fprintf(stderr, "libfiu: Too many errors in remote control "
+				"thread, shutting down\n");
+		return NULL;
+	}
+
 	fdr = open(npipe_path_in, O_RDONLY);
 	if (fdr < 0)
 		return NULL;
@@ -202,6 +210,7 @@ reopen:
 		r = rc_do_command(fdr, fdw);
 		if (r < 0 && errno != EPIPE) {
 			perror("libfiu: Error reading from remote control");
+			errcount++;
 			close(fdr);
 			close(fdw);
 			goto reopen;
