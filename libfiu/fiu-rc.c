@@ -137,8 +137,6 @@ static int rc_process_cmd(char *cmd)
 	} else {
 		return -1;
 	}
-
-	return 0;
 }
 
 /* Read remote control directives from fdr and process them, writing the
@@ -222,10 +220,7 @@ reopen:
 		}
 	}
 
-	close(fdr);
-	close(fdw);
-
-	return NULL;
+	/* we never get here */
 }
 
 static void fifo_atexit(void)
