@@ -27,6 +27,8 @@ else
 	NICE_CC = $(CC)
 endif
 
+LIB_VER=0.12
+
 
 default: all
 
@@ -35,7 +37,8 @@ all: libs libfiu.pc
 libfiu.pc: build-flags libfiu.pc.in
 	@echo "generating libfiu.pc"
 	@cat libfiu.pc.in | \
-		sed 's@++PREFIX++@$(PREFIX)@g' \
+		sed 's@++PREFIX++@$(PREFIX)@g' | \
+		sed 's@++LIB_VER++@$(LIB_VER)@g' \
 		> libfiu.pc
 
 libs: libfiu.so libfiu.a
