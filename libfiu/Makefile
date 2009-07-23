@@ -28,6 +28,7 @@ else
 endif
 
 LIB_VER=0.12
+LIB_SO_VER=0
 
 
 default: all
@@ -44,7 +45,10 @@ libfiu.pc: build-flags libfiu.pc.in
 libs: libfiu.so libfiu.a
 
 libfiu.so: build-flags fiu.h $(OBJS)
-	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lpthread -o libfiu.so
+	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC \
+		-Wl,-soname,libfiu.so.$(LIB_SO_VER) \
+		$(OBJS) -lpthread -o libfiu.so.$(LIB_VER)
+	ln -fs libfiu.so.$(LIB_VER) libfiu.so
 
 libfiu.a: build-flags fiu.h $(OBJS)
 	$(AR) cr libfiu.a $(OBJS)
@@ -52,7 +56,9 @@ libfiu.a: build-flags fiu.h $(OBJS)
 
 install-lib: libs libfiu.pc
 	$(INSTALL) -d $(PREFIX)/lib
-	$(INSTALL) -m 0755 libfiu.so $(PREFIX)/lib
+	$(INSTALL) -m 0755 libfiu.so.$(LIB_VER) $(PREFIX)/lib
+	ln -fs libfiu.so.$(LIB_VER) $(PREFIX)/lib/libfiu.so
+	ln -fs libfiu.so.$(LIB_VER) $(PREFIX)/lib/libfiu.so.$(LIB_SO_VER)
 	$(INSTALL) -m 0755 libfiu.a $(PREFIX)/lib
 	$(INSTALL) -d $(PREFIX)/include
 	$(INSTALL) -m 0644 fiu.h $(PREFIX)/include
@@ -85,8 +91,8 @@ $(OBJS): build-flags
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
 clean:
-	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.a build-flags
-	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
+	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.so.$(LIB_VER) libfiu.a
+	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 
 .PHONY: default all libs install-lib install-man install clean \
 	.force-build-flags
