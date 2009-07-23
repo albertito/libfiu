@@ -235,12 +235,12 @@ static int _fiu_rc_fifo(const char *basename)
 	snprintf(npipe_path_in, PATH_MAX, "%s-%d.in", basename, getpid());
 	snprintf(npipe_path_out, PATH_MAX, "%s-%d.out", basename, getpid());
 
-	if (mkfifo(npipe_path_in, 0600) != 0) {
+	if (mkfifo(npipe_path_in, 0600) != 0 && errno != EEXIST) {
 		rec_count--;
 		return -1;
 	}
 
-	if (mkfifo(npipe_path_out, 0600) != 0) {
+	if (mkfifo(npipe_path_out, 0600) != 0 && errno != EEXIST) {
 		unlink(npipe_path_in);
 		rec_count--;
 		return -1;
