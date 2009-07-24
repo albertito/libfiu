@@ -14,6 +14,9 @@ endif
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# location of preload libraries
+PLIBPATH=$(PREFIX)/lib
+
 # install utility, we assume it's GNU/BSD compatible
 INSTALL=install
 
@@ -55,7 +58,7 @@ fiu_run_preload.so: build-flags $(OBJS)
 		-o fiu_run_preload.so
 
 fiu-run: build-flags fiu-run.in
-	cat fiu-run.in | sed "s+@@PREFIX@@+$(PREFIX)+g" > fiu-run
+	cat fiu-run.in | sed "s+@@PLIBPATH@@+$(PLIBPATH)+g" > fiu-run
 	chmod +x fiu-run
 
 install: fiu_run_preload.so fiu-run

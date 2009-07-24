@@ -8,7 +8,7 @@
 FIFO_PREFIX="${TMPDIR:-/tmp}/fiu-ctrl"
 
 # default library path to look for preloader libraries
-PLIBPATH="@@PREFIX@@/lib"
+PLIBPATH="@@PLIBPATH@@"
 
 # the enable string to pass to the preload library (via the FIU_ENABLE
 # environment variable)
