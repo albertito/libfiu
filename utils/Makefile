@@ -12,9 +12,9 @@ install:
 	$(INSTALL) -d $(PREFIX)/bin
 	$(INSTALL) -m 0755 fiu-ctrl $(PREFIX)/bin
 	$(INSTALL) -m 0755 fiu-ls $(PREFIX)/bin
-	$(INSTALL) -d $(PREFIX)/man/man1
-	$(INSTALL) -m 0644 fiu-ctrl.1 $(PREFIX)/man/man1/
-	$(INSTALL) -m 0644 fiu-ls.1 $(PREFIX)/man/man1/
+	$(INSTALL) -d $(PREFIX)/share/man/man1
+	$(INSTALL) -m 0644 fiu-ctrl.1 $(PREFIX)/share/man/man1/
+	$(INSTALL) -m 0644 fiu-ls.1 $(PREFIX)/share/man/man1/
 
 clean:
 

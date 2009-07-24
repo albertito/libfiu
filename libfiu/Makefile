@@ -71,8 +71,8 @@ install-lib: libs libfiu.pc
 	@echo
 
 install-man:
-	$(INSTALL) -d $(PREFIX)/man/man3
-	$(INSTALL) -m 0644 libfiu.3 $(PREFIX)/man/man3/
+	$(INSTALL) -d $(PREFIX)/share/man/man3
+	$(INSTALL) -m 0644 libfiu.3 $(PREFIX)/share/man/man3/
 
 install: install-lib install-man
 

@@ -63,8 +63,8 @@ install: fiu_run_preload.so fiu-run
 	$(INSTALL) -m 0755 fiu_run_preload.so $(PREFIX)/lib
 	$(INSTALL) -d $(PREFIX)/bin
 	$(INSTALL) -m 0755 fiu-run $(PREFIX)/bin
-	$(INSTALL) -d $(PREFIX)/man/man1
-	$(INSTALL) -m 0644 fiu-run.1 $(PREFIX)/man/man1/
+	$(INSTALL) -d $(PREFIX)/share/man/man1
+	$(INSTALL) -m 0644 fiu-run.1 $(PREFIX)/share/man/man1/
 
 clean:
 	rm -f $(OBJS) fiu_run_preload.so fiu-run build-flags
