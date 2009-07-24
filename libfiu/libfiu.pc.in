@@ -1,5 +1,5 @@
 
-prefix=++PREFIX++
+prefix=++DESTDIR++
 libdir=${prefix}/lib
 includedir=${prefix}/include
 

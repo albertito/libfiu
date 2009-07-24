@@ -14,6 +14,9 @@ endif
 # prefix for installing the binaries
 PREFIX=/usr/local
 
+# prefix for eventual location of binaries
+DESTDIR=$(PREFIX)
+
 # install utility, we assume it's GNU/BSD compatible
 INSTALL=install
 
@@ -38,7 +41,7 @@ all: libs libfiu.pc
 libfiu.pc: build-flags libfiu.pc.in
 	@echo "generating libfiu.pc"
 	@cat libfiu.pc.in | \
-		sed 's@++PREFIX++@$(PREFIX)@g' | \
+		sed 's@++DESTDIR++@$(DESTDIR)@g' | \
 		sed 's@++LIB_VER++@$(LIB_VER)@g' \
 		> libfiu.pc
 
