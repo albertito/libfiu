@@ -49,7 +49,7 @@ failure point \fIlibc/mm/malloc\fR with a 5% of probability to fail:
 
 .RS
 .nf
-fiu-ctrl -e posix/io/read -p 25 -e libc/mm/malloc -p 5 12345
+fiu\-ctrl \-e posix/io/read \-p 25 \-e libc/mm/malloc \-p 5 12345
 .fi
 .RE
 
@@ -58,7 +58,7 @@ failure point \fIposix/io/read\fR:
 
 .RS
 .nf
-fiu-ctrl -d posix/io/read 12345
+fiu\-ctrl \-d posix/io/read 12345
 .fi
 .RE
 
