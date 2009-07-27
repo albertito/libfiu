@@ -60,7 +60,7 @@ int open(const char *pathname, int flags, ...)
 	/* Use the normal macros to complete the function, now that we have a
 	 * set mode to something */
 
-	int valid_errnos[] = {
+	static const int valid_errnos[] = {
 	  #ifdef EACCESS
 		EACCES,
 	  #endif

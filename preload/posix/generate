@@ -132,7 +132,7 @@ class Function:
 
 	def write_valid_errnos(self, f):
 		"Generates the code for the static list of valid errnos."
-		f.write("\tint valid_errnos[] = {\n")
+		f.write("\tstatic const int valid_errnos[] = {\n")
 		for e in self.valid_errnos:
 			f.write("\t  #ifdef %s\n" % e)
 			f.write("\t\t%s,\n" % e)
