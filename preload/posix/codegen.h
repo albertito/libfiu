@@ -136,10 +136,11 @@ extern int __thread _fiu_called;
  * amount when the given point of failure is enabled. Can be combined with the
  * other body generators. */
 #define mkwrap_body_reduce(FIU_NAME, CNT)			\
-	fstatus = fiu_fail(FIU_NAME);				\
-	if (fstatus != 0) {					\
-		CNT -= random() % CNT;				\
-	}
+								\
+		fstatus = fiu_fail(FIU_NAME);			\
+		if (fstatus != 0) {				\
+			CNT -= random() % CNT;			\
+		}
 
 #define mkwrap_bottom(NAME, PARAMSN)				\
 								\
