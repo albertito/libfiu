@@ -5,6 +5,7 @@ libfiu/*.o
 libfiu/libfiu.a
 libfiu/libfiu.pc
 libfiu/libfiu.so
+libfiu/libfiu.so.*
 libfiu/build-flags
 preload/posix/*.o
 preload/posix/*.so
