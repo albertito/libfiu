@@ -9,7 +9,7 @@
 void *_fiu_libc;
 
 /* Recursion counter, per-thread */
-int __thread _fiu_called;
+int __thread _fiu_called = 0;
 
 /* Let the user know if there is no constructor priorities support, just in
  * case there are bugs when building/running without them */
@@ -17,17 +17,28 @@ int __thread _fiu_called;
 #warning "Building without using constructor priorities"
 #endif
 
-static void constructor_attr(200) _fiu_init(void)
+void constructor_attr(200) _fiu_init(void)
 {
-	_fiu_called = 0;
+	static int initialized = 0;
+
+	/* When built without constructor priorities, we could be called more
+	 * than once during the initialization phase: one because we're marked
+	 * as a constructor, and another when one of the other constructors
+	 * sees that it doesn't have _fiu_libc set. */
+
+	printd("_fiu_init() start (%d)\n", initialized);
+	if (initialized)
+		goto exit;
 
 	_fiu_libc = dlopen("libc.so.6", RTLD_NOW);
 	if (_fiu_libc == NULL) {
 		fprintf(stderr, "Error loading libc: %s\n", dlerror());
 		exit(1);
 	}
+	initialized = 1;
 
-	printd("done\n");
+exit:
+	printd("_fiu_init() done\n");
 }
 
 /* this runs after all function-specific constructors */

@@ -8,6 +8,7 @@
 
 /* Pointer to the dynamically loaded library */
 extern void *_fiu_libc;
+void _fiu_init(void);
 
 /* Recursion counter, per-thread */
 extern int __thread _fiu_called;
@@ -75,6 +76,10 @@ extern int __thread _fiu_called;
 	static void constructor_attr(201) _fiu_init_##NAME(void) \
 	{							\
 		rec_inc();					\
+								\
+		if (_fiu_libc == NULL)				\
+			_fiu_init();				\
+								\
 		_fiu_orig_##NAME = (RTYPE (*) PARAMST)		\
 				dlsym(_fiu_libc, #NAME);	\
 		rec_dec();					\
@@ -145,6 +150,9 @@ extern int __thread _fiu_called;
 		}
 
 #define mkwrap_bottom(NAME, PARAMSN)				\
+								\
+		if (_fiu_orig_##NAME == NULL)			\
+			_fiu_init_##NAME();			\
 								\
 		r = (*_fiu_orig_##NAME) PARAMSN;		\
 								\

@@ -21,6 +21,10 @@ static int (*_fiu_orig_open) (const char *pathname, int flags, ...) = NULL;
 static void constructor_attr(201) _fiu_init_open(void)
 {
 	rec_inc();
+
+	if (_fiu_libc == NULL)
+		_fiu_init();
+
 	_fiu_orig_open = (int (*) (const char *, int, ...))
 			 dlsym(_fiu_libc, "open");
 	rec_dec();
