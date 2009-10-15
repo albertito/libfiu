@@ -82,11 +82,14 @@ install: fiu_posix_preload.so
 	$(INSTALL) -d $(PREFIX)/lib
 	$(INSTALL) -m 0755 fiu_posix_preload.so $(PREFIX)/lib
 
+uninstall:
+	$(RM) $(PREFIX)/lib/fiu_posix_preload.so
+
 clean:
 	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL) build-flags
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default install clean .force-build-flags
+.PHONY: default install uninstall clean .force-build-flags
 
 

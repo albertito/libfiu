@@ -69,10 +69,15 @@ install: fiu_run_preload.so fiu-run
 	$(INSTALL) -d $(PREFIX)/share/man/man1
 	$(INSTALL) -m 0644 fiu-run.1 $(PREFIX)/share/man/man1/
 
+uninstall:
+	$(RM) $(PREFIX)/lib/fiu_run_preload.so
+	$(RM) $(PREFIX)/bin/fiu-run
+	$(RM) $(PREFIX)/share/man/man1/fiu-run.1
+
 clean:
 	rm -f $(OBJS) fiu_run_preload.so fiu-run build-flags
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 
-.PHONY: default install clean .force-build-flags
+.PHONY: default install uninstall clean .force-build-flags
 
 

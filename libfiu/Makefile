@@ -79,6 +79,22 @@ install-man:
 
 install: install-lib install-man
 
+uninstall-lib:
+	$(RM) $(PREFIX)/lib/libfiu.so
+	$(RM) $(PREFIX)/lib/libfiu.so.$(LIB_VER)
+	$(RM) $(PREFIX)/lib/libfiu.so.$(LIB_SO_VER)
+	$(RM) $(PREFIX)/lib/libfiu.a
+	$(RM) $(PREFIX)/include/fiu.h
+	$(RM) $(PREFIX)/include/fiu-control.h
+	$(RM) $(PREFIX)/include/fiu-local.h
+	$(RM) $(PREFIX)/lib/pkgconfig/libfiu.pc
+
+uninstall-man:
+	$(RM) $(PREFIX)/share/man/man3/libfiu.3
+
+uninstall: uninstall-lib uninstall-man
+
+
 BF = $(ALL_CFLAGS) ~ $(PREFIX)
 build-flags: .force-build-flags
 	@if [ x"$(BF)" != x"`cat build-flags 2>/dev/null`" ]; then \
@@ -97,7 +113,10 @@ clean:
 	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.so.$(LIB_VER) libfiu.a
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 
-.PHONY: default all libs install-lib install-man install clean \
+.PHONY: default all libs \
+	install-lib install-man install \
+	uninstall-lib uninstall-man uninstall \
+	clean \
 	.force-build-flags
 
 

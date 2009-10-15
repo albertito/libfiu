@@ -4,9 +4,13 @@ default: all
 
 install: all_install
 
+uninstall: all_uninstall
+
 all: libfiu preload utils
 
 all_install: libfiu_install preload_install utils_install
+
+all_uninstall: libfiu_uninstall preload_uninstall utils_uninstall
 
 
 libfiu:
@@ -18,6 +22,8 @@ libfiu_clean:
 libfiu_install:
 	$(MAKE) -C libfiu install
 
+libfiu_uninstall:
+	$(MAKE) -C libfiu uninstall
 
 
 preload: libfiu
@@ -29,6 +35,9 @@ preload_clean:
 preload_install: preload
 	$(MAKE) -C preload install
 
+preload_uninstall:
+	$(MAKE) -C preload uninstall
+
 
 utils:
 	$(MAKE) -C utils
@@ -38,6 +47,9 @@ utils_clean:
 
 utils_install: utils
 	$(MAKE) -C utils install
+
+utils_uninstall:
+	$(MAKE) -C utils uninstall
 
 
 bindings: python2 python3
@@ -65,11 +77,11 @@ python_clean:
 clean: python_clean preload_clean libfiu_clean utils_clean
 
 
-.PHONY: default all clean install all_install \
-	libfiu libfiu_clean libfiu_install \
+.PHONY: default all clean install all_install uninstall all_uninstall \
+	libfiu libfiu_clean libfiu_install libfiu_uninstall \
 	python2 python2_install python3 python3_install python_clean \
 	bindings bindings_install bindings_clean \
-	preload preload_clean preload_install \
-	utils utils_clean utils_install
+	preload preload_clean preload_install preload_uninstall \
+	utils utils_clean utils_install utils_uninstall
 
 
