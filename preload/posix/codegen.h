@@ -37,14 +37,16 @@ extern int __thread _fiu_called;
 	#define rec_inc()				\
 		do {					\
 			_fiu_called++;			\
-			fprintf(stderr, "I: %d\n", _fiu_called); \
+			fprintf(stderr, "I: %d %s\n", _fiu_called, \
+					__FUNCTION__);	\
 			fflush(stderr);			\
 		} while (0)
 
 	#define rec_dec()				\
 		do {					\
 			_fiu_called--;			\
-			fprintf(stderr, "D: %d\n", _fiu_called); \
+			fprintf(stderr, "D: %d %s\n", _fiu_called, \
+					__FUNCTION__);	\
 			fflush(stderr);			\
 		} while (0)
 
@@ -53,7 +55,7 @@ extern int __thread _fiu_called;
 			if (_fiu_called)		\
 				fprintf(stderr, "\t");	\
 			_fiu_called++;			\
-			fprintf(stderr, "%5.5d ", getpid()); \
+			fprintf(stderr, "%6.6d ", getpid()); \
 			fprintf(stderr, "%s(): ", __FUNCTION__ ); \
 			fprintf(stderr, __VA_ARGS__);	\
 			fflush(stderr);			\
