@@ -13,11 +13,17 @@ void _fiu_init(void);
 /* Recursion counter, per-thread */
 extern int __thread _fiu_called;
 
-/* GCC >= 4.3 supports constructor priorities only on some platforms. Since we
- * don't rely on them, but use them for clarity purposes, use a macro so
- * libfiu builds on systems where they're not supported. */
-#if (defined __linux__) && (defined __GNUC__) \
-	&& __GNUC__ >= 4 && __GNUC_MINOR__ >= 3
+/* Some compilers support constructor priorities. Since we don't rely on them,
+ * but use them for clarity purposes, use a macro so libfiu builds on systems
+ * where they're not supported.
+ * Compilers that are known to support constructor priorities:
+ *  - GCC >= 4.3 on Linux
+ *  - clang as of 2010-03-14
+ */
+#if \
+	( (defined __linux__) && (defined __GNUC__) \
+		&& __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 ) \
+	|| (defined __clang__)
   #define constructor_attr(prio) __attribute__((constructor(prio)))
 #else
   #define NO_CONSTRUCTOR_PRIORITIES 1
