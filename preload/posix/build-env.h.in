@@ -1,0 +1,12 @@
+
+#ifndef _BUILD_ENV_H
+#define _BUILD_ENV_H
+
+/*
+ * Constants taken from the build environment
+ */
+
+/* libc's soname, used for dlopen()ing the C library */
+#define LIBC_SONAME "@@LIBC_SONAME@@"
+
+#endif

@@ -64,7 +64,16 @@ $(OBJS): build-flags
 NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
 	rm -f dlcheck.so)
 
-fiu_posix_preload.so: build-flags $(OBJS)
+# libc's soname depends on the platform (most use libc.so.6, but for example
+# ia64 and alpha use libc.so.6.1), so find which one to use at build-time
+LIBC_SONAME = $(shell ld -o libccheck.so -lc -shared && \
+	ldd libccheck.so | grep libc.so | awk '{ print $$1 }'; rm -f libccheck.so)
+
+build-env.h: build-env.h.in
+	@echo "  GEN $@"
+	$(Q) sed "s+@@LIBC_SONAME@@+$(LIBC_SONAME)+g" build-env.h.in > build-env.h
+
+fiu_posix_preload.so: build-flags build-env.h $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
 		-o fiu_posix_preload.so
 
@@ -86,7 +95,7 @@ uninstall:
 	$(RM) $(PREFIX)/lib/fiu_posix_preload.so
 
 clean:
-	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL) build-flags
+	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL) build-flags build-env.h
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 

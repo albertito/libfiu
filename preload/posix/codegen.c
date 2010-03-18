@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "codegen.h"
+#include "build-env.h"
 
 /* Dynamically load libc */
 void *_fiu_libc;
@@ -30,7 +31,7 @@ void constructor_attr(200) _fiu_init(void)
 	if (initialized)
 		goto exit;
 
-	_fiu_libc = dlopen("libc.so.6", RTLD_NOW);
+	_fiu_libc = dlopen(LIBC_SONAME, RTLD_NOW);
 	if (_fiu_libc == NULL) {
 		fprintf(stderr, "Error loading libc: %s\n", dlerror());
 		exit(1);

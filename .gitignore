@@ -10,6 +10,7 @@ libfiu/build-flags
 preload/posix/*.o
 preload/posix/*.so
 preload/posix/build-flags
+preload/posix/build-env.h
 preload/posix/function_list
 preload/posix/modules/*.o
 preload/posix/modules/*.mod.c
