@@ -21,7 +21,7 @@ extern int __thread _fiu_called;
  *  - clang as of 2010-03-14
  */
 #if \
-	( (defined __linux__) && (defined __GNUC__) \
+	( (defined __GNUC__) \
 		&& __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 ) \
 	|| (defined __clang__)
   #define constructor_attr(prio) __attribute__((constructor(prio)))
