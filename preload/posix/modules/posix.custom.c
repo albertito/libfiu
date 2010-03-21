@@ -37,12 +37,19 @@ int open(const char *pathname, int flags, ...)
 
 	/* Differences from the generated code begin here */
 
-	int mode;
+	mode_t mode;
 	va_list l;
 
 	if (flags & O_CREAT) {
 		va_start(l, flags);
-		mode = va_arg(l, mode_t);
+
+		/* va_arg() can only take fully promoted types, and mode_t
+		 * sometimes is smaller than an int, so we should always pass
+		 * int to it, and not mode_t. Not doing so would may result in
+		 * a compile-time warning and run-time error. We asume that it
+		 * is never bigger than an int, which holds in practise. */
+		mode = va_arg(l, int);
+
 		va_end(l);
 	} else {
 		/* set it to 0, it's ignored anyway */
