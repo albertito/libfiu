@@ -40,15 +40,15 @@ Run it several times and you can see that sometimes it works, but sometimes it
 doesn't, reporting an error reading, which means a *read()* failed as
 expected.
 
-When fortune is run, every time fortune calls *read()* it has a 1% chance to
-fail, which selects an errno at random from the list of the ones that read()
-is allowed to return. If you want to select an specific errno, you can do it
-by passing its numerical value using the *-i* parameter.
+When fortune is run, every *read()* has a 1% chance to fail, selecting an
+*errno* at random from the list of the ones that read() is allowed to return.
+If you want to select an specific *errno*, you can do it by passing its
+numerical value using the *-i* parameter.
 
 The name of the failure points are fixed, and there is at least one for each
-function that libfiu supports injecting failures to. Not all POSIX is
-included, but most of the important pieces are, and it is easily extended. See
-below for details.
+function that libfiu supports injecting failures to. Not all POSIX functions
+are included, but most of the important pieces are, and it can be easily
+extended. See below for details.
 
 To see the list of supported functions and names, see the (automatically
 generated) *preload/posix/function_list* file that comes in the libfiu
@@ -64,7 +64,7 @@ instead of from the beginning, as *fiu-run* does.
 To that end, you can combine *fiu-run* with the second tool, called
 *fiu-ctrl*.
 
-Let's suppose you want to see what the "top" program does when it can't open
+Let's suppose we want to see what the "top" program does when it can't open
 files. First, we run it with *fiu-run*::
 
   $ fiu-run -x top

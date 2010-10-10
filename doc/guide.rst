@@ -31,8 +31,8 @@ Code overview
 Let's take a look to a small (fictitious) code sample to see what's the
 general idea behind libfiu.
 
-Let's say you have this code that check if there's enough free space to fit a
-given file::
+Let's say you have this code that checks if there's enough free space to store
+a given file::
 
         size_t free_space() {
                 [code to find out how much free space there is]
@@ -130,7 +130,7 @@ It is recommended that you use meaningful names for your points of failure, to
 be able to easily identify their purpose. You can also name them
 hierarchically (for example, using names like *"io/write"*, *"io/read"*, and
 so on), to be able to enable entire groups of points of failure (like
-*"io/\*"*,). To this end, any separator will do, the *'/'* is not special at
+*"io/\*"*). To this end, any separator will do, the *'/'* is not special at
 all.
 
 
