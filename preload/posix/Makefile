@@ -60,22 +60,33 @@ $(OBJS): build-flags
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
+
 # some platforms do not have libdl, we only use it if available
-NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
-	rm -f dlcheck.so)
+build-needlibdl:
+	@$(LD) -ldl -o dlcheck.so 2>/dev/null \
+		&& echo -ldl > $@ || echo > $@
+	@rm dlcheck.so
 
 # libc's soname depends on the platform (most use libc.so.6, but for example
 # ia64 and alpha use libc.so.6.1), so find which one to use at build-time
-LIBC_SONAME = $(shell ld -o libccheck.so -lc -shared && \
-	ldd libccheck.so | grep libc.so | awk '{ print $$1 }'; rm -f libccheck.so)
+build-libcsoname:
+	@$(CC) -x c /dev/null -lc -shared -o build-libccheck.so
+	@ldd build-libccheck.so | grep libc.so | awk '{ print $$1 }' > $@
+	@rm build-libccheck.so
+	@test "`cat $@`" != "" || \
+		(echo "Error finding soname, please report"; rm $@; exit 1)
 
-build-env.h: build-env.h.in
+build-env.h: build-env.h.in build-libcsoname
 	@echo "  GEN $@"
-	$(Q) sed "s+@@LIBC_SONAME@@+$(LIBC_SONAME)+g" build-env.h.in > build-env.h
+	$(Q) sed "s+@@LIBC_SONAME@@+`cat build-libcsoname`+g" build-env.h.in \
+		> build-env.h
 
-fiu_posix_preload.so: build-flags build-env.h $(OBJS)
-	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
+
+fiu_posix_preload.so: build-flags build-env.h build-needlibdl $(OBJS)
+	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) \
+		-lfiu `cat build-needlibdl` \
 		-o fiu_posix_preload.so
+
 
 # this should only be needed when building the function list and not the
 # preload library
@@ -95,7 +106,8 @@ uninstall:
 	$(RM) $(PREFIX)/lib/fiu_posix_preload.so
 
 clean:
-	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL) build-flags build-env.h
+	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL)
+	rm -f build-flags build-env.h build-libcsoname build-needlibdl
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 

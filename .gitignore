@@ -10,6 +10,8 @@ libfiu/build-flags
 preload/posix/*.o
 preload/posix/*.so
 preload/posix/build-flags
+preload/posix/build-libcsoname
+preload/posix/build-needlibdl
 preload/posix/build-env.h
 preload/posix/function_list
 preload/posix/modules/*.o
@@ -19,4 +21,5 @@ preload/run/*.o
 preload/run/*.so
 preload/run/fiu-run
 preload/run/build-flags
+preload/run/build-needlibdl
 

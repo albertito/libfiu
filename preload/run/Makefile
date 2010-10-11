@@ -49,13 +49,19 @@ $(OBJS): build-flags
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
-# some platforms do not have libdl, we only use it if available
-NEED_LIBDL := $(shell ld -o dlcheck.so -shared -ldl 2>/dev/null && echo -ldl; \
-	rm -f dlcheck.so)
 
-fiu_run_preload.so: build-flags $(OBJS)
-	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) -lfiu $(NEED_LIBDL) \
+# some platforms do not have libdl, we only use it if available
+build-needlibdl:
+	@$(LD) -ldl -o dlcheck.so 2>/dev/null \
+		&& echo -ldl > $@ || echo > $@
+	@rm dlcheck.so
+
+
+fiu_run_preload.so: build-flags build-needlibdl $(OBJS)
+	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) \
+		-lfiu `cat build-needlibdl` \
 		-o fiu_run_preload.so
+
 
 fiu-run: build-flags fiu-run.in
 	cat fiu-run.in | sed "s+@@PLIBPATH@@+$(PLIBPATH)+g" > fiu-run
