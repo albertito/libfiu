@@ -1,7 +1,7 @@
 
 CFLAGS += -std=c99 -Wall -O3
 ALL_CFLAGS = -D_XOPEN_SOURCE=600 -fPIC -DFIU_ENABLE=1 \
-		-I. -I../../libfiu/ -L../../libfiu/ $(CFLAGS)
+		-I. -I../../libfiu/ $(CFLAGS)
 
 ifdef DEBUG
 ALL_CFLAGS += -g
@@ -84,6 +84,7 @@ build-env.h: build-env.h.in build-libcsoname
 
 fiu_posix_preload.so: build-flags build-env.h build-needlibdl $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) \
+		-L../../libfiu/ \
 		-lfiu `cat build-needlibdl` \
 		-o fiu_posix_preload.so
 
