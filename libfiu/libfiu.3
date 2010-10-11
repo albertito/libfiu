@@ -168,6 +168,15 @@ functions.
 Enables remote control over named pipes with the given basename. See the
 remote control documentation that comes with the library for more detail.
 
+.SS THREAD SAFETY
+
+The library is thread-safe. The list of enabled failure points is shared among
+all threads.
+
+Care should be taken in the user-provided functions given to
+.BR fiu_enable_external() ,
+as they can be run in parallel.
+
 .SH SEE ALSO
 .BR fiu-run (1),
 .BR fiu-ctrl (1).
