@@ -365,10 +365,8 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 		external_cb_t *external_cb)
 {
 	struct pf_info *pf;
-	int rv;
+	int rv = -1;
 	size_t prev_len;
-
-	rv = -1;
 
 	rec_count++;
 
