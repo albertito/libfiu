@@ -19,9 +19,12 @@ pid_t waitpid(pid_t pid, int *status, int options);
 	on error: -1
 	valid errnos: ECHILD EINTR EINVAL
 
+# FreeBSD does not have waitid()
+v: #ifndef __FreeBSD__
 int waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options);
 	on error: -1
 	valid errnos: ECHILD EINTR EINVAL
+v: #endif
 
 int kill(pid_t pid, int sig);
 	on error: -1
