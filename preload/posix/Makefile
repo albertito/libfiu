@@ -68,10 +68,12 @@ build-needlibdl:
 	@rm dlcheck.so
 
 # libc's soname depends on the platform (most use libc.so.6, but for example
-# ia64 and alpha use libc.so.6.1), so find which one to use at build-time
+# ia64 and alpha use libc.so.6.1), so find which one to use at build-time.
+# Please note that the argument to ldd *must* start with "./", otherwise some
+# "ldd"s won't work (for example, the one in FreeBSD 8.1).
 build-libcsoname:
 	@$(CC) -x c /dev/null -lc -shared -o build-libccheck.so
-	@ldd build-libccheck.so | grep libc.so | awk '{ print $$1 }' > $@
+	@ldd ./build-libccheck.so | grep libc.so | awk '{ print $$1 }' > $@
 	@rm build-libccheck.so
 	@test "`cat $@`" != "" || \
 		(echo "Error finding soname, please report"; rm $@; exit 1)
