@@ -65,7 +65,7 @@ $(OBJS): build-flags
 build-needlibdl:
 	@$(LD) -ldl -o dlcheck.so 2>/dev/null \
 		&& echo -ldl > $@ || echo > $@
-	@rm dlcheck.so
+	@rm -f dlcheck.so
 
 # libc's soname depends on the platform (most use libc.so.6, but for example
 # ia64 and alpha use libc.so.6.1), so find which one to use at build-time.
