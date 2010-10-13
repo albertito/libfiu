@@ -24,9 +24,17 @@ int msync(void *addr, size_t length, int flags);
 	on error: -1
 	valid errnos: EBUSY EINVAL ENOMEM
 
+# glibc's mprotect() does not use const in the first argument, as the standard
+# says it should
+v: #ifdef __GLIBC__
 int mprotect(void *addr, size_t len, int prot);
 	on error: -1
 	valid errnos: EACCES EINVAL ENOMEM
+v: #else
+int mprotect(const void *addr, size_t len, int prot);
+	on error: -1
+	valid errnos: EACCES EINVAL ENOMEM
+v: #endif
 
 int madvise(void *addr, size_t length, int advice);
 	on error: -1
