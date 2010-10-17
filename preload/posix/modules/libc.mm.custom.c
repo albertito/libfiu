@@ -8,7 +8,13 @@
  * We use __malloc_hook, the glibc-specific interface, so this is glibc-only.
  */
 
-#include <features.h>
+/* We need to include features.h, which in turns defines __GLIBC__. However,
+ * features.h is glibc-specific and does not exist on other platforms, so we
+ * can't include it directly or the file won't build.
+ * Instead, we have to resort to this ugly trick of including limits.h, which
+ * is standard and we know glibc's implementation includes features.h.
+ */
+#include <limits.h>
 
 #ifndef __GLIBC__
   #warning "Not using glibc, so no malloc() wrappers will be available"
