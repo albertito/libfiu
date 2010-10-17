@@ -54,7 +54,7 @@ $(OBJS): build-flags
 build-needlibdl:
 	@$(LD) -ldl -o dlcheck.so 2>/dev/null \
 		&& echo -ldl > $@ || echo > $@
-	@rm dlcheck.so
+	@rm -f dlcheck.so
 
 
 fiu_run_preload.so: build-flags build-needlibdl $(OBJS)
