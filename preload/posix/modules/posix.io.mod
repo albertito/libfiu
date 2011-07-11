@@ -111,26 +111,31 @@ int rename(const char *oldpath, const char *newpath);
 		ENOENT ENOMEM ENOSPC ENOTDIR ENOTEMPTY EPERM EROFS EXDEV
 
 
-fiu name base: posix/io/stat/
-
-include: <sys/types.h>
-include: <sys/stat.h>
-include: <unistd.h>
-
-int stat(const char *path, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
-
-int fstat(int fd, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
-
-int lstat(const char *path, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
+# NOTE: These are disabled because the stat family function is usually defined
+# within one of the standard headers, which (besides being ugly) makes
+# overriding them this way much harder. The definitions below are commented
+# out for reference and testing purposes.
+#
+#fiu name base: posix/io/stat/
+#
+#include: <sys/types.h>
+#include: <sys/stat.h>
+#include: <unistd.h>
+#
+#int stat(const char *path, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
+#
+#int fstat(int fd, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
+#
+#int lstat(const char *path, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
 
 
 fiu name base: posix/io/net/
