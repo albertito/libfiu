@@ -4,7 +4,7 @@
  * This header, part of libfiu, contains the API that your project should use.
  *
  * If you want to avoid having libfiu as a mandatory build-time dependency,
- * you should include fiu-stubs.h in your project, and #include it instead of
+ * you should include fiu-local.h in your project, and #include it instead of
  * this.
  */
 
