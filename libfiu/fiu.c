@@ -329,42 +329,32 @@ void *fiu_failinfo(void)
  * Control API
  */
 
-/* Sets up the given pf. For internal use only. */
+/* Sets up the given pf.
+ * Only the common fields are filled, the caller should take care of the
+ * method-specific ones. For internal use only. */
 static int setup_fail(struct pf_info *pf, const char *name, int failnum,
-		void *failinfo, unsigned int flags, enum pf_method method,
-		float probability, external_cb_t *external_cb)
+		void *failinfo, unsigned int flags, enum pf_method method)
 {
 	pf->name = strdup(name);
+	if (pf->name == NULL)
+		return -1;
+
 	pf->namelen = strlen(name);
 	pf->failnum = failnum;
 	pf->failinfo = failinfo;
 	pf->flags = flags;
 	pf->method = method;
-	switch (method) {
-		case PF_ALWAYS:
-			break;
-		case PF_PROB:
-			pf->minfo.probability = probability;
-			break;
-		case PF_EXTERNAL:
-			pf->minfo.external_cb = external_cb;
-			break;
-		default:
-			return -1;
-	}
 
-	if (pf->name == NULL)
-		return -1;
 	return 0;
-
 }
 
-/* Creates a new pf in the enabled_fails table. For internal use only. */
-static int insert_new_fail(const char *name, int failnum, void *failinfo,
-		unsigned int flags, enum pf_method method, float probability,
-		external_cb_t *external_cb)
+/* Creates a new pf in the enabled_fails table.
+ * Only the common fields are filled, the caller should take care of the
+ * method-specific ones. For internal use only. */
+static struct pf_info *insert_new_fail(const char *name, int failnum,
+		void *failinfo, unsigned int flags, enum pf_method method)
 {
-	struct pf_info *pf;
+	struct pf_info *pf = NULL;
 	int rv = -1;
 	size_t prev_len;
 
@@ -377,18 +367,20 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 		for (pf = enabled_fails; pf <= enabled_fails_last; pf++) {
 			if (pf->name == NULL || strcmp(pf->name, name) == 0) {
 				rv = setup_fail(pf, name, failnum, failinfo,
-						flags, method, probability,
-						external_cb);
-				if (rv == 0)
-					enabled_fails_nfree--;
+						flags, method);
+				if (rv != 0) {
+					pf = NULL;
+					goto exit;
+				}
 
+				enabled_fails_nfree--;
 				goto exit;
 			}
 		}
 
 		/* There should be a free slot, but couldn't find one! This
 		 * shouldn't happen */
-		rv = -1;
+		pf = NULL;
 		goto exit;
 	}
 
@@ -399,7 +391,7 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 		enabled_fails_last = NULL;
 		enabled_fails_len = 0;
 		enabled_fails_nfree = 0;
-		rv = -1;
+		pf = NULL;
 		goto exit;
 	}
 
@@ -413,39 +405,59 @@ static int insert_new_fail(const char *name, int failnum, void *failinfo,
 	enabled_fails_last = enabled_fails + enabled_fails_len - 1;
 
 	pf = enabled_fails + prev_len;
-	rv = setup_fail(pf, name, failnum, failinfo, flags, method,
-			probability, external_cb);
-	if (rv == 0)
-		enabled_fails_nfree--;
+	rv = setup_fail(pf, name, failnum, failinfo, flags, method);
+	if (rv != 0) {
+		pf = NULL;
+		goto exit;
+	}
+
+	enabled_fails_nfree--;
 
 exit:
 	ef_wunlock();
 	rec_count--;
-	return rv;
+	return pf;
 }
 
 /* Makes the given name fail. */
 int fiu_enable(const char *name, int failnum, void *failinfo,
 		unsigned int flags)
 {
-	return insert_new_fail(name, failnum, failinfo, flags, PF_ALWAYS, 0,
-			NULL);
+	struct pf_info *pf;
+
+	pf = insert_new_fail(name, failnum, failinfo, flags, PF_ALWAYS);
+	if (pf == NULL)
+		return -1;
+
+	return 0;
 }
 
 /* Makes the given name fail with the given probability. */
 int fiu_enable_random(const char *name, int failnum, void *failinfo,
 		unsigned int flags, float probability)
 {
-	return insert_new_fail(name, failnum, failinfo, flags, PF_PROB,
-			probability, NULL);
+	struct pf_info *pf;
+
+	pf = insert_new_fail(name, failnum, failinfo, flags, PF_PROB);
+	if (pf == NULL)
+		return -1;
+
+	pf->minfo.probability = probability;
+	return 0;
 }
 
 /* Makes the given name fail when the external function returns != 0. */
 int fiu_enable_external(const char *name, int failnum, void *failinfo,
 		unsigned int flags, external_cb_t *external_cb)
 {
-	return insert_new_fail(name, failnum, failinfo, flags, PF_EXTERNAL,
-			0, external_cb);
+	struct pf_info *pf;
+
+	pf = insert_new_fail(name, failnum, failinfo, flags, PF_EXTERNAL);
+	if (pf == NULL)
+		return -1;
+
+	pf->minfo.external_cb = external_cb;
+	return 0;
 }
 
 /* Makes the given name NOT fail. */
