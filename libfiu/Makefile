@@ -21,7 +21,7 @@ DESTDIR=$(PREFIX)
 INSTALL=install
 
 
-OBJS = fiu.o fiu-rc.o
+OBJS = fiu.o fiu-rc.o backtrace.o
 
 
 ifneq ($(V), 1)
@@ -32,6 +32,17 @@ endif
 
 LIB_VER=0.14
 LIB_SO_VER=0
+
+
+# We attempt to detect if we have the extensions we use in backtrace.c by just
+# attempting to compile it normally, and fall back to the dummy version if
+# that fails. Not very sophisticated but should be safe.
+USE_DUMMY_BACKTRACE := $(shell $(CC) -c backtrace.c -o /dev/null 2>/dev/null || \
+	echo -DDUMMY_BACKTRACE)
+ifndef USE_DUMMY_BACKTRACE
+# The real backtrace needs linking against libdl.
+USE_LIBDL = -ldl
+endif
 
 
 default: all
@@ -50,8 +61,9 @@ libs: libfiu.so libfiu.a
 libfiu.so: build-flags fiu.h $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC \
 		-Wl,-soname,libfiu.so.$(LIB_SO_VER) \
-		$(OBJS) -lpthread -o libfiu.so.$(LIB_VER)
+		$(OBJS) -lpthread $(USE_LIBDL) -o libfiu.so.$(LIB_VER)
 	ln -fs libfiu.so.$(LIB_VER) libfiu.so
+	ln -fs libfiu.so.$(LIB_VER) libfiu.so.$(LIB_SO_VER)
 
 libfiu.a: build-flags fiu.h $(OBJS)
 	$(AR) cr libfiu.a $(OBJS)
@@ -104,10 +116,13 @@ build-flags: .force-build-flags
 		echo "$(BF)" > build-flags; \
 	fi
 
+
 $(OBJS): build-flags
 
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
+
+backtrace.o: ALL_CFLAGS += $(USE_DUMMY_BACKTRACE)
 
 
 doxygen:
@@ -115,7 +130,8 @@ doxygen:
 
 
 clean:
-	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.so.$(LIB_VER) libfiu.a
+	rm -f libfiu.pc $(OBJS)
+	rm -f libfiu.so libfiu.so.$(LIB_VER) libfiu.so.$(LIB_SO_VER) libfiu.a
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 	$(MAKE) -C doxygen $@
 

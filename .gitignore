@@ -25,4 +25,6 @@ preload/run/*.so
 preload/run/fiu-run
 preload/run/build-flags
 preload/run/build-needlibdl
-
+tests/*.o
+tests/build-flags
+tests/test-?

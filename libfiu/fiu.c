@@ -19,6 +19,7 @@ enum pf_method {
 	PF_ALWAYS = 1,
 	PF_PROB,
 	PF_EXTERNAL,
+	PF_STACK,
 };
 
 /* Point of failure information */
@@ -39,6 +40,12 @@ struct pf_info {
 		/* To use when method == PF_EXTERNAL */
 		external_cb_t *external_cb;
 
+		/* To use when method == PF_STACK */
+		struct stack {
+			void *func_start;
+			void *func_end;
+			int func_pos_in_stack;
+		} stack;
 	} minfo;
 };
 
@@ -167,6 +174,41 @@ static int shrink_enabled_fails(void)
 	return 0;
 }
 
+/* Determines if the given address is within the function code. */
+static int pc_in_func(struct pf_info *pf, void *pc)
+{
+	/* We don't know if the platform allows us to know func_end,
+	 * so we use different methods depending on its availability. */
+	if (pf->minfo.stack.func_end) {
+		return (pc > pf->minfo.stack.func_start &&
+				pc < pf->minfo.stack.func_end);
+	} else {
+		return pf->minfo.stack.func_start == get_func_start(pc);
+	}
+}
+
+/* Determines wether to fail or not the given failure point, which is of type
+ * PF_STACK. Returns 1 if it should fail, or 0 if it should not. */
+static int should_stack_fail(struct pf_info *pf)
+{
+	// TODO: Find the right offset for pos_in_stack: we should look for
+	// fiu_fail(), and start counting from there.
+	int nptrs, i;
+	void *buffer[100];
+
+	nptrs = get_backtrace(buffer, 100);
+
+	for (i = 0; i < nptrs; i++) {
+		if (pc_in_func(pf, buffer[i]) &&
+				(pf->minfo.stack.func_pos_in_stack == -1 ||
+				 i == pf->minfo.stack.func_pos_in_stack)) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 /* Pseudorandom number generator.
  *
  * The performance of the PRNG is very sensitive to us, so we implement our
@@ -289,6 +331,10 @@ int fiu_fail(const char *name)
 						&(pf->failnum),
 						&(pf->failinfo),
 						&(pf->flags)))
+					goto exit_fail;
+				break;
+			case PF_STACK:
+				if (should_stack_fail(pf))
 					goto exit_fail;
 				break;
 			default:
@@ -458,6 +504,42 @@ int fiu_enable_external(const char *name, int failnum, void *failinfo,
 
 	pf->minfo.external_cb = external_cb;
 	return 0;
+}
+
+/* Makes the given name fail when func is in the stack at func_pos.
+ * If func_pos is -1, then any position will match. */
+int fiu_enable_stack(const char *name, int failnum, void *failinfo,
+		unsigned int flags, void *func, int func_pos_in_stack)
+{
+	struct pf_info *pf;
+
+	/* Specifying the stack position is unsupported for now */
+	if (func_pos_in_stack != -1)
+		return -1;
+
+	pf = insert_new_fail(name, failnum, failinfo, flags, PF_STACK);
+	if (pf == NULL)
+		return -1;
+
+	pf->minfo.stack.func_start = func;
+	pf->minfo.stack.func_end = get_func_end(func);
+	pf->minfo.stack.func_pos_in_stack = func_pos_in_stack;
+	return 0;
+}
+
+/* Same as fiu_enable_stack(), but takes a function name. */
+int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
+		unsigned int flags, const char *func_name,
+		int func_pos_in_stack)
+{
+	void *fp;
+
+	fp = get_func_addr(func_name);
+	if (fp == NULL)
+		return -1;
+
+	return fiu_enable_stack(name, failnum, failinfo, flags, fp,
+			func_pos_in_stack);
 }
 
 /* Makes the given name NOT fail. */

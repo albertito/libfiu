@@ -51,6 +51,8 @@ utils_install: utils
 utils_uninstall:
 	$(MAKE) -C utils uninstall
 
+test: libfiu
+	$(MAKE) -C tests
 
 bindings: python2 python3
 
@@ -82,6 +84,7 @@ clean: python_clean preload_clean libfiu_clean utils_clean
 	python2 python2_install python3 python3_install python_clean \
 	bindings bindings_install bindings_clean \
 	preload preload_clean preload_install preload_uninstall \
-	utils utils_clean utils_install utils_uninstall
+	utils utils_clean utils_install utils_uninstall \
+	test
 
 

@@ -25,6 +25,12 @@ libfiu - Fault injection in userspace
 .BI "int fiu_enable_external(const char *" name ", int " failnum ","
 .BI "		void *" failinfo ", unsigned int " flags ","
 .BI "		external_cb_t *" external_cb ");"
+.BI "int fiu_enable_stack(const char *" name ", int " failnum ","
+.BI "		void *" failinfo ", unsigned int " flags ","
+.BI "		void *" func ", int " func_pos_in_stack ");"
+.BI "int fiu_enable_stack_by_name(const char *" name ", int " failnum ","
+.BI "		void *" failinfo ", unsigned int " flags ","
+.BI "		const char *" func_name ", int " func_pos_in_stack ");"
 .BI "int fiu_disable(const char *" name ");"
 .BI "int fiu_rc_fifo(const char *" basename ");"
 .sp
@@ -160,6 +166,39 @@ to the given external function, which should return 0 if it is not to fail, or
 1 otherwise. The rest of the parameters, as well as the return value, are the
 same as the ones in
 .BR fiu_enable() .
+
+.TP
+.BI "int fiu_enable_stack(" name ", " failnum ", " failinfo ", " flags ", " func ", " func_pos_in_stack ")"
+Enables the given point of failure, but only if
+.I func
+is in the stack at
+.IR func_pos_in_stack .
+
+.I func
+must be a function pointer, and
+.I func_pos_in_stack
+is the position where we expect the function to be, or -1 for "any" (values
+other than -1 are not yet supported). The rest of the parameters, as well as
+the return value, are the same as the ones in
+.BR fiu_enable() .
+
+This function relies on some GNU extensions, so it may be not available in all
+platforms.
+
+.TP
+.BI "int fiu_enable_stack_by_name(" name ", " failnum ", " failinfo ", " flags ", " func_name ", " func_pos_in_stack ")"
+Enables the given point of failure, but only if
+.I func_name
+is in the stack at
+.IR func_pos_in_stack .
+
+.I func
+must be the name of a function (resolved at runtime using dlsym()); the rest
+of the parameters, as well as the return value, are the same as the ones in
+.BR fiu_enable_stack .
+
+This function relies on some GNU extensions, so it may be not available in all
+platforms.
 
 .TP
 .BI "fiu_disable(" name ")"

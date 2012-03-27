@@ -69,6 +69,47 @@ typedef int external_cb_t(const char *name, int *failnum, void **failinfo,
 int fiu_enable_external(const char *name, int failnum, void *failinfo,
 		unsigned int flags, external_cb_t *external_cb);
 
+/* Enables the given point of failure, but only if the given function is in
+ * the stack at the given position.
+ *
+ * This function relies on GNU extensions such as backtrace() and dladdr(), so
+ * it may not be available on your platform.
+ *
+ * - name: point of failure name.
+ * - failnum: what will fiu_fail() return, must be != 0.
+ * - failinfo: what will fiu_failinfo() return.
+ * - flags: flags.
+ * - func: pointer to the function.
+ * - func_pos: position where we expect the function to be; use -1 for "any".
+ * 	Values other than -1 are not supported at the moment, but will be in
+ * 	the future.
+ */
+int fiu_enable_stack(const char *name, int failnum, void *failinfo,
+		unsigned int flags, void *func, int func_pos_in_stack);
+
+/** Enables the given point of failure, but only if 'func_name' is in
+ * the stack at 'func_pos_in_stack'.
+ *
+ * This function relies on GNU extensions such as backtrace() and dladdr(), so
+ * if your platform does not support them, it will always return failure.
+ *
+ * It is exactly like fiu_enable_stack() but takes a function name, it will
+ * ask the dynamic linker to find the corresponding function pointer.
+ *
+ * @param name  Name of the point of failure to enable.
+ * @param failnum  What will fiu_fail() return, must be != 0.
+ * @param failinfo  What will fiu_failinfo() return.
+ * @param flags  Flags.
+ * @param func_name  Name of the function.
+ * @param func_pos_in_stack  Position where we expect the function to be; use
+ * 		-1 for "any". Values other than -1 are not supported at the
+ * 		moment, but will be in the future.
+ * @returns  0 if success, < 0 otherwise.
+ */
+int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
+		unsigned int flags, const char *func_name,
+		int func_pos_in_stack);
+
 /** Disables the given point of failure. That makes it NOT fail.
  *
  * @param name  Name of the point of failure to disable.
