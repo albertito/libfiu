@@ -7,6 +7,9 @@ libfiu/libfiu.pc
 libfiu/libfiu.so
 libfiu/libfiu.so.*
 libfiu/build-flags
+libfiu/doxygen/doc.internal
+libfiu/doxygen/doc.public
+libfiu/doxygen/Doxyfile.base
 preload/posix/*.o
 preload/posix/*.so
 preload/posix/build-flags

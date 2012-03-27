@@ -259,8 +259,8 @@ int fiu_fail(const char *name)
 
 	rec_count++;
 
-	/* we must do this before acquiring the lock and calling any
-	 * (potentially wrapped) functions */
+	/* We must do this before acquiring the lock and calling any
+	 * (potentially wrapped) functions. */
 	if (rec_count > 1) {
 		rec_count--;
 		return 0;

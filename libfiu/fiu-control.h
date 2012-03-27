@@ -1,4 +1,11 @@
 
+/** @file
+ *
+ * This header contains the control API.
+ * It should be used for controlling the injection of failures, usually when
+ * writing tests.
+ */
+
 #ifndef _FIU_CONTROL_H
 #define _FIU_CONTROL_H
 
@@ -6,71 +13,80 @@
 extern "C" {
 #endif
 
-/*
- * Control API for libfiu
- */
 
 /* Flags for fiu_enable*() */
-#define FIU_ONETIME 1		/* Only fail once */
+
+/** Only fail once; the point of failure will be automatically disabled
+ * afterwards. */
+#define FIU_ONETIME 1
 
 
-/* Enables the given point of failure. That makes it always fail.
+/** Enables the given point of failure unconditionally.
  *
- * - name: point of failure name.
- * - failnum: what will fiu_fail() return, must be != 0.
- * - failinfo: what will fiu_failinfo() return.
- * - flags: flags.
- * - returns: 0 if success, < 0 otherwise.
+ * @param name  Name of the point of failure to enable.
+ * @param failnum  What will fiu_fail() return, must be != 0.
+ * @param failinfo  What will fiu_failinfo() return.
+ * @param flags  Flags.
+ * @returns 0 if success, < 0 otherwise.
  */
 int fiu_enable(const char *name, int failnum, void *failinfo,
 		unsigned int flags);
 
 
-/* Enables the given point of failure, with the given probability. That makes
- * it fail with the given probablity.
+/** Enables the given point of failure, with the given probability. That makes
+ * it fail with the given probability.
  *
- * - name: point of failure name.
- * - failnum: what will fiu_fail() return, must be != 0.
- * - failinfo: what will fiu_failinfo() return.
- * - flags: flags.
- * - probability: probability a fiu_fail() call will return failnum,
+ * @param name  Name of the point of failure to enable.
+ * @param failnum  What will fiu_fail() return, must be != 0.
+ * @param failinfo  What will fiu_failinfo() return.
+ * @param flags  Flags.
+ * @param probability Probability a fiu_fail() call will return failnum,
  * 	between 0 (never fail) and 1 (always fail). As a special fast case, -1
  * 	can also be used to always fail.
- * - returns: 0 if success, < 0 otherwise. */
+ * @returns  0 if success, < 0 otherwise.
+ */
 int fiu_enable_random(const char *name, int failnum, void *failinfo,
 		unsigned int flags, float probability);
 
 
-/** Type of external callback functions. They must return 0 to indicate not to
- * fail, != 0 to indicate otherwise. Can modify failnum, failinfo and flags,
- * in order to alter the values of the point of failure. */
+/** Type of external callback functions.
+ * They must return 0 to indicate not to fail, != 0 to indicate otherwise. Can
+ * modify failnum, failinfo and flags, in order to alter the values of the
+ * point of failure. */
 typedef int external_cb_t(const char *name, int *failnum, void **failinfo,
 		unsigned int *flags);
 
-/* Enables the given point of failure, leaving the decision whether to fail or
- * not to the given external function.
+/** Enables the given point of failure, leaving the decision whether to fail
+ * or not to the given external function.
  *
- * - name: point of failure name.
- * - failnum: what will fiu_fail() return, must be != 0.
- * - failinfo: what will fiu_failinfo() return.
- * - flags: flags.
- * - external_cb: function to call to determine whether fail or not. */
+ * @param name  Name of the point of failure to enable.
+ * @param failnum  What will fiu_fail() return, must be != 0.
+ * @param failinfo  What will fiu_failinfo() return.
+ * @param flags  Flags.
+ * @param external_cb  Function to call to determine whether to fail or not.
+ * @returns  0 if success, < 0 otherwise.
+ */
 int fiu_enable_external(const char *name, int failnum, void *failinfo,
 		unsigned int flags, external_cb_t *external_cb);
 
-/* Disables the given point of failure. That makes it NOT fail.
+/** Disables the given point of failure. That makes it NOT fail.
  *
- * - name: point of failure name.
- * - returns: 0 if success, < 0 otherwise. */
+ * @param name  Name of the point of failure to disable.
+ * @returns  0 if success, < 0 otherwise.
+ */
 int fiu_disable(const char *name);
 
-/* Enables remote control over a named pipe that begins with the given
- * basename. "-$PID" will be appended to it to form the final path. After the
- * process dies, the pipe will be removed. If the process forks, a new pipe
- * will be created.
+/** Enables remote control over a named pipe.
  *
- * - basename: base path to use in the creation of the named pipes.
- * - returns: 0 on success, -1 on errors. */
+ * The name pipe path will begin with the given basename. "-$PID" will be
+ * appended to it to form the final path. After the process dies, the pipe
+ * will be removed. If the process forks, a new pipe will be created.
+ *
+ * Once this function has been called, the fiu-ctrl utility can be used to
+ * control the points of failure externally.
+ *
+ * @param basename  Base path to use in the creation of the named pipes.
+ * @returns  0 on success, -1 on errors. */
 int fiu_rc_fifo(const char *basename);
 
 

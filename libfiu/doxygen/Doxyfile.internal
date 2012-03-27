@@ -1,0 +1,7 @@
+@INCLUDE = Doxyfile.base
+PROJECT_NAME = "libfiu (internal)"
+OUTPUT_DIRECTORY = doc.internal
+EXTRACT_ALL = YES
+EXTRACT_STATIC = YES
+INTERNAL_DOCS = YES
+

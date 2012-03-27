@@ -109,14 +109,20 @@ $(OBJS): build-flags
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
+
+doxygen:
+	        $(MAKE) LIB_VER=$(LIB_VER) -C doxygen
+
+
 clean:
 	rm -f libfiu.pc $(OBJS) libfiu.so libfiu.so.$(LIB_VER) libfiu.a
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
+	$(MAKE) -C doxygen $@
 
 .PHONY: default all libs \
 	install-lib install-man install \
 	uninstall-lib uninstall-man uninstall \
-	clean \
+	doxygen clean \
 	.force-build-flags
 
 

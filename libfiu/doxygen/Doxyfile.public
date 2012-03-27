@@ -1,0 +1,8 @@
+@INCLUDE = Doxyfile.base
+PROJECT_NAME = "libfiu (public)"
+OUTPUT_DIRECTORY = doc.public
+EXTRACT_ALL = YES
+EXTRACT_STATIC = NO
+INTERNAL_DOCS = NO
+INPUT = ../fiu.h ../fiu-control.h
+

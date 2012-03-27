@@ -1,11 +1,11 @@
 
-/* libfiu - Fault Injection in Userspace
+/** @file
  *
- * This header, part of libfiu, contains the API that your project should use.
+ * This header contains the API that your project should use when defining
+ * points of failure in your real (non-testing) code.
  *
  * If you want to avoid having libfiu as a mandatory build-time dependency,
- * you should include fiu-local.h in your project, and #include it instead of
- * this.
+ * you should add fiu-local.h to your project, and \#include that instead.
  */
 
 #ifndef _FIU_H
@@ -20,25 +20,34 @@ extern "C" {
 #endif
 
 
-/* Initializes the library.
+/** Initializes the library.
  *
- * - flags: unused.
- * - returns: 0 if success, < 0 if error. */
+ * Must be called before any other library function. It is safe to invoke it
+ * more than once.
+ *
+ * @param flags  Unused.
+ * @returns  0 if success, < 0 if error.
+ */
 int fiu_init(unsigned int flags);
 
-/* Returns the failure status of the given point of failure.
+/** Returns the failure status of the given point of failure.
  *
- * - name: point of failure name.
- * - returns: the failure status (0 means it should not fail). */
+ * @param name  Point of failure name.
+ * @returns  The failure status (0 means it should not fail).
+ */
 int fiu_fail(const char *name);
 
-/* Returns the information associated with the last failure.
+/** Returns the information associated with the last failure.
  *
- * - returns: the information associated with the last fail, or NULL if there
- *      isn't one. */
+ * Please note that this function is thread-safe and thread-local, so the
+ * information returned will be for the last failure in the same thread.
+ *
+ * @returns  The information associated with the last failure, or NULL if
+ * 		there isn't one.
+ */
 void *fiu_failinfo(void);
 
-/* Performs the given action when the given point of failure fails. Mostly
+/** Performs the given action when the given point of failure fails. Mostly
  * used in the following macros. */
 #define fiu_do_on(name, action) \
         do { \
@@ -47,10 +56,10 @@ void *fiu_failinfo(void);
                 } \
         } while (0)
 
-/* Exits the program when the given point of failure fails. */
+/** Exits the program when the given point of failure fails. */
 #define fiu_exit_on(name) fiu_do_on(name, exit(EXIT_FAILURE))
 
-/* Makes the function return the given retval when the given point of failure
+/** Makes the function return the given retval when the given point of failure
  * fails. */
 #define fiu_return_on(name, retval) fiu_do_on(name, return retval)
 
@@ -60,8 +69,8 @@ void *fiu_failinfo(void);
 #endif
 
 #else
-/* fiu not enabled, this should match fiu-local.h but we don't include it
- * because it includes us assuming we're installed system-wide */
+/* These are used when fiu not enabled. They should match fiu-local.h but we
+ * don't include it to avoid a circular dependency. */
 
 #define fiu_init(flags) 0
 #define fiu_fail(name) 0

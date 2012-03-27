@@ -46,7 +46,10 @@ in the distribution.
 .SS CORE API
 
 To use the core API, you should
-.IR "#include <fiu.h>" .
+.I "#include <fiu.h>"
+(or
+.IR "<fiu-local.h>" ,
+see below).
 
 Because fault injection is usually a debugging/testing facility, unwanted at
 runtime, some special considerations were taken to minimize the impact of the
@@ -55,7 +58,7 @@ core API. First of all, if
 is not defined, then fiu.h will define empty stubs for all the core API,
 effectively disabling fault injection completely.
 
-Also, a special header
+Also, the special header
 .I fiu-local.h
 is shipped with libfiu. It is meant to be included in your project to avoid
 having libfiu as a mandatory build-time dependency. You can add it to your
@@ -84,7 +87,8 @@ runtime using the control API.
 .TP
 .BI "fiu_failinfo()"
 Returns the information associated with the last failure, or NULL if there
-isn't one.
+isn't one. This function is thread-aware and will only return information
+about failures in the calling thread.
 
 .TP
 .BI "fiu_do_on(" name ", " action ") [macro]"
