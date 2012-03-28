@@ -11,28 +11,39 @@ ifdef PROFILE
 ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
 endif
 
-
-OBJS = test-1.o test-2.o
-
-
 ifneq ($(V), 1)
 	NICE_CC = @echo "  CC  $@"; $(CC)
 	NICE_RUN = @echo "  RUN $<"; LD_LIBRARY_PATH=../libfiu/
+	NICE_PY_RUN = @echo "  PY  $<"; \
+		      LD_LIBRARY_PATH=../libfiu/ \
+		      PYTHONPATH=../bindings/python/
 else
 	NICE_CC = $(CC)
 	NICE_RUN = LD_LIBRARY_PATH=../libfiu/
+	NICE_PY_RUN = LD_LIBRARY_PATH=../libfiu/ \
+		      PYTHONPATH=../bindings/python/
 endif
 
 default: tests
 
 all: tests
 
-tests: run-test-1 run-test-2
+tests: c-tests py-tests
 
-test-%: test-%.o
+#
+# C tests
+#
+
+C_SRCS := $(wildcard test-*.c)
+C_OBJS := $(patsubst %.c,%.o,$(C_SRCS))
+C_BINS := $(patsubst %.c,%,$(C_SRCS))
+
+c-tests: $(patsubst %.c,c-run-%,$(C_SRCS))
+
+test-%: test-%.o build-flags
 	$(NICE_CC) $(ALL_CFLAGS) $< -lfiu -o $@
 
-run-%: % FORCE
+c-run-%: %
 	$(NICE_RUN) ./$<
 
 
@@ -45,18 +56,33 @@ build-flags: .force-build-flags
 		echo "$(BF)" > build-flags; \
 	fi
 
-$(OBJS): build-flags
-
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
+
+#
+# Python tests
+#
+
+PY_TESTS := $(wildcard test-*.py)
+
+py-tests: $(patsubst %.py,py-run-%,$(PY_TESTS))
+
+py-run-%: %.py
+	$(NICE_PY_RUN) python ./$<
+
+
 clean:
-	rm -f $(OBJS) test1
+	# Normally, $C_OBJS and $C_BINS are removed by make after building,
+	# since here they're considered "intermediate files"; however we
+	# also remove them when cleaning just in case.
+	rm -f $(C_OBJS) $(C_BINS)
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 
 FORCE:
 
 .PHONY: default all clean \
+	tests c-tests py-tests \
 	.force-build-flags
 
 

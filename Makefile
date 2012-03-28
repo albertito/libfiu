@@ -51,7 +51,7 @@ utils_install: utils
 utils_uninstall:
 	$(MAKE) -C utils uninstall
 
-test: libfiu
+test: libfiu bindings
 	$(MAKE) -C tests
 
 bindings: python2 python3
