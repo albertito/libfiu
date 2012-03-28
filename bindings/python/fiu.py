@@ -63,6 +63,21 @@ def enable_external(name, cb, failnum = 1, flags = 0):
 	if r != 0:
 		raise RuntimeError(r)
 
+def enable_stack_by_name(name, func_name,
+		failnum = 1, failinfo = None, flags = 0,
+		pos_in_stack = -1):
+	"""Enables the given point of failure, but only if 'func_name' is in
+	the stack.
+
+	'func_name' is be the name of the C function to look for.
+	"""
+	_fi_table[name] = failinfo
+	r = _ll.enable_stack_by_name(name, failnum, failinfo, flags,
+			func_name, pos_in_stack)
+	if r != 0:
+		del _fi_table[name]
+		raise RuntimeError(r)
+
 def disable(name):
 	"""Disables the given point of failure, undoing the actions of the
 	enable*() functions."""

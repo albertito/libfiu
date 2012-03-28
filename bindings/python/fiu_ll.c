@@ -158,6 +158,25 @@ static PyObject *enable_external(PyObject *self, PyObject *args)
 				py_external_cb, flags, external_callback));
 }
 
+static PyObject *enable_stack_by_name(PyObject *self, PyObject *args)
+{
+	char *name;
+	int failnum;
+	PyObject *failinfo;
+	unsigned int flags;
+	char *func_name;
+	int pos_in_stack = -1;
+
+	if (!PyArg_ParseTuple(args, "siOIs|i:enable_stack_by_name",
+				&name, &failnum, &failinfo, &flags,
+				&func_name, &pos_in_stack))
+		return NULL;
+
+	return PyLong_FromLong(fiu_enable_stack_by_name(name, failnum,
+				failinfo, flags,
+				func_name, pos_in_stack));
+}
+
 static PyObject *disable(PyObject *self, PyObject *args)
 {
 	char *name;
@@ -183,7 +202,10 @@ static PyMethodDef fiu_methods[] = {
 	{ "failinfo", (PyCFunction) failinfo, METH_VARARGS, NULL },
 	{ "enable", (PyCFunction) enable, METH_VARARGS, NULL },
 	{ "enable_random", (PyCFunction) enable_random, METH_VARARGS, NULL },
-	{ "enable_external", (PyCFunction) enable_external, METH_VARARGS, NULL },
+	{ "enable_external", (PyCFunction) enable_external,
+		METH_VARARGS, NULL },
+	{ "enable_stack_by_name", (PyCFunction) enable_stack_by_name,
+		METH_VARARGS, NULL },
 	{ "disable", (PyCFunction) disable, METH_VARARGS, NULL },
 	{ "rc_fifo", (PyCFunction) rc_fifo, METH_VARARGS, NULL },
 	{ NULL }
