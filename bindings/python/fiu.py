@@ -32,7 +32,7 @@ _fi_table = {}
 
 def enable(name, failnum = 1, failinfo = None, flags = 0):
 	"Enables the given point of failure."
-	_fi_table[name] = failnum
+	_fi_table[name] = failinfo
 	r = _ll.enable(name, failnum, failinfo, flags)
 	if r != 0:
 		del _fi_table[name]
@@ -40,7 +40,7 @@ def enable(name, failnum = 1, failinfo = None, flags = 0):
 
 def enable_random(name, probability, failnum = 1, failinfo = None, flags = 0):
 	"Enables the given point of failure, with the given probability."
-	_fi_table[name] = failnum
+	_fi_table[name] = failinfo
 	r = _ll.enable_random(name, failnum, failinfo, flags, probability)
 	if r != 0:
 		del _fi_table[name]
@@ -61,6 +61,7 @@ def enable_external(name, cb, failnum = 1, flags = 0):
 	_fi_table[name] = cb
 	r = _ll.enable_external(name, failnum, flags, cb)
 	if r != 0:
+		del _fi_table[name]
 		raise RuntimeError(r)
 
 def enable_stack_by_name(name, func_name,
