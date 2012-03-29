@@ -160,6 +160,7 @@ extern int __thread _fiu_called;
 		if (_fiu_orig_##NAME == NULL)			\
 			_fiu_init_##NAME();			\
 								\
+		printd("calling orig\n");			\
 		r = (*_fiu_orig_##NAME) PARAMSN;		\
 								\
 	exit:							\

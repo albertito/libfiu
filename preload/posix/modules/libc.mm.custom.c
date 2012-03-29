@@ -68,6 +68,7 @@ static void *fiu_malloc_hook(size_t size, const void *caller)
 		goto exit;
 	}
 
+	printd("calling orig\n");
 	r = malloc(size);
 
 exit:
@@ -96,6 +97,7 @@ static void *fiu_realloc_hook(void *ptr, size_t size, const void *caller)
 		goto exit;
 	}
 
+	printd("calling orig\n");
 	r = realloc(ptr, size);
 
 exit:
