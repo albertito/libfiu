@@ -30,9 +30,9 @@ Suppose you want to run the classic program "fortune" (which some would
 definitely consider mission critical) and see how it behaves on the presence
 of *read()* errors. With *fiu-run*, you can do it like this::
 
-  $ fiu-run -x -e posix/io/rw/read -p 1 fortune
+  $ fiu-run -x -c "enable_random name=posix/io/rw/read,probability=0.05" fortune
 
-That enables the failure point with the name *posix/io/rw/read* with 1%
+That enables the failure point with the name *posix/io/rw/read* with 5%
 probability to fail *on each call*, and then runs fortune. The *-x*
 parameter tells *fiu-run* to enable fault injection in the POSIX API.
 
@@ -40,7 +40,7 @@ Run it several times and you can see that sometimes it works, but sometimes it
 doesn't, reporting an error reading, which means a *read()* failed as
 expected.
 
-When fortune is run, every *read()* has a 1% chance to fail, selecting an
+When fortune is run, every *read()* has a 5% chance to fail, selecting an
 *errno* at random from the list of the ones that read() is allowed to return.
 If you want to select an specific *errno*, you can do it by passing its
 numerical value using the *-i* parameter.
@@ -72,13 +72,13 @@ files. First, we run it with *fiu-run*::
 Everything should look normal. Then, in another terminal, we make *open()*
 fail unconditionally::
 
-  $ fiu-ctrl -e posix/io/oc/open `pidof top`
+  $ fiu-ctrl -c "enable name=posix/io/oc/open" `pidof top`
 
 After that moment, the top display will probably be empty, because it can't
 read process information. Now let's disable that failure point, so *open()*
 works again::
 
-  $ fiu-ctrl -d posix/io/oc/open `pidof top`
+  $ fiu-ctrl -c "disable name=posix/io/oc/open" `pidof top`
 
 And everything should have gone back to normal.
 
