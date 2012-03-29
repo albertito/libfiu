@@ -46,7 +46,7 @@ REMOVED in future releases: -e, -p, -u and -i.
 Examples:
 
   fiu-ctrl -c 'enable_random name=posix/io/*,probability=0.25' \\
-           -c 'enable_random name=libc/mm/malloc,probability=0.05' 12345
+           -c 'enable_random name=libc/mm/*,probability=0.05' 12345
 
 Tell the process with pid 12345 to enable the failure point 'posix/io/read'
 with a 25% of probability to fail, and the failure point 'libc/mm/malloc' with
