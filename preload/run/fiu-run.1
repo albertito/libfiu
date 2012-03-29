@@ -21,21 +21,9 @@ For additional documentation, go to the project's website at
 
 .SH OPTIONS
 .TP
-.B "-e fpname"
-Enable the given failure point name.
-.TP
-.B "-p prob"
-Use the given probability for the previous failure point. In percent, defaults
-to 100, which means "always enabled". Must come \fIafter\fR the \fB-e\fR it
-affects.
-.TP
-.B "-u failnum"
-Use the given number as the failnum for the previous failure point. Must be !=
-0, defaults to 1. Must come \fIafter\fR the \fB-e\fR it affects.
-.TP
-.B "-i failinfo"
-Use the given number as the failinfo for the previous failure point. Defaults
-to 0. Must come \fIafter\fR the \fB-e\fR it affects.
+.B "-c command"
+Run the given libfiu remote control command before executing the program (see
+below for reference).
 .TP
 .B -x
 Use the POSIX libfiu preload library, allows simulate failures in the POSIX
@@ -50,19 +38,31 @@ over named pipes.
 .B "-l path"
 Path where to find the libfiu preload libraries. Defaults to the path where
 they were installed, so it is usually correct.
-
 .P
-You can enable any number of failure points by using \fB-e\fR repeatedly.
+
+Remote control commands are of the form
+"\fIcommand param1=value1,param2=value2\fR".
+Valid commands are:
+.TP
+.B 'enable name=NAME'
+Enables the NAME failure point unconditionally.
+.TP
+.B 'enable_random name=NAME,probability=P'
+Enables the NAME failure point with a probability of P.
+.P
+
+All of the \fIenable*\fR commands can also optionally take \fIfailnum\fR and
+\fIfailinfo\fR parameters, analogous to the ones taken by the C functions.
+
 
 .SH EXAMPLES
-The following will run the \fBfortune\fR(1) program simulating faults in all
-the POSIX I/O functions with a 10% probability, and in malloc() with 5%
-probability (note that the \fB-x\fR parameter is required in this case to
-enable failure points in the POSIX and libc functions):
+The following will run the \fBfortune\fR(1) program simulating faults in
+read() with 5% probability (note that the \fB-x\fR parameter is required in
+this case to enable failure points in the POSIX and libc functions):
 
 .RS
 .nf
-fiu\-run \-x \-e posix/io/* \-p 10 \-e libc/mm/malloc \-p 5 fortune
+fiu\-run \-x \-c "enable_random name=posix/io/rw/read,probability=0.05" fortune
 .fi
 .RE
 

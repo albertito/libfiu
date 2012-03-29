@@ -17,29 +17,32 @@ For additional documentation, go to the project's website at
 
 .SH OPTIONS
 .TP
-.B "-e fpname"
-Enable the given failure point name.
-.TP
-.B "-p prob"
-Use the given probability for the previous failure point. In percent, defaults
-to 100, which means "always enabled". Must come \fIafter\fR the \fB-e\fR it
-affects.
-.TP
-.B "-u failnum"
-Use the given number as the failnum for the previous failure point. Must be !=
-0, defaults to 1. Must come \fIafter\fR the \fB-e\fR it affects.
-.TP
-.B "-i failinfo"
-Use the given number as the failinfo for the previous failure point. Defaults
-to 0. Must come \fIafter\fR the \fB-e\fR it affects.
-.TP
-.B -d
-Disable the given failure point name.
+.B "-c command"
+Run the given libfiu remote control command before executing the program (see
+below for reference).
 .TP
 .B "-f ctrlpath"
 Set the default prefix for remote control over named pipes. Defaults to
 "$TMPDIR/fiu-ctrl", or "/tmp/fiu-ctrl" if "$TMPDIR" is not set, which is the
 usually correct for programs launched using \fBfiu-run\fR(1).
+.P
+
+Remote control commands are of the form
+"\fIcommand param1=value1,param2=value2\fR".
+Valid commands are:
+.TP
+.B 'enable name=NAME'
+Enables the NAME failure point unconditionally.
+.TP
+.B 'enable_random name=NAME,probability=P'
+Enables the NAME failure point with a probability of P.
+.TP
+.B 'disable name=NAME'
+Disables the NAME failure point.
+.P
+
+All of the \fIenable*\fR commands can also optionally take \fIfailnum\fR and
+\fIfailinfo\fR parameters, analogous to the ones taken by the C functions.
 
 
 .SH EXAMPLES
@@ -49,7 +52,8 @@ failure point \fIlibc/mm/malloc\fR with a 5% of probability to fail:
 
 .RS
 .nf
-fiu\-ctrl \-e posix/io/read \-p 25 \-e libc/mm/malloc \-p 5 12345
+fiu\-ctrl \-c 'enable_random name=posix/io/*,probability=0.25' \\
+         \-c 'enable_random name=libc/mm/*,probability=0.05' 12345
 .fi
 .RE
 
@@ -58,7 +62,7 @@ failure point \fIposix/io/read\fR:
 
 .RS
 .nf
-fiu\-ctrl \-d posix/io/read 12345
+fiu\-ctrl \-c 'disable name=posix/io/read' 12345
 .fi
 .RE
 
