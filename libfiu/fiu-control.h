@@ -130,6 +130,19 @@ int fiu_disable(const char *name);
  * @returns  0 on success, -1 on errors. */
 int fiu_rc_fifo(const char *basename);
 
+/** Applies a remote control command given via a string.
+ *
+ * The format of the string is not stable and is still subject to change.
+ * At the moment, this function is exported for consumption by the libfiu
+ * utilities.
+ *
+ * @param command:  A zero-terminated string with the command to apply.
+ * @param error:  In case of an error, it will point to a human-readable error
+ *			message.
+ * @returns  0 if success, < 0 otherwise.
+ */
+int fiu_rc_string(const char *cmd, char ** const error);
+
 
 #ifdef __cplusplus
 }

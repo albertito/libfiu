@@ -25,27 +25,39 @@ Usage: fiu-run [options] program [arguments]
 
 The following options are supported:
 
-  -e fpname	Enable the given failure point name.
-  -p prob	... with the given probability (defaults to 100%).
-  -u failnum	... and this failnum (must be != 0) (defaults to 1).
-  -i failinfo	... and this failinfo (defaults to 0).
   -x		Use POSIX libfiu preload library, allows simulate failures in
 		the POSIX and C standard library functions.
+  -c command	Run the given libfiu remote control command before executing
+		the program (see below for reference).
   -f ctrlpath	Enable remote control over named pipes with the given path as
 		base name, the process id will be appended (defaults to
 		\"$FIFO_PREFIX\", set to \"\" to disable).
   -l path	Path where to find the libfiu preload libraries, defaults to
 		$PLIBPATH (which is usually correct).
 
-The -p, -u and -i options must come after the -e they affect.
+Remote control commands are of the form 'command param1=value1,param2=value2'.
+Valid commands are:
 
-For example:
+ - 'enable name=NAME'
+     Enables the NAME failure point unconditionally.
+ - 'enable_random name=NAME,probability=P'
+     Enables the NAME failure point with a probability of P.
 
-  fiu-run -x -e 'posix/io/*' -p 25 -e libc/mm/malloc -p 5 ls -l
+All of them can also optionally take 'failnum' and 'failinfo' parameters,
+analogous to the ones taken by the C functions.
 
-will run \"ls -l\" enabling all failure points that begin with 'posix/io/'
-with a 25% of probability to fail, and the failure point libc/mm/malloc with a
-5% of probability to fail.
+The following options existed in the past but are deprecated and WILL BE
+REMOVED in future releases: -e, -p, -u and -i.
+
+
+Example:
+
+  fiu-run -x -c 'enable_random name=posix/io/*,probability=0.25' \\
+             -c 'enable_random name=libc/mm/malloc,probability=0.05' ls -l
+
+Run \"ls -l\" enabling all failure points that begin with 'posix/io/' with a
+25% of probability to fail, and the failure point libc/mm/malloc with a 5% of
+probability to fail.
 "
 
 
@@ -61,31 +73,35 @@ fi
 function opts_reset() {
 	# variables to store what we know so far; after a new name is found
 	# the old one is added to $ENABLE
-	NAME=""
-	PROB=-1
-	FAILNUM=1
-	FAILINFO=0
+	DEP_NAME=""
+	DEP_PROB=-1
+	DEP_FAILNUM=1
+	DEP_FAILINFO=0
+}
+
+function add_deprecated_enable() {
+	if [ "$NAME" == "" ]; then
+		return
+	fi;
+
+	PARAMS="name=$DEP_NAME,failnum=$DEP_FAILNUM,failinfo=$DEP_FAILINFO"
+	if [ $PROB -ge 0 ]; then
+		C="enable_random $PARAMS,probability=$PROB"
+	else
+		C="enable $PARAMS"
+	fi
+
+	ENABLE="$ENABLE
+		$C"
 }
 
 opts_reset;
-while getopts "+e:p:u:i:f:l:xh" opt; do
+while getopts "+c:f:l:xe:p:u:i:h" opt; do
 	case $opt in
-	e)
-		# add the current one, if any
-		if [ "$NAME" != "" ]; then
-			ENABLE="$ENABLE:$NAME,$PROB,$FAILNUM,$FAILINFO"
-			opts_reset;
-		fi
-		NAME="$OPTARG"
-		;;
-	p)
-		PROB="$OPTARG"
-		;;
-	u)
-		FAILNUM="$OPTARG"
-		;;
-	i)
-		FAILINFO="$OPTARG"
+	c)
+		# Note we use the newline as a command separator.
+		ENABLE="$ENABLE
+			$OPTARG"
 		;;
 	f)
 		FIFO_PREFIX="$OPTARG"
@@ -96,6 +112,23 @@ while getopts "+e:p:u:i:f:l:xh" opt; do
 	x)
 		USE_POSIX_PRELOAD=1
 		;;
+
+	# Deprecated options
+	e)
+		add_deprecated_enable
+		opts_reset
+		DEP_NAME="$OPTARG"
+		;;
+	p)
+		DEP_PROB="$OPTARG"
+		;;
+	u)
+		DEP_FAILNUM="$OPTARG"
+		;;
+	i)
+		DEP_FAILINFO="$OPTARG"
+		;;
+
 	h|*)
 		echo "$HELP_MSG"
 		exit 1
@@ -104,10 +137,8 @@ while getopts "+e:p:u:i:f:l:xh" opt; do
 done
 
 # add leftovers
-if [ "$NAME" != "" ]; then
-	ENABLE="$ENABLE:$NAME,$PROB,$FAILNUM,$FAILINFO"
-	opts_reset;
-fi
+add_deprecated_enable
+opts_reset;
 
 # eat the parameters we already processed
 shift $(( $OPTIND - 1 ))

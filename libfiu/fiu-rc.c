@@ -24,6 +24,7 @@
 /* Max length of a line containing a control directive */
 #define MAX_LINE 512
 
+
 /*
  * Generic remote control
  */
@@ -64,77 +65,127 @@ static int read_line(int fd, char *buf)
 }
 
 /* Remote control command processing.
- * Supported commands:
- *  - disable <name>
- *  - enable <name> <failnum> <failinfo> [flags]
- *  - enable_random <name> <failnum> <failinfo> <probability> [flags]
  *
- * flags can be one of:
- *  - "one": same as FIU_ONETIME
+ * Supported commands:
+ *  - disable name=N
+ *  - enable name=N,failnum=F,failinfo=I
+ *  - enable_random <same as enable>,probability=P
+ *  - enable_stack_by_name <same as enable>,func_name=F,pos_in_stack=P
+ *
+ * All enable* commands can also take an additional "onetime" parameter,
+ * indicating that this should only fail once (analogous to the FIU_ONETIME
+ * flag).
+ *
+ * This function is ugly, but we aim for simplicity and ease to extend for
+ * future commands.
  */
-static int rc_process_cmd(char *cmd)
+int fiu_rc_string(const char *cmd, char ** const error)
 {
-	char *tok, *state;
-	char fp_name[MAX_LINE];
-	int failnum;
-	void *failinfo;
-	float probability;
-	unsigned int flags;
+	char m_cmd[MAX_LINE];
+	char command[MAX_LINE], parameters[MAX_LINE];
 
-	state = NULL;
+	/* We need a version of cmd we can write to for parsing */
+	strncpy(m_cmd, cmd, MAX_LINE);
 
-	tok = strtok_r(cmd, " ", &state);
-	if (tok == NULL)
-		return -1;
+	/* Separate command and parameters */
+	{
+		char *tok = NULL, *state = NULL;
 
-	if (strcmp(tok, "disable") == 0) {
-		tok = strtok_r(NULL, " ", &state);
-		if (tok == NULL)
+		tok = strtok_r(m_cmd, " \t", &state);
+		if (tok == NULL) {
+			*error = "Cannot get command";
 			return -1;
-		return fiu_disable(tok);
-
-	} else if (strcmp(tok, "enable") == 0
-			|| strcmp(tok, "enable_random") == 0) {
-
-		tok = strtok_r(NULL, " ", &state);
-		if (tok == NULL)
-			return -1;
-		strncpy(fp_name, tok, MAX_LINE);
-
-		tok = strtok_r(NULL, " ", &state);
-		if (tok == NULL)
-			return -1;
-		failnum = atoi(tok);
-
-		tok = strtok_r(NULL, " ", &state);
-		if (tok == NULL)
-			return -1;
-		failinfo = (void *) strtoul(tok, NULL, 10);
-
-		probability = -1;
-		if (strcmp(tok, "enable_random") == 0) {
-			tok = strtok_r(NULL, " ", &state);
-			if (tok == NULL)
-				return -1;
-			probability = strtod(tok, NULL);
-			if (probability < 0 || probability > 1)
-				return -1;
 		}
+		strncpy(command, tok, MAX_LINE);
 
-		flags = 0;
-		tok = strtok_r(NULL, " ", &state);
-		if (tok != NULL) {
-			if (strcmp(tok, "one") == 0)
+		tok = strtok_r(NULL, " \t", &state);
+		if (tok == NULL) {
+			*error = "Cannot get parameters";
+			return -1;
+		}
+		strncpy(parameters, tok, MAX_LINE);
+	}
+
+	/* Parsing of parameters.
+	 *
+	 * To simplify the code, we parse the command parameters here. Not all
+	 * commands use all the parameters, but since they're not ambiguous it
+	 * makes it easier to do it this way. */
+	char *fp_name = NULL;
+	int failnum = 1;
+	void *failinfo = NULL;
+	unsigned int flags = 0;
+	double probability = -1;
+	char *func_name = NULL;
+	int func_pos_in_stack = -1;
+
+	{
+		/* Different tokens that we accept as parameters */
+		enum {
+			OPT_NAME = 0,
+			OPT_FAILNUM,
+			OPT_FAILINFO,
+			OPT_PROBABILITY,
+			OPT_FUNC_NAME,
+			OPT_POS_IN_STACK,
+			FLAG_ONETIME,
+		};
+		char * const token[] = {
+			[OPT_NAME] = "name",
+			[OPT_FAILNUM] = "failnum",
+			[OPT_FAILINFO] = "failinfo",
+			[OPT_PROBABILITY] = "probability",
+			[OPT_FUNC_NAME] = "func_name",
+			[OPT_POS_IN_STACK] = "pos_in_stack",
+			[FLAG_ONETIME] = "onetime",
+			NULL
+		};
+
+		char *value;
+		char *opts = parameters;
+		while (*opts != '\0') {
+			switch (getsubopt(&opts, token, &value)) {
+			case OPT_NAME:
+				fp_name = value;
+				break;
+			case OPT_FAILNUM:
+				failnum = atoi(value);
+				break;
+			case OPT_FAILINFO:
+				failinfo = (void *) strtoul(value, NULL, 10);
+				break;
+			case OPT_PROBABILITY:
+				probability = strtod(value, NULL);
+				break;
+			case OPT_FUNC_NAME:
+				func_name = value;
+				break;
+			case OPT_POS_IN_STACK:
+				func_pos_in_stack = atoi(value);
+				break;
+			case FLAG_ONETIME:
 				flags |= FIU_ONETIME;
+				break;
+			default:
+				*error = "Unknown parameter";
+				return -1;
+			}
 		}
+	}
 
-		if (probability >= 0) {
-			return fiu_enable_random(fp_name, failnum, failinfo,
-					probability, flags);
-		} else {
-			return fiu_enable(fp_name, failnum, failinfo, flags);
-		}
+	/* Excecute the command */
+	if (strcmp(command, "disable") == 0) {
+		return fiu_disable(fp_name);
+	} else if (strcmp(command, "enable") == 0) {
+		return fiu_enable(fp_name, failnum, failinfo, flags);
+	} else if (strcmp(command, "enable_random") == 0) {
+		return fiu_enable_random(fp_name, failnum, failinfo,
+				flags, probability);
+	} else if (strcmp(command, "enable_stack_by_name") == 0) {
+		return fiu_enable_stack_by_name(fp_name, failnum, failinfo,
+				flags, func_name, func_pos_in_stack);
 	} else {
+		*error = "Unknown command";
 		return -1;
 	}
 }
@@ -146,12 +197,13 @@ static int rc_do_command(int fdr, int fdw)
 {
 	int len, r, reply_len;
 	char buf[MAX_LINE], reply[MAX_LINE];
+	char *error;
 
 	len = read_line(fdr, buf);
 	if (len <= 0)
 		return len;
 
-	r = rc_process_cmd(buf);
+	r = fiu_rc_string(buf, &error);
 
 	reply_len = snprintf(reply, MAX_LINE, "%d\n", r);
 	r = write(fdw, reply, reply_len);
@@ -281,5 +333,4 @@ int fiu_rc_fifo(const char *basename)
 
 	return r;
 }
-
 

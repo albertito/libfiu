@@ -18,28 +18,43 @@ Usage: fiu-ctrl [options] PID [PID ...]
 
 The following options are supported:
 
-  -e fpname	Enable the given failure point name.
-  -p prob	... with the given probability (defaults to 100%).
-  -u failnum	... and this failnum (must be != 0) (defaults to 1).
-  -i failinfo	... and this failinfo (defaults to 0).
-  -d fpname	Disable the given failure point name.
-  -f ctrlpath	Set the default prefix for remote control over named pipes.
-		(defaults to \"$FIFO_PREFIX\", which is usually correct if
-		the program was run using fiu-run(1)).
+  -c command	Run the given libfiu remote control command before executing
+		the program (see below for reference).
+  -f ctrlpath	Enable remote control over named pipes with the given path as
+		base name, the process id will be appended (defaults to
+		\"$FIFO_PREFIX\", set to \"\" to disable).
+  -l path	Path where to find the libfiu preload libraries, defaults to
+		$PLIBPATH (which is usually correct).
 
-The -p, -u and -i options must come after the -e they affect.
+Remote control commands are of the form 'command param1=value1,param2=value2'.
+Valid commands are:
 
-For example:
+ - 'enable name=NAME'
+     Enables the NAME failure point unconditionally.
+ - 'enable_random name=NAME,probability=P'
+     Enables the NAME failure point with a probability of P.
+ - 'disable name=NAME'
+     Disables the NAME failure point.
 
-  fiu-ctrl -e posix/io/read -p 25 -e libc/mm/malloc -p 5 12345
+All of the enable\* can also optionally take 'failnum' and 'failinfo'
+parameters, analogous to the ones taken by the C functions.
 
-will tell the process with pid 12345 to enable the failure point
-'posix/io/read' with a 25% of probability to fail, and the failure point
-'libc/mm/malloc' with a 5% of probability to fail. And:
+The following options existed in the past but are deprecated and WILL BE
+REMOVED in future releases: -e, -p, -u and -i.
 
-  fiu-ctrl -d posix/io/read 12345
 
-will tell the same process to disable the previously enabled failure point.
+Examples:
+
+  fiu-ctrl -c 'enable_random name=posix/io/*,probability=0.25' \\
+           -c 'enable_random name=libc/mm/malloc,probability=0.05' 12345
+
+Tell the process with pid 12345 to enable the failure point 'posix/io/read'
+with a 25% of probability to fail, and the failure point 'libc/mm/malloc' with
+a 5% of probability to fail.
+
+  fiu-ctrl -c 'disable name=posix/io/read' 12345
+
+Tell the same process to disable the previously enabled failure point.
 
 You can control multiple processes at once by specifiying more than one
 process ID.
@@ -57,48 +72,54 @@ fi
 
 function opts_reset() {
 	# variables to store what we know so far; after a new name is found
-	# the old one is added to $ENABLE
-	NAME=""
-	PROB=-1
-	FAILNUM=1
-	FAILINFO=0
+	# the old one is added to $CMD
+	DEP_NAME=""
+	DEP_PROB=-1
+	DEP_FAILNUM=1
+	DEP_FAILINFO=0
 }
 
-function add_cmd() {
-	if [ "$NAME" != "" ]; then
-		if [ $PROB -ge 0 ]; then
-			C="enable_random $NAME $PROB $FAILNUM $FAILINFO"
-			CMDS[${#CMDS[*]}]="$C"
-		else
-			CMDS[${#CMDS[*]}]="enable $NAME $FAILNUM $FAILINFO"
-		fi
-		opts_reset;
+function add_deprecated_enable() {
+	if [ "$NAME" == "" ]; then
+		return
+	fi;
+
+	PARAMS="name=$DEP_NAME,failnum=$DEP_FAILNUM,failinfo=$DEP_FAILINFO"
+	if [ $PROB -ge 0 ]; then
+		C="enable_random $PARAMS,probability=$PROB"
+	else
+		C="enable $PARAMS"
 	fi
+
+	CMDS[${#CMDS[*]}]="$C"
 }
 
 opts_reset;
-while getopts "+e:p:u:i:d:f:h" opt; do
+while getopts "+c:e:p:u:i:d:f:h" opt; do
 	case $opt in
+	c)
+		CMDS[${#CMDS[*]}]="$OPTARG"
+		;;
 	e)
 		# add the current one, if any
-		add_cmd;
+		add_deprecated_enable;
 		opts_reset;
-		NAME="$OPTARG"
+		DEP_NAME="$OPTARG"
 		;;
 	p)
-		PROB="$OPTARG"
+		DEP_PROB="$OPTARG"
 		;;
 	u)
-		FAILNUM="$OPTARG"
+		DEP_FAILNUM="$OPTARG"
 		;;
 	i)
-		FAILINFO="$OPTARG"
+		DEP_FAILINFO="$OPTARG"
 		;;
 	f)
 		FIFO_PREFIX="$OPTARG"
 		;;
 	d)
-		CMDS[${#CMDS[*]}]="disable $OPTARG"
+		CMDS[${#CMDS[*]}]="disable name=$OPTARG"
 		opts_reset;
 		;;
 	h|*)
@@ -142,9 +163,9 @@ function send_cmd_fifo() {
 	P=$1
 	shift 1
 	echo "$@" > $P.in
-	R="`cat $P.out`"
-	if [ "$R" -eq -1 ]; then
-		echo "$P: Command returned error"
+	REPLY=$(cat "$P.out")
+	if [ "$REPLY" == "-1" ]; then
+		echo "$P: Command '$@' returned error ($REPLY)"
 	fi
 }
 
