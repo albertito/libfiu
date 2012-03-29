@@ -30,7 +30,7 @@ else
 	NICE_CC = $(CC)
 endif
 
-LIB_VER=0.14
+LIB_VER=0.90
 LIB_SO_VER=0
 
 
