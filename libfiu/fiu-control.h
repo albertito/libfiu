@@ -136,7 +136,7 @@ int fiu_rc_fifo(const char *basename);
  * At the moment, this function is exported for consumption by the libfiu
  * utilities.
  *
- * @param command:  A zero-terminated string with the command to apply.
+ * @param cmd:  A zero-terminated string with the command to apply.
  * @param error:  In case of an error, it will point to a human-readable error
  *			message.
  * @returns  0 if success, < 0 otherwise.
