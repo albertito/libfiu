@@ -14,14 +14,11 @@ endif
 ifneq ($(V), 1)
 	NICE_CC = @echo "  CC  $@"; $(CC)
 	NICE_RUN = @echo "  RUN $<"; LD_LIBRARY_PATH=../libfiu/
-	NICE_PY_RUN = @echo "  PY  $<"; \
-		      LD_LIBRARY_PATH=../libfiu/ \
-		      PYTHONPATH=../bindings/python/
+	NICE_PY = @echo "  PY  $<"; ./wrap-python 2
 else
 	NICE_CC = $(CC)
 	NICE_RUN = LD_LIBRARY_PATH=../libfiu/
-	NICE_PY_RUN = LD_LIBRARY_PATH=../libfiu/ \
-		      PYTHONPATH=../bindings/python/
+	NICE_PY = ./wrap-python 2
 endif
 
 default: tests
@@ -69,7 +66,7 @@ PY_TESTS := $(wildcard test-*.py)
 py-tests: $(patsubst %.py,py-run-%,$(PY_TESTS))
 
 py-run-%: %.py
-	$(NICE_PY_RUN) python ./$<
+	$(NICE_PY) ./$<
 
 
 clean:

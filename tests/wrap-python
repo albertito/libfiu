@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+# Python wrapper, which makes it able to import the built (and not the
+# installed) version of libfiu.
+#
+# The first parameter must be the python version (2 or 3)
+
+import sys
+import os
+import glob
+
+
+if len(sys.argv) < 2 or sys.argv[1] not in ("2", "3"):
+	sys.stderr.write("Error: the first argument must be the " +
+				"version (2 or 3)\n")
+	sys.exit(1)
+
+py_ver = sys.argv[1]
+
+
+# Find the path where the library was built and add it to the lookup paths, so
+# we run against it
+lib_bin = os.path.dirname(sys.argv[0]) + "/../libfiu/libfiu.so"
+
+if not os.path.exists(lib_bin):
+	sys.stderr.write("Can't find library (run make)\n")
+	sys.exit(1)
+
+lib_path = os.path.dirname(os.path.abspath(lib_bin))
+os.environ["LD_LIBRARY_PATH"] = ":".join([lib_path, \
+				os.environ.get("LD_LIBRARY_PATH", "")])
+
+
+# Find out the corresponding module path for the desired python version. The
+# path must be absolute
+mod_bins = glob.glob(os.path.dirname(sys.argv[0]) +
+			"/../bindings/python/build/lib*-%s.*/fiu_ll.so" \
+				% py_ver)
+if not mod_bins:
+	sys.stderr.write(("Can't find python%s bindings, run " +
+				"make python%s\n") % (py_ver, py_ver))
+	sys.exit(1)
+
+if len(mod_bins) > 1:
+	sys.stderr.write("Found too many matching python%s bindings" \
+				% py_ver)
+	sys.exit(1)
+
+mod_path = os.path.dirname(os.path.abspath(mod_bins[0]))
+os.environ["PYTHONPATH"] = ":".join([mod_path,
+					os.environ.get("PYTHONPATH", "")])
+
+if py_ver == '2':
+	py_bin = "python"
+else:
+	py_bin = "python3"
+
+os.execvp(py_bin, [py_bin] + sys.argv[2:])
+
