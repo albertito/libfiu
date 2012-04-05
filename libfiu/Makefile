@@ -37,8 +37,8 @@ LIB_SO_VER=0
 # We attempt to detect if we have the extensions we use in backtrace.c by just
 # attempting to compile it normally, and fall back to the dummy version if
 # that fails. Not very sophisticated but should be safe.
-USE_DUMMY_BACKTRACE := $(shell $(CC) -c backtrace.c -o /dev/null 2>/dev/null || \
-	echo -DDUMMY_BACKTRACE)
+USE_DUMMY_BACKTRACE := $(shell $(CC) $(ALL_CFLAGS) -c backtrace.c \
+	-o /dev/null 2>/dev/null || echo -DDUMMY_BACKTRACE)
 ifndef USE_DUMMY_BACKTRACE
 # The real backtrace needs linking against libdl.
 USE_LIBDL = -ldl
