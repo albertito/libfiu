@@ -7,6 +7,7 @@
 /* This is needed for some of the functions below. */
 #define _GNU_SOURCE
 
+#include <stdlib.h>	/* NULL */
 #include <execinfo.h>
 #include <dlfcn.h>
 #include <sys/procfs.h>
