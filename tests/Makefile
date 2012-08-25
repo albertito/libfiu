@@ -25,7 +25,7 @@ default: tests
 
 all: tests
 
-tests: c-tests py-tests
+tests: c-tests py-tests gen-tests
 
 #
 # C tests
@@ -68,6 +68,17 @@ py-tests: $(patsubst %.py,py-run-%,$(PY_TESTS))
 py-run-%: %.py
 	$(NICE_PY) ./$<
 
+#
+# Generated tests
+#
+
+gen-tests:
+	$(MAKE) -C generated
+
+
+#
+# Cleanup
+#
 
 clean:
 	# Normally, $C_OBJS and $C_BINS are removed by make after building,

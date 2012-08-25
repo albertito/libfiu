@@ -28,3 +28,5 @@ preload/run/build-needlibdl
 tests/*.o
 tests/build-flags
 tests/test-?
+tests/generated/build-flags
+tests/generated/tests/*.[oc]
