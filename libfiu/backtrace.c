@@ -13,6 +13,7 @@
 #include <sys/procfs.h>
 #include <link.h>
 
+const int have_backtrace = 1;
 
 int get_backtrace(void *buffer, int size)
 {
@@ -59,6 +60,8 @@ void *get_func_addr(const char *func_name)
 #warning Using dummy versions of backtrace
 
 #include <stddef.h>	/* for NULL */
+
+const int have_backtrace = 0;
 
 int get_backtrace(void *buffer, int size)
 {

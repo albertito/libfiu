@@ -7,6 +7,8 @@
 /* Recursion count, used both in fiu.c and fiu-rc.c */
 extern __thread int rec_count;
 
+/* Are these backtrace-related functions available, or dummies? */
+extern const int have_backtrace;
 
 /* Gets a stack trace. The pointers are stored in the given buffer, which must
  * be of the given size. The number of entries is returned.

@@ -34,7 +34,7 @@ int main(void)
 	fiu_init(0);
 	r = fiu_enable_stack_by_name("fp-1", 1, NULL, 0, "func2", -1);
 	if (r != 0) {
-		printf("note: fiu_enable_stack_by_name() failed, "
+		printf("NOTE: fiu_enable_stack_by_name() failed, "
 				"skipping test\n");
 		return 0;
 	}

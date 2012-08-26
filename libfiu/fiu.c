@@ -517,11 +517,17 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 	if (func_pos_in_stack != -1)
 		return -1;
 
+	if (have_backtrace == 0)
+		return -1;
+
 	pf = insert_new_fail(name, failnum, failinfo, flags, PF_STACK);
 	if (pf == NULL)
 		return -1;
 
 	pf->minfo.stack.func_start = func;
+
+	/* Note get_func_end(func) can return NULL and we would still be able
+	 * to make it work, see pc_in_func() above. */
 	pf->minfo.stack.func_end = get_func_end(func);
 	pf->minfo.stack.func_pos_in_stack = func_pos_in_stack;
 	return 0;
