@@ -2,16 +2,14 @@
 #ifndef _FIU_CODEGEN
 #define _FIU_CODEGEN
 
-#include <dlfcn.h>		/* dlsym() */
 #include <fiu.h>		/* fiu_* */
 #include <stdlib.h>		/* NULL, random() */
 
-/* Pointer to the dynamically loaded library */
-extern void *_fiu_libc;
-void _fiu_init(void);
-
 /* Recursion counter, per-thread */
 extern int __thread _fiu_called;
+
+/* Get a symbol from libc */
+void *libc_symbol(const char *symbol);
 
 /* Some compilers support constructor priorities. Since we don't rely on them,
  * but use them for clarity purposes, use a macro so libfiu builds on systems
@@ -76,18 +74,20 @@ extern int __thread _fiu_called;
  */
 
 /* Generates the common top of the wrapped function */
-#define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST)	\
+#define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST, ON_ERR) \
 	static RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
+								\
+	static int _fiu_in_init_##NAME = 0;			\
 								\
 	static void constructor_attr(201) _fiu_init_##NAME(void) \
 	{							\
 		rec_inc();					\
-								\
-		if (_fiu_libc == NULL)				\
-			_fiu_init();				\
+		_fiu_in_init_##NAME++;				\
 								\
 		_fiu_orig_##NAME = (RTYPE (*) PARAMST)		\
-				dlsym(_fiu_libc, #NAME);	\
+				libc_symbol(#NAME);		\
+								\
+		_fiu_in_init_##NAME--;				\
 		rec_dec();					\
 	}							\
 								\
@@ -97,6 +97,15 @@ extern int __thread _fiu_called;
 		int fstatus;					\
 								\
 		if (_fiu_called) {				\
+			if (_fiu_orig_##NAME == NULL) {		\
+				if (_fiu_in_init_##NAME) {	\
+					printd("fail on init\n"); \
+					return ON_ERR;		\
+				} else {			\
+					printd("get orig\n");	\
+					_fiu_init_##NAME();	\
+				}				\
+			}					\
 			printd("orig\n");			\
 			return (*_fiu_orig_##NAME) PARAMSN;	\
 		}						\

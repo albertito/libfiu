@@ -8,8 +8,6 @@ It is not set in stone, although it shouldn't change frequently.
 Manually written
 ----------------
 
-malloc				libc/mm/malloc
-realloc				libc/mm/realloc
 open				posix/io/oc/open
 
 

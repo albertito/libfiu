@@ -6,9 +6,6 @@
 #include "codegen.h"
 #include "build-env.h"
 
-/* Dynamically load libc */
-void *_fiu_libc;
-
 /* Recursion counter, per-thread */
 int __thread _fiu_called = 0;
 
@@ -18,29 +15,31 @@ int __thread _fiu_called = 0;
 #warning "Building without using constructor priorities"
 #endif
 
-void constructor_attr(200) _fiu_init(void)
+/* Get a symbol from libc.
+ * This function is a wrapper around dlsym(libc, ...), that we use to abstract
+ * away how we get the libc wrapper, because on some platforms there are
+ * better shortcuts. */
+void *libc_symbol(const char *symbol)
 {
-	static int initialized = 0;
+#ifdef RTLD_NEXT
+	return dlsym(RTLD_NEXT, symbol);
+#else
+	/* We don't want to get this over and over again, so we set it once
+	 * and reuse it afterwards. */
+	static void *_fiu_libc = NULL;
 
-	/* When built without constructor priorities, we could be called more
-	 * than once during the initialization phase: one because we're marked
-	 * as a constructor, and another when one of the other constructors
-	 * sees that it doesn't have _fiu_libc set. */
-
-	printd("_fiu_init() start (%d)\n", initialized);
-	if (initialized)
-		goto exit;
-
-	_fiu_libc = dlopen(LIBC_SONAME, RTLD_NOW);
 	if (_fiu_libc == NULL) {
-		fprintf(stderr, "Error loading libc: %s\n", dlerror());
-		exit(1);
+		_fiu_libc = dlopen(LIBC_SONAME, RTLD_NOW);
+		if (_fiu_libc == NULL) {
+			fprintf(stderr, "Error loading libc: %s\n", dlerror());
+			exit(1);
+		}
 	}
-	initialized = 1;
 
-exit:
-	printd("_fiu_init() done\n");
+	return dlsym(_fiu_libc, symbol);
+#endif
 }
+
 
 /* this runs after all function-specific constructors */
 static void constructor_attr(250) _fiu_init_final(void)

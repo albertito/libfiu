@@ -60,6 +60,10 @@ $(OBJS): build-flags
 .c.o:
 	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
+# We define _GNU_SOURCE to get RTLD_NEXT if available; on non-GNU
+# platforms it should be harmless.
+codegen.o: codegen.c
+	$(NICE_CC) $(ALL_CFLAGS) -D_GNU_SOURCE -c $< -o $@
 
 # some platforms do not have libdl, we only use it if available
 build-needlibdl:

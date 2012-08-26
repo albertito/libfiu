@@ -18,15 +18,17 @@
  * of arguments */
 static int (*_fiu_orig_open) (const char *pathname, int flags, ...) = NULL;
 
+static int _fiu_in_init_open = 0;
+
 static void constructor_attr(201) _fiu_init_open(void)
 {
 	rec_inc();
-
-	if (_fiu_libc == NULL)
-		_fiu_init();
+	_fiu_in_init_open++;
 
 	_fiu_orig_open = (int (*) (const char *, int, ...))
-			 dlsym(_fiu_libc, "open");
+		libc_symbol("open");
+
+	_fiu_in_init_open--;
 	rec_dec();
 }
 
@@ -56,12 +58,22 @@ int open(const char *pathname, int flags, ...)
 		mode = 0;
 	}
 
+	/* Differences from the generated code end here */
+
 	if (_fiu_called) {
+		if (_fiu_orig_open == NULL) {
+			if (_fiu_in_init_open) {
+				printd("fail on init\n");
+				return -1;
+			} else {
+				printd("get orig\n");
+				_fiu_init_open();
+			}
+		}
+
 		printd("orig\n");
 		return (*_fiu_orig_open) (pathname, flags, mode);
 	}
-
-	/* Differences from the generated code end here */
 
 	printd("fiu\n");
 

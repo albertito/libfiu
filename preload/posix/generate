@@ -100,9 +100,9 @@ class Function:
 		paramst = ', '.join([i[0] for i in self.params_info])
 		paramsn = ', '.join([i[1] for i in self.params_info])
 
-		f.write('mkwrap_top(%s, %s, (%s), (%s), (%s))\n' % \
+		f.write('mkwrap_top(%s, %s, (%s), (%s), (%s), (%s))\n' % \
 				(self.ret_type, self.name, self.params,
-					paramsn, paramst) )
+					paramsn, paramst, self.on_error) )
 
 		if self.reduce:
 			f.write('mkwrap_body_reduce("%s/reduce", %s)\n' % \
