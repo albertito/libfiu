@@ -11,6 +11,7 @@ include: <poll.h>
 include: <fcntl.h>
 include: <errno.h>
 
+
 fiu name base: posix/io/oc/
 
 # open() has its own custom wrapper
@@ -111,31 +112,32 @@ int rename(const char *oldpath, const char *newpath);
 		ENOENT ENOMEM ENOSPC ENOTDIR ENOTEMPTY EPERM EROFS EXDEV
 
 
-# NOTE: These are disabled because the stat family function is usually defined
-# within one of the standard headers, which (besides being ugly) makes
-# overriding them this way much harder. The definitions below are commented
-# out for reference and testing purposes.
-#
-#fiu name base: posix/io/stat/
-#
-#include: <sys/types.h>
-#include: <sys/stat.h>
-#include: <unistd.h>
-#
-#int stat(const char *path, struct stat *buf);
-#	on error: -1
-#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-#		ENOTDIR EOVERFLOW
-#
-#int fstat(int fd, struct stat *buf);
-#	on error: -1
-#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-#		ENOTDIR EOVERFLOW
-#
-#int lstat(const char *path, struct stat *buf);
-#	on error: -1
-#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-#		ENOTDIR EOVERFLOW
+# NOTE: These are #ifdef'ed because stat() and friends are usually defined as
+# macros within one of the standard headers, which (besides being ugly) makes
+# overriding them this way much harder.
+
+fiu name base: posix/io/stat/
+
+v: #ifndef stat
+int stat(const char *path, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+v: #endif
+
+v: #ifndef fstat
+int fstat(int fd, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+v: #endif
+
+v: #ifndef lstat
+int lstat(const char *path, struct stat *buf);
+	on error: -1
+	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+		ENOTDIR EOVERFLOW
+v: #endif
 
 
 fiu name base: posix/io/net/
