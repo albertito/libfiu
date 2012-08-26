@@ -29,12 +29,17 @@ void func2(int should_fail)
 
 int main(void)
 {
+	int r;
+
 	fiu_init(0);
-	fiu_enable_stack("fp-1", 1, NULL, 0, (void *) &func2, -1);
+	r = fiu_enable_stack("fp-1", 1, NULL, 0, (void *) &func2, -1);
+	if (r != 0) {
+		printf("note: fiu_enable_stack() failed, skipping test\n");
+		return 0;
+	}
 
 	func1(0);
 	func2(1);
-
 
 	fiu_disable("fp-1");
 
