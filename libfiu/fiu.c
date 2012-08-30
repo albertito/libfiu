@@ -180,8 +180,8 @@ static int pc_in_func(struct pf_info *pf, void *pc)
 	/* We don't know if the platform allows us to know func_end,
 	 * so we use different methods depending on its availability. */
 	if (pf->minfo.stack.func_end) {
-		return (pc > pf->minfo.stack.func_start &&
-				pc < pf->minfo.stack.func_end);
+		return (pc >= pf->minfo.stack.func_start &&
+				pc <= pf->minfo.stack.func_end);
 	} else {
 		return pf->minfo.stack.func_start == get_func_start(pc);
 	}
