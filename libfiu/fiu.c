@@ -517,7 +517,7 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 	if (func_pos_in_stack != -1)
 		return -1;
 
-	if (have_backtrace == 0)
+	if (backtrace_works((void (*)()) fiu_enable_stack) == 0)
 		return -1;
 
 	pf = insert_new_fail(name, failnum, failinfo, flags, PF_STACK);

@@ -7,9 +7,6 @@
 /* Recursion count, used both in fiu.c and fiu-rc.c */
 extern __thread int rec_count;
 
-/* Are these backtrace-related functions available, or dummies? */
-extern const int have_backtrace;
-
 /* Gets a stack trace. The pointers are stored in the given buffer, which must
  * be of the given size. The number of entries is returned.
  * It's a wrapper around glibc's backtrace(). */
@@ -24,6 +21,10 @@ void *get_func_start(void *func);
 
 /* Returns a pointer to the function given by name. */
 void *get_func_addr(const char *func_name);
+
+/* Do the above backtrace-related functions work?
+ * Takes a pointer to the caller so it can verify it's on the stack. */
+int backtrace_works(void (*caller)());
 
 #endif
 
