@@ -540,6 +540,12 @@ int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
 {
 	void *fp;
 
+	/* We need to check this here instead of relying on the test within
+	 * fiu_enable_stack() in case it is inlined; that would fail the check
+	 * because fiu_enable_stack() would not be in the stack. */
+	if (backtrace_works((void (*)()) fiu_enable_stack_by_name) == 0)
+		return -1;
+
 	fp = get_func_addr(func_name);
 	if (fp == NULL)
 		return -1;
