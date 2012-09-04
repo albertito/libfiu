@@ -112,32 +112,32 @@ int rename(const char *oldpath, const char *newpath);
 		ENOENT ENOMEM ENOSPC ENOTDIR ENOTEMPTY EPERM EROFS EXDEV
 
 
-# NOTE: These are #ifdef'ed because stat() and friends are usually defined as
-# macros within one of the standard headers, which (besides being ugly) makes
-# overriding them this way much harder.
-
-fiu name base: posix/io/stat/
-
-v: #ifndef stat
-int stat(const char *path, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
-v: #endif
-
-v: #ifndef fstat
-int fstat(int fd, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
-v: #endif
-
-v: #ifndef lstat
-int lstat(const char *path, struct stat *buf);
-	on error: -1
-	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
-		ENOTDIR EOVERFLOW
-v: #endif
+# NOTE: These are commented because stat() and friends are usually defined as
+# either macros or inline functions within one of the standard headers, which
+# makes overriding them this way much harder.
+#
+#fiu name base: posix/io/stat/
+#
+#v: #ifndef stat
+#int stat(const char *path, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
+#v: #endif
+#
+#v: #ifndef fstat
+#int fstat(int fd, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
+#v: #endif
+#
+#v: #ifndef lstat
+#int lstat(const char *path, struct stat *buf);
+#	on error: -1
+#	valid errnos: EACCES EBADF EFAULT ELOOP ENAMETOOLONG ENOENT ENOMEM \
+#		ENOTDIR EOVERFLOW
+#v: #endif
 
 
 fiu name base: posix/io/net/
