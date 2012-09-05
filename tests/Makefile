@@ -80,12 +80,13 @@ gen-tests:
 # Cleanup
 #
 
+# Normally, $C_OBJS and $C_BINS are removed by make after building,
+# since here they're considered "intermediate files"; however we
+# also remove them when cleaning just in case.
 clean:
-	# Normally, $C_OBJS and $C_BINS are removed by make after building,
-	# since here they're considered "intermediate files"; however we
-	# also remove them when cleaning just in case.
 	rm -f $(C_OBJS) $(C_BINS)
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
+	$(MAKE) -C generated clean
 
 FORCE:
 
