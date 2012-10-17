@@ -80,13 +80,13 @@ function opts_reset() {
 }
 
 function add_deprecated_enable() {
-	if [ "$NAME" == "" ]; then
+	if [ "$DEP_NAME" == "" ]; then
 		return
 	fi;
 
 	PARAMS="name=$DEP_NAME,failnum=$DEP_FAILNUM,failinfo=$DEP_FAILINFO"
-	if [ $PROB -ge 0 ]; then
-		C="enable_random $PARAMS,probability=$PROB"
+	if [ "$DEP_PROB" -ge 0 ]; then
+		C="enable_random $PARAMS,probability=0.$DEP_PROB"
 	else
 		C="enable $PARAMS"
 	fi
@@ -139,8 +139,8 @@ while getopts "+c:e:p:u:i:d:f:h" opt; do
 done
 
 # add leftovers
-if [ "$NAME" != "" ]; then
-	add_cmd;
+if [ "$DEP_NAME" != "" ]; then
+	add_deprecated_enable;
 fi
 
 # eat the parameters we already processed
@@ -176,6 +176,7 @@ function send_cmd_fifo() {
 	if [ "$REPLY" == "-1" ]; then
 		echo "$P: Command '$@' returned error ($REPLY)"
 	fi
+	#echo "$P: $@ -> $REPLY"
 }
 
 for c in "${CMDS[@]}"; do
