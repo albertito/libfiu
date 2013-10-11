@@ -31,6 +31,10 @@ struct pf_info {
 	void *failinfo;
 	unsigned int flags;
 
+	/* Lock and failed flag, used only when flags & FIU_ONETIME. */
+	pthread_mutex_t lock;
+	bool failed_once;
+
 	/* How to decide when this point of failure fails, and the information
 	 * needed to take the decision */
 	enum pf_method method;
@@ -77,6 +81,10 @@ static struct pf_info *pf_create(const char *name, int failnum,
 	pf->flags = flags;
 	pf->method = method;
 
+	/* These two are only use when flags & FIU_ONETIME. */
+	pthread_mutex_init(&pf->lock, NULL);
+	pf->failed_once = false;
+
 exit:
 	rec_count--;
 	return pf;
@@ -84,6 +92,7 @@ exit:
 
 static void pf_free(struct pf_info *pf) {
 	free(pf->name);
+	pthread_mutex_destroy(&pf->lock);
 	free(pf);
 }
 
@@ -265,6 +274,16 @@ int fiu_fail(const char *name)
 		return 0;
 	}
 
+	if (pf->flags & FIU_ONETIME) {
+		pthread_mutex_lock(&pf->lock);
+		if (pf->failed_once) {
+			pthread_mutex_unlock(&pf->lock);
+			goto exit;
+		}
+		/* We leave it locked so we don't accidentally fail this
+		 * point twice. */
+	}
+
 	switch (pf->method) {
 		case PF_ALWAYS:
 			goto exit_fail;
@@ -288,6 +307,11 @@ int fiu_fail(const char *name)
 			break;
 	}
 
+	if (pf->flags & FIU_ONETIME) {
+		pthread_mutex_unlock(&pf->lock);
+	}
+
+exit:
 	ef_runlock();
 	rec_count--;
 	return 0;
@@ -298,7 +322,8 @@ exit_fail:
 	failnum = pf->failnum;
 
 	if (pf->flags & FIU_ONETIME) {
-		wtable_del(enabled_fails, name);
+		pf->failed_once = true;
+		pthread_mutex_unlock(&pf->lock);
 	}
 
 	ef_runlock();
