@@ -38,7 +38,7 @@ C_BINS := $(patsubst %.c,%,$(C_SRCS))
 c-tests: $(patsubst %.c,c-run-%,$(C_SRCS))
 
 test-%: test-%.o build-flags
-	$(NICE_CC) $(ALL_CFLAGS) $< -lfiu -o $@
+	$(NICE_CC) $(ALL_CFLAGS) $< -lfiu -lpthread -o $@
 
 c-run-%: %
 	$(NICE_RUN) ./$<

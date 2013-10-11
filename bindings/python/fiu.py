@@ -25,6 +25,13 @@ def failinfo(name):
 	Python."""
 	return _ll.failinfo()
 
+class Flags:
+	"""Contains the valid flag constants.
+
+	ONETIME: This point of failure is disabled immediately after failing once.
+	"""
+	ONETIME = _ll.FIU_ONETIME
+
 
 # To be sure failinfo doesn't dissapear from under our feet, we keep a
 # name -> failinfo table. See fiu_ll's comments for more details.
