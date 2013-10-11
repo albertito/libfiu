@@ -265,6 +265,12 @@ int fiu_fail(const char *name)
 
 	ef_rlock();
 
+	/* It can happen that someone calls fiu_fail() before fiu_init(); we
+	 * don't want to crash so we just exit. */
+	if (enabled_fails == NULL) {
+		goto exit;
+	}
+
 	pf = wtable_get(enabled_fails, name);
 
 	/* None found. */
