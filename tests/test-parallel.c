@@ -22,6 +22,9 @@
 /* Signal for the threads to stop. */
 bool stop_threads = false;
 
+/* The name of each point */
+char point_name[NPOINTS][16];
+
 char *make_point_name(char *name, int i)
 {
 	sprintf(name, "fp-%d", i);
@@ -29,16 +32,21 @@ char *make_point_name(char *name, int i)
 }
 
 /* Calls all the points all the time. */
+unsigned long long no_check_caller_count = 0;
 void *no_check_caller(void *unused)
 {
-	int i;
-	char name[200];
+	int i = 0;
 
 	while (!stop_threads) {
-		for (i = 0; i < NPOINTS; i++) {
-			fiu_fail(make_point_name(name, i));
-		}
+		fiu_fail(point_name[i]);
+
+		i = (i + 1) % NPOINTS;
+
+		if (i == 0)
+			no_check_caller_count++;
 	}
+
+	no_check_caller_count = no_check_caller_count * NPOINTS + i;
 
 	return NULL;
 }
@@ -49,56 +57,68 @@ bool rand_bool(void) {
 
 /* Used too know if a point is enabled or not. */
 bool enabled[NPOINTS];
-pthread_mutex_t enabled_lock = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_rwlock_t enabled_lock;
 
 
 /* Calls all the *enabled* points all the time. */
+unsigned long long checking_caller_count = 0;
 void *checking_caller(void *unused)
 {
 	int i = 0;
 	int failed;
-	char name[200];
 
 	while (!stop_threads) {
-		pthread_mutex_lock(&enabled_lock);
+		pthread_rwlock_rdlock(&enabled_lock);
 		if (enabled[i]) {
-			failed = fiu_fail(make_point_name(name, i)) != 0;
+			failed = fiu_fail(point_name[i]) != 0;
+			pthread_rwlock_unlock(&enabled_lock);
+
 			if (!failed) {
 				printf("ERROR: fp %d did not fail\n", i);
 				assert(false);
 			}
+		} else {
+			pthread_rwlock_unlock(&enabled_lock);
 		}
-		pthread_mutex_unlock(&enabled_lock);
 
 		i = (i + 1) % NPOINTS;
+
+		if (i == 0)
+			checking_caller_count++;
 	}
+
+	checking_caller_count = checking_caller_count * NPOINTS + i;
 
 	return NULL;
 }
 
 /* Enable and disable points all the time. */
+unsigned long long enabler_count = 0;
 void *enabler(void *unused)
 {
 	int i = 0;
-	char name[200];
 
 	while (!stop_threads) {
-		pthread_mutex_lock(&enabled_lock);
 		if (rand_bool()) {
-			make_point_name(name, i);
+			pthread_rwlock_wrlock(&enabled_lock);
 			if (enabled[i]) {
-				assert(fiu_disable(name) == 0);
+				assert(fiu_disable(point_name[i]) == 0);
 				enabled[i] = false;
 			} else {
-				assert(fiu_enable(name, 1, NULL, 0) == 0);
+				assert(fiu_enable(point_name[i], 1, NULL, 0)
+						== 0);
 				enabled[i] = true;
 			}
+			pthread_rwlock_unlock(&enabled_lock);
 		}
-		pthread_mutex_unlock(&enabled_lock);
 
 		i = (i + 1) % NPOINTS;
+
+		if (i == 0)
+			enabler_count++;
 	}
+
+	enabler_count = enabler_count * NPOINTS + i;
 
 	return NULL;
 }
@@ -106,22 +126,28 @@ void *enabler(void *unused)
 void disable_all()
 {
 	int i = 0;
-	char name[200];
 
-	pthread_mutex_lock(&enabled_lock);
+	pthread_rwlock_wrlock(&enabled_lock);
 	for (i = 0; i < NPOINTS; i++) {
 		/* Note this could fail as we don't check if they're active or
 		 * not, but here we don't care. */
-		fiu_disable(make_point_name(name, i));
+		fiu_disable(point_name[i]);
 	}
-	pthread_mutex_unlock(&enabled_lock);
+	pthread_rwlock_unlock(&enabled_lock);
 }
 
 int main(void)
 {
+	int i;
+
 	pthread_t t1, t2, t3;
 
 	fiu_init(0);
+
+	for (i = 0; i < NPOINTS; i++)
+		make_point_name(point_name[i], i);
+
+	pthread_rwlock_init(&enabled_lock, NULL);
 
 	pthread_create(&t1, NULL, no_check_caller, NULL);
 	pthread_create(&t2, NULL, checking_caller, NULL);
@@ -136,6 +162,14 @@ int main(void)
 	pthread_join(t3, NULL);
 
 	disable_all();
+
+	pthread_rwlock_destroy(&enabled_lock);
+
+	printf("parallel nc: %-8llu  c: %-8llu  e: %-8llu  t: %llu\n",
+			no_check_caller_count, checking_caller_count,
+			enabler_count,
+			no_check_caller_count + checking_caller_count
+				+ enabler_count);
 
 	return 0;
 }
