@@ -26,7 +26,7 @@ DESTDIR=$(PREFIX)
 INSTALL=install
 
 
-OBJS = fiu.o fiu-rc.o backtrace.o wtable.o
+OBJS = fiu.o fiu-rc.o backtrace.o wtable.o hash.o
 
 
 ifneq ($(V), 1)

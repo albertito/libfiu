@@ -22,10 +22,13 @@
 #include <stdlib.h>		/* for malloc() */
 #include <string.h>		/* for memcpy()/memcmp() */
 #include <stdio.h>		/* snprintf() */
+
+#include "hash.h"
 #include "wtable.h"
 
 
-struct entry {
+/* Entry of the wildcard array. */
+struct wentry {
 	char *key;
 	size_t key_len;
 
@@ -34,9 +37,14 @@ struct entry {
 };
 
 struct wtable {
-	struct entry *entries;
-	size_t table_size;
-	size_t nentries;
+	/* Final (non-wildcard) entries are kept in this hash. */
+	hash_t *finals;
+
+	/* Wildcarded entries are kept in this dynamic array. */
+	struct wentry *wildcards;
+	size_t ws_size;
+	size_t ws_used_count;
+
 	void (*destructor)(void *);
 };
 
@@ -44,41 +52,55 @@ struct wtable {
 /* Minimum table size. */
 #define MIN_SIZE 10
 
+
 struct wtable *wtable_create(void (*destructor)(void *))
 {
 	struct wtable *t = malloc(sizeof(struct wtable));
 	if (t == NULL)
 		return NULL;
 
-	t->entries = malloc(sizeof(struct entry) * MIN_SIZE);
-	if (t->entries == NULL) {
-		free(t);
-		return NULL;
-	}
+	t->wildcards = NULL;
 
-	memset(t->entries, 0, sizeof(struct entry) * MIN_SIZE);
+	t->finals = hash_create(destructor);
+	if (t->finals == NULL)
+		goto error;
 
-	t->table_size = MIN_SIZE;
-	t->nentries = 0;
+	t->wildcards = malloc(sizeof(struct wentry) * MIN_SIZE);
+	if (t->wildcards == NULL)
+		goto error;
+
+	memset(t->wildcards, 0, sizeof(struct wentry) * MIN_SIZE);
+
+	t->ws_size = MIN_SIZE;
+	t->ws_used_count = 0;
 	t->destructor = destructor;
 
 	return t;
+
+error:
+	if (t->finals)
+		hash_free(t->finals);
+	free(t->wildcards);
+	free(t);
+	return NULL;
 }
 
 void wtable_free(struct wtable *t)
 {
 	int i;
-	struct entry *entry;
+	struct wentry *entry;
 
-	for (i = 0; i < t->table_size; i++) {
-		entry = t->entries + i;
+	hash_free(t->finals);
+
+	for (i = 0; i < t->ws_size; i++) {
+		entry = t->wildcards + i;
 		if (entry->in_use) {
 			t->destructor(entry->value);
 			free(entry->key);
 		}
 	}
 
-	free(t->entries);
+	free(t->wildcards);
 	free(t);
 }
 
@@ -96,6 +118,14 @@ static unsigned int strlast(const char *s1, const char *s2)
 	return i;
 }
 
+
+/* True if s is a wildcarded string, False otherwise. */
+static bool is_wildcard(const char *s, size_t len)
+{
+	/* Note we only support wildcards at the end of the string for now. */
+	return s[len - 1] == '*';
+}
+
 /* Checks if ws matches s.
  *
  * ws is a "wildcard string", which can end in a '*', in which case we compare
@@ -109,7 +139,7 @@ static bool ws_matches_s(
 	if (ws == NULL || s == NULL)
 		return false;
 
-	if (exact || ws[ws_len - 1] != '*') {
+	if (exact || !is_wildcard(ws, ws_len)) {
 		/* Exact match */
 		if (ws_len != s_len)
 			return false;
@@ -128,18 +158,18 @@ static bool ws_matches_s(
  *
  * Returns a pointer to the entry, or NULL if not found.
  */
-static struct entry *find_entry(struct wtable *t, const char *key,
-		bool exact, struct entry **first_free)
+static struct wentry *wildcards_find_entry(struct wtable *t, const char *key,
+		bool exact, struct wentry **first_free)
 {
 	size_t key_len;
 	size_t pos;
-	struct entry *entry;
+	struct wentry *entry;
 	bool found_free = false;
 
 	key_len = strlen(key);
 
-	for (pos = 0; pos < t->table_size; pos++) {
-		entry = t->entries + pos;
+	for (pos = 0; pos < t->ws_size; pos++) {
+		entry = t->wildcards + pos;
 		if (!entry->in_use) {
 			if (!found_free && first_free) {
 				*first_free = entry;
@@ -156,27 +186,36 @@ static struct entry *find_entry(struct wtable *t, const char *key,
 
 	/* No match. */
 	return NULL;
-
 }
 
 void *wtable_get(struct wtable *t, const char *key)
 {
-	struct entry *entry = find_entry(t, key, false, NULL);
+	void *value;
+	struct wentry *entry;
 
+	/* Do an exact lookup first. */
+	value = hash_get(t->finals, key);
+	if (value)
+		return value;
+
+	/* And then a wildcards one. */
+	entry = wildcards_find_entry(t, key, false, NULL);
 	if (entry)
 		return entry->value;
+
 	return NULL;
 }
 
-/* Internal version of wtable_set().
+/* Set on our wildcards table.
+ * For internal use only.
  * It uses the key as-is (it won't copy it), and it won't resize the array
  * either. */
-static bool _wtable_set(struct wtable *t, char *key, void *value)
+static bool wildcards_set(struct wtable *t, char *key, void *value)
 {
-	struct entry *entry, *first_free;
+	struct wentry *entry, *first_free;
 
 	first_free = NULL;
-	entry = find_entry(t, key, true, &first_free);
+	entry = wildcards_find_entry(t, key, true, &first_free);
 
 	if (entry) {
 		/* Found a match, override the value. */
@@ -191,7 +230,7 @@ static bool _wtable_set(struct wtable *t, char *key, void *value)
 		first_free->key_len = strlen(key);
 		first_free->value = value;
 		first_free->in_use = true;
-		t->nentries++;
+		t->ws_used_count++;
 		return true;
 	}
 
@@ -203,7 +242,7 @@ static bool _wtable_set(struct wtable *t, char *key, void *value)
 static bool resize_table(struct wtable *t, size_t new_size)
 {
 	size_t i;
-	struct entry *old_entries, *e;
+	struct wentry *old_wildcards, *e;
 	size_t old_size;
 
 	if (new_size < MIN_SIZE) {
@@ -211,71 +250,80 @@ static bool resize_table(struct wtable *t, size_t new_size)
 		return true;
 	}
 
-	old_entries = t->entries;
-	old_size = t->table_size;
+	old_wildcards = t->wildcards;
+	old_size = t->ws_size;
 
-	t->entries = malloc(sizeof(struct entry) * new_size);
-	if (t->entries == NULL)
+	t->wildcards = malloc(sizeof(struct wentry) * new_size);
+	if (t->wildcards == NULL)
 		return false;
 
-	memset(t->entries, 0, sizeof(struct entry) * new_size);
-	t->table_size = new_size;
-	t->nentries = 0;
+	memset(t->wildcards, 0, sizeof(struct wentry) * new_size);
+	t->ws_size = new_size;
+	t->ws_used_count = 0;
 
-	/* Insert the old entries into the new table. We use the internal
-	 * version _wtable_set() to avoid copying the keys again. */
+	/* Insert the old entries into the new table. */
 	for (i = 0; i < old_size; i++) {
-		e = old_entries + i;
+		e = old_wildcards + i;
 		if (e->in_use) {
-			_wtable_set(t, e->key, e->value);
+			wildcards_set(t, e->key, e->value);
 		}
 	}
+
+	free(old_wildcards);
 
 	return true;
 }
 
 bool wtable_set(struct wtable *t, const char *key, void *value)
 {
-	if ((t->table_size - t->nentries) <= 1) {
-		/* If we only have one entry left, grow by 30%, plus one to
-		 * make sure we always increase even if the percentage isn't
-		 * enough. */
-		if (!resize_table(t, t->table_size * 1.3 + 1))
-			return false;
-	}
+	if (is_wildcard(key, strlen(key))) {
+		if ((t->ws_size - t->ws_used_count) <= 1) {
+			/* If we only have one entry left, grow by 30%, plus
+			 * one to make sure we always increase even if the
+			 * percentage isn't enough. */
+			if (!resize_table(t, t->ws_size * 1.3 + 1))
+				return false;
+		}
 
-	return _wtable_set(t, strdup(key), value);
+		return wildcards_set(t, strdup(key), value);
+	} else {
+		return hash_set(t->finals, key, value);
+	}
 }
 
 
 bool wtable_del(struct wtable *t, const char *key)
 {
-	struct entry *entry;
+	struct wentry *entry;
 
-	entry = find_entry(t, key, true, NULL);
+	if (is_wildcard(key, strlen(key))) {
+		entry = wildcards_find_entry(t, key, true, NULL);
 
-	if (!entry) {
-		/* Key not found. */
-		return false;
-	}
-
-	/* Mark the entry as free. */
-	free(entry->key);
-	entry->key = NULL;
-	entry->key_len = 0;
-	t->destructor(entry->value);
-	entry->value = NULL;
-	entry->in_use = false;
-
-	t->nentries--;
-
-	/* Shrink if the table is less than 60% occupied. */
-	if (t->table_size > MIN_SIZE &&
-			(float) t->nentries / t->table_size < 0.6) {
-		if (!resize_table(t, t->nentries + 3))
+		if (!entry) {
+			/* Key not found. */
 			return false;
-	}
+		}
 
-	return true;
+		/* Mark the entry as free. */
+		free(entry->key);
+		entry->key = NULL;
+		entry->key_len = 0;
+		t->destructor(entry->value);
+		entry->value = NULL;
+		entry->in_use = false;
+
+		t->ws_used_count--;
+
+		/* Shrink if the table is less than 60% occupied. */
+		if (t->ws_size > MIN_SIZE &&
+				(float) t->ws_used_count / t->ws_size < 0.6) {
+			if (!resize_table(t, t->ws_used_count + 3))
+				return false;
+		}
+
+		return true;
+	} else {
+		return hash_del(t->finals, key);
+	}
 }
 
