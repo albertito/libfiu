@@ -45,6 +45,9 @@ struct wtable {
 	size_t ws_size;
 	size_t ws_used_count;
 
+	/* And we keep a cache of lookups into the wildcards array. */
+	cache_t *wcache;
+
 	void (*destructor)(void *);
 };
 
@@ -60,6 +63,7 @@ struct wtable *wtable_create(void (*destructor)(void *))
 		return NULL;
 
 	t->wildcards = NULL;
+	t->wcache = NULL;
 
 	t->finals = hash_create(destructor);
 	if (t->finals == NULL)
@@ -71,6 +75,10 @@ struct wtable *wtable_create(void (*destructor)(void *))
 
 	memset(t->wildcards, 0, sizeof(struct wentry) * MIN_SIZE);
 
+	t->wcache = cache_create();
+	if (t->wcache == NULL)
+		goto error;
+
 	t->ws_size = MIN_SIZE;
 	t->ws_used_count = 0;
 	t->destructor = destructor;
@@ -80,6 +88,8 @@ struct wtable *wtable_create(void (*destructor)(void *))
 error:
 	if (t->finals)
 		hash_free(t->finals);
+	if (t->wcache)
+		cache_free(t->wcache);
 	free(t->wildcards);
 	free(t);
 	return NULL;
@@ -91,6 +101,7 @@ void wtable_free(struct wtable *t)
 	struct wentry *entry;
 
 	hash_free(t->finals);
+	cache_free(t->wcache);
 
 	for (i = 0; i < t->ws_size; i++) {
 		entry = t->wildcards + i;
@@ -198,10 +209,19 @@ void *wtable_get(struct wtable *t, const char *key)
 	if (value)
 		return value;
 
-	/* And then a wildcards one. */
+	/* Then see if we can find it in the wcache */
+	if (cache_get(t->wcache, key, &value))
+		return value;
+
+	/* And then walk the wildcards array. */
 	entry = wildcards_find_entry(t, key, false, NULL);
-	if (entry)
+	if (entry) {
+		cache_set(t->wcache, key, entry->value);
 		return entry->value;
+	}
+
+	/* Cache the negative result as well. */
+	cache_set(t->wcache, key, NULL);
 
 	return NULL;
 }
@@ -271,6 +291,10 @@ static bool resize_table(struct wtable *t, size_t new_size)
 
 	free(old_wildcards);
 
+	/* Keep the cache the same size as our table, which works reasonably
+	 * well in practise */
+	cache_resize(t->wcache, new_size);
+
 	return true;
 }
 
@@ -320,6 +344,11 @@ bool wtable_del(struct wtable *t, const char *key)
 			if (!resize_table(t, t->ws_used_count + 3))
 				return false;
 		}
+
+		/* Invalidate the cache. We could be smart and walk it,
+		 * removing only the positive hits, but it's also more
+		 * expensive */
+		cache_invalidate(t->wcache);
 
 		return true;
 	} else {

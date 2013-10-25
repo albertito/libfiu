@@ -4,6 +4,8 @@
  *
  * Takes \0-terminated strings as keys, and void * as values.
  * It is tuned for a small number of elements (< 1000).
+ *
+ * It is NOT thread-safe.
  */
 
 #include <sys/types.h>		/* for size_t */
@@ -12,6 +14,7 @@
 #include <stdlib.h>		/* for malloc() */
 #include <string.h>		/* for memcpy()/memcmp() */
 #include <stdio.h>		/* snprintf() */
+#include <pthread.h>		/* read-write locks */
 #include "hash.h"
 
 /* MurmurHash2, by Austin Appleby. The one we use.
@@ -84,6 +87,12 @@ struct hash {
 /* Minimum table size. */
 #define MIN_SIZE 10
 
+/* Dumb destructor, used to simplify the code when no destructor is given. */
+static void dumb_destructor(void *value)
+{
+	return;
+}
+
 struct hash *hash_create(void (*destructor)(void *))
 {
 	struct hash *h = malloc(sizeof(struct hash));
@@ -100,6 +109,10 @@ struct hash *hash_create(void (*destructor)(void *))
 
 	h->table_size = MIN_SIZE;
 	h->nentries = 0;
+
+	if (destructor == NULL)
+		destructor = dumb_destructor;
+
 	h->destructor = destructor;
 
 	return h;
@@ -107,7 +120,7 @@ struct hash *hash_create(void (*destructor)(void *))
 
 void hash_free(struct hash *h)
 {
-	int i;
+	size_t i;
 	struct entry *entry;
 
 	for (i = 0; i < h->table_size; i++) {
@@ -262,5 +275,173 @@ bool hash_del(struct hash *h, const char *key)
 
 	return true;
 
+}
+
+/* Generic, simple cache.
+ *
+ * It is implemented using a hash table and manipulating it directly when
+ * needed.
+ *
+ * It favours reads over writes, and it's very basic.
+ * It IS thread-safe.
+ */
+
+struct cache {
+	struct hash *hash;
+	size_t size;
+	pthread_rwlock_t lock;
+};
+
+struct cache *cache_create()
+{
+	struct cache *c;
+
+	c = malloc(sizeof(struct cache));
+	if (c == NULL)
+		return NULL;
+
+	c->hash = hash_create(NULL);
+	if (c->hash == NULL) {
+		free(c);
+		return NULL;
+	}
+
+	pthread_rwlock_init(&c->lock, NULL);
+
+	return c;
+}
+
+void cache_free(struct cache *c)
+{
+	hash_free(c->hash);
+	pthread_rwlock_destroy(&c->lock);
+	free(c);
+}
+
+/* Internal non-locking version of cache_invalidate(). */
+static void _cache_invalidate(struct cache *c)
+{
+	size_t i;
+	struct entry *entry;
+
+	for (i = 0; i < c->hash->table_size; i++) {
+		entry = c->hash->entries + i;
+		if (entry->in_use == IN_USE) {
+			free(entry->key);
+			entry->key = NULL;
+			entry->value = NULL;
+			entry->in_use = NEVER;
+		}
+	}
+}
+
+bool cache_invalidate(struct cache *c)
+{
+	pthread_rwlock_wrlock(&c->lock);
+	_cache_invalidate(c);
+	pthread_rwlock_unlock(&c->lock);
+
+	return true;
+}
+
+bool cache_resize(struct cache *c, size_t new_size)
+{
+	pthread_rwlock_wrlock(&c->lock);
+	if (new_size > c->size) {
+		if (resize_table(c->hash, new_size)) {
+			c->size = new_size;
+			goto success;
+		}
+	} else {
+		/* TODO: Implement shrinking. We just invalidate everything
+		 * for now, and then resize. */
+		_cache_invalidate(c);
+
+		if (resize_table(c->hash, new_size)) {
+			c->size = new_size;
+			goto success;
+		}
+	}
+
+	pthread_rwlock_unlock(&c->lock);
+	return false;
+
+success:
+	pthread_rwlock_unlock(&c->lock);
+	return true;
+}
+
+struct entry *entry_for_key(struct cache *c, const char *key)
+{
+	size_t pos;
+	struct entry *entry;
+
+	pos = murmurhash2(key, strlen(key)) % c->hash->table_size;
+
+	entry = c->hash->entries + pos;
+
+	return entry;
+}
+
+bool cache_get(struct cache *c, const char *key, void **value)
+{
+	pthread_rwlock_rdlock(&c->lock);
+	struct entry *e = entry_for_key(c, key);
+
+	*value = NULL;
+
+	if (e->in_use != IN_USE)
+		goto miss;
+
+	if (strcmp(key, e->key) == 0) {
+		*value = e->value;
+		goto hit;
+	} else {
+		goto miss;
+	}
+
+hit:
+	pthread_rwlock_unlock(&c->lock);
+	return true;
+
+miss:
+	pthread_rwlock_unlock(&c->lock);
+	return false;
+}
+
+
+bool cache_set(struct cache *c, const char *key, void *value)
+{
+	pthread_rwlock_wrlock(&c->lock);
+	struct entry *e = entry_for_key(c, key);
+
+	if (e->in_use == IN_USE)
+		free(e->key);
+
+	e->in_use = IN_USE;
+
+	e->key = strdup(key);
+	e->value = value;
+
+	pthread_rwlock_unlock(&c->lock);
+	return true;
+}
+
+bool cache_del(struct cache *c, const char *key)
+{
+	pthread_rwlock_wrlock(&c->lock);
+	struct entry *e = entry_for_key(c, key);
+
+	if (e->in_use == IN_USE && strcmp(e->key, key) == 0) {
+		free(e->key);
+		e->key = NULL;
+		e->value = NULL;
+		e->in_use = REMOVED;
+		pthread_rwlock_unlock(&c->lock);
+		return true;
+	}
+
+	pthread_rwlock_unlock(&c->lock);
+	return false;
 }
 
