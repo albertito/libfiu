@@ -13,6 +13,7 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, \
 	on error: MAP_FAILED
 	valid errnos: EACCES EAGAIN EBADF EINVAL ENFILE ENODEV ENOMEM EPERM \
 		ETXTBSY
+	variants: off64_t
 
 int munmap(void *addr, size_t length);
 	on error: 0

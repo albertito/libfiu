@@ -1,7 +1,8 @@
 
 CFLAGS += -std=c99 -Wall -O3
 ALL_CFLAGS = -D_XOPEN_SOURCE=600 -fPIC -DFIU_ENABLE=1 \
-		-I. -I../../libfiu/ $(CFLAGS)
+		-D_LARGEFILE64_SOURCE=1 -I. -I../../libfiu/ \
+		$(CFLAGS)
 
 ifdef DEBUG
 ALL_CFLAGS += -g

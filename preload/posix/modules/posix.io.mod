@@ -43,6 +43,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 	on error: -1
 	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW ENXIO
 	reduce: count
+	variants: off64_t
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 	on error: -1
@@ -53,6 +54,7 @@ ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off64_t offset);
 	on error: -1
 	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW ENXIO
 	reduce: iovcnt
+	variants: off64_t
 
 
 ssize_t write(int fd, const void *buf, size_t count);
@@ -65,6 +67,7 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 	valid errnos: EBADFD EDQUOT EFAULT EFBIG EINTR EINVAL EIO ENOSPC \
 		EOVERFLOW ENXIO
 	reduce: count
+	variants: off64_t
 
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 	on error: -1
@@ -76,17 +79,20 @@ ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 	valid errnos: EBADFD EDQUOT EFAULT EFBIG EINTR EINVAL EIO ENOSPC \
 		EOVERFLOW ENXIO
 	reduce: iovcnt
+	variants: off64_t
 
 
 int truncate(const char *path, off_t length);
 	on error: -1
 	valid errnos: EACCES EFAULT EFBIG EINTR EINVAL EIO EISDIR ELOOP \
 		ENAMETOOLONG ENOENT ENOTDIR EPERM EROFS ETXTBSY
+	variants: off64_t
 
 int ftruncate(int fd, off_t length);
 	on error: -1
 	valid errnos: EACCES EBADF EFAULT EFBIG EINTR EINVAL EIO EISDIR ELOOP \
 		ENAMETOOLONG ENOENT ENOTDIR EPERM EROFS ETXTBSY
+	variants: off64_t
 
 
 fiu name base: posix/io/dir/
