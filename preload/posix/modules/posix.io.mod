@@ -36,34 +36,34 @@ fiu name base: posix/io/rw/
 
 ssize_t read(int fd, void *buf, size_t count);
 	on error: -1
-	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW
+	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR
 	reduce: count
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 	on error: -1
-	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW
+	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW ENXIO
 	reduce: count
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 	on error: -1
-	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW
+	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR
 	reduce: iovcnt
 
 
 ssize_t write(int fd, const void *buf, size_t count);
 	on error: -1
-	valid errnos: EBADFD EFAULT EFBIG EINTR EINVAL EIO ENOSPC
+	valid errnos: EBADFD EDQUOT EFAULT EFBIG EINTR EINVAL EIO ENOSPC
 	reduce: count
 
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 	on error: -1
-	valid errnos: EBADFD EFAULT EFBIG EINTR EINVAL EIO ENOSPC \
-		EOVERFLOW
+	valid errnos: EBADFD EDQUOT EFAULT EFBIG EINTR EINVAL EIO ENOSPC \
+		EOVERFLOW ENXIO
 	reduce: count
 
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 	on error: -1
-	valid errnos: EBADFD EFAULT EFBIG EINTR EINVAL EIO ENOSPC
+	valid errnos: EBADFD EDQUOT EFAULT EFBIG EINTR EINVAL EIO ENOSPC
 	reduce: iovcnt
 
 
