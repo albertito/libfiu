@@ -158,23 +158,24 @@ class Function:
 
 		f = copy.copy(self)
 
-		# NOTE: we don't modify fiu_name here to be able to enable
+		# NOTE: We don't modify fiu_name here to be able to enable
 		# both <func> and <func>64 versions of the function by
-		# enabling just <func>
+		# enabling just <func>.
 		f.name = f.name + "64"
 		f.params = f.params.replace("off_t", "off64_t")
 		f.params_info = [
 			(x, y) if x != "off_t " else ("off64_t ", y)
 			for (x, y) in f.params_info]
-		return f
+
+		# This is glibc-specific, so surround it with #ifdefs.
+		return [Verbatim("#ifdef __GLIBC__"), f, Verbatim("#endif")]
 
 	def get_all_variants(self):
 		"""Returns all variants of the given function provided via
 		'variants:' function directive"""
-
 		variants = [self]
 		for v in self.variants:
-			variants.append(self.apply_variant(v))
+			variants.extend(self.apply_variant(v))
 		return variants
 
 class Include:
