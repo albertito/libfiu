@@ -8,6 +8,7 @@ The code is NOT nice. It just does the trick.
 
 import sys
 import re
+import copy
 
 
 # Function definition regular expression
@@ -53,6 +54,10 @@ class Function:
 		# if the given parameter should be reduced by a random amount
 		self.reduce = None
 
+		# describes possible variations of function, for example
+		# pread() and pread64().
+		self.variants = []
+
 	def load_from_definition(self, definition):
 		m = func_def_re.match(definition)
 		self.name = m.group("name")
@@ -75,6 +80,8 @@ class Function:
 				self.valid_errnos = v.split()
 			elif k == 'reduce':
 				self.reduce = v
+			elif k == 'variants':
+				self.variants = v.split();
 			else:
 				raise SyntaxError, \
 					"Unknown information: " + k
@@ -145,6 +152,30 @@ class Function:
 			n.append(self.fiu_name + '/reduce')
 		return n
 
+        def apply_variant(self, v):
+		if v != 'off64_t':
+			raise SyntaxError, "Unknown function variant: " + v
+
+		f = copy.copy(self)
+
+		# NOTE: we don't modify fiu_name here to be able to enable
+		# both <func> and <func>64 versions of the function by
+		# enabling just <func>
+		f.name = f.name + "64"
+		f.params = f.params.replace("off_t", "off64_t")
+		f.params_info = [
+			(x, y) if x != "off_t " else ("off64_t ", y)
+			for (x, y) in f.params_info]
+		return f
+
+	def get_all_variants(self):
+		"""Returns all variants of the given function provided via
+		'variants:' function directive"""
+
+		variants = [self]
+		for v in self.variants:
+			variants.append(self.apply_variant(v))
+		return variants
 
 class Include:
 	"Represents an include directive"
@@ -222,7 +253,7 @@ def parse_module(path):
 			# either a new function or a directive, but in either
 			# case the current function is done
 			if current_func:
-				directives.append(current_func)
+				directives.extend(current_func.get_all_variants())
 			current_func = None
 
 			l = l.strip()
@@ -248,7 +279,7 @@ def parse_module(path):
 			current_func.load_info(l.strip())
 
 	if current_func:
-		directives.append(current_func)
+		directives.extend(current_func.get_all_variants())
 
 	return directives
 
