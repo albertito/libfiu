@@ -50,7 +50,7 @@ ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR
 	reduce: iovcnt
 
-ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off64_t offset);
+ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 	on error: -1
 	valid errnos: EBADFD EFAULT EINTR EINVAL EIO EISDIR EOVERFLOW ENXIO
 	reduce: iovcnt
