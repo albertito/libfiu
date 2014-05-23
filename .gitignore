@@ -1,6 +1,7 @@
 bindings/python/build
 bindings/python/*.pyc
 bindings/python/*.pyo
+bindings/python/fiu_ctrl.py
 libfiu/*.o
 libfiu/libfiu.a
 libfiu/libfiu.pc
@@ -28,6 +29,7 @@ preload/run/build-needlibdl
 tests/*.o
 tests/build-flags
 tests/test-?
+tests/libs/
 tests/generated/build-flags
 tests/generated/tests/*.[oc]
 .*.swp
