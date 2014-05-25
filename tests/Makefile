@@ -25,7 +25,7 @@ default: tests
 
 all: tests
 
-tests: c-tests py-tests gen-tests
+tests: c-tests py-tests gen-tests utils-tests
 
 #
 # C tests
@@ -69,12 +69,14 @@ py-run-%: %.py
 	$(NICE_PY) ./$<
 
 #
-# Generated tests
+# Sub-directory tests
 #
 
 gen-tests:
 	$(MAKE) -C generated
 
+utils-tests:
+	$(MAKE) -C utils
 
 #
 # Cleanup
@@ -91,7 +93,7 @@ clean:
 FORCE:
 
 .PHONY: default all clean \
-	tests c-tests py-tests \
+	tests c-tests py-tests gen-tests utils-tests \
 	.force-build-flags
 
 

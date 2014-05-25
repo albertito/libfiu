@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Wrap the utilities (fiu-ctrl, fiu-ls, fiu-run) so that we can run them
+# easily from within the development tree, agains the locally-built libraries.
+#
+# The first argument is the utility to run.
+
+case "$1" in
+"fiu-ctrl")
+	BIN=../../utils/fiu-ctrl
+	ARGS=
+	;;
+"fiu-ls")
+	BIN=../../utils/fiu-ls
+	ARGS=
+	;;
+"fiu-run")
+	BIN=../../preload/run/fiu-run
+	ARGS="-l ./libs"
+	;;
+esac
+
+shift
+
+exec $BIN $ARGS "$@"
+
