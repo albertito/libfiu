@@ -43,7 +43,7 @@ LIB_SO_VER=0
 # attempting to compile it normally, and fall back to the dummy version if
 # that fails. Not very sophisticated but should be safe.
 USE_DUMMY_BACKTRACE := $(shell $(CC) $(ALL_CFLAGS) -c backtrace.c \
-	-o /dev/null 2>/dev/null || echo -DDUMMY_BACKTRACE)
+	-o backtrace-check.o || echo -DDUMMY_BACKTRACE)
 ifndef USE_DUMMY_BACKTRACE
 # The real backtrace needs linking against libdl.
 USE_LIBDL = -ldl
@@ -135,7 +135,7 @@ doxygen:
 
 
 clean:
-	rm -f libfiu.pc $(OBJS)
+	rm -f libfiu.pc $(OBJS) backtrace-check.o
 	rm -f libfiu.so libfiu.so.$(LIB_VER) libfiu.so.$(LIB_SO_VER) libfiu.a
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 	$(MAKE) -C doxygen $@

@@ -30,3 +30,6 @@ tests/build-flags
 tests/test-?
 tests/generated/build-flags
 tests/generated/tests/*.[oc]
+.*.swp
+*.gcno
+*.gcda
