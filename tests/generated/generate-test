@@ -110,8 +110,8 @@ def generate(options, outfile):
 	else:
 		outfile.write("\n\n")
 
-	if options['ifdef']:
-		outfile.write("#ifdef %s\n" % options['ifdef'])
+	if options['if']:
+		outfile.write("#if %s\n" % options['if'])
 
 	if 'errno_on_fail' in options:
 		options['errno_cond'] = \
@@ -126,7 +126,7 @@ def generate(options, outfile):
 	outfile.write(Template(TEST_FAILURE_TMPL).substitute(options))
 	outfile.write(Template(TEST_MAIN_TMPL).substitute(options))
 
-	if options['ifdef']:
+	if options['if']:
 		outfile.write("#else\n")
 		outfile.write(Template(TEST_SKIPPED_TMPL).substitute(options))
 		outfile.write("#endif\n")
@@ -148,7 +148,7 @@ def main():
 		'include': (),
 		'prep': '',
 
-		'ifdef': '',
+		'if': '',
 
 		# These are C conditions that are always true.
 		'success_cond': '1',
