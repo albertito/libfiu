@@ -23,8 +23,6 @@ The following options are supported:
   -f ctrlpath	Enable remote control over named pipes with the given path as
 		base name, the process id will be appended (defaults to
 		\"$FIFO_PREFIX\", set to \"\" to disable).
-  -l path	Path where to find the libfiu preload libraries, defaults to
-		$PLIBPATH (which is usually correct).
 
 Remote control commands are of the form 'command param1=value1,param2=value2'.
 Valid commands are:
