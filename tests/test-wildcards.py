@@ -12,6 +12,8 @@ assert fiu.fail("a:b:c")
 assert fiu.fail("a:b:x")
 assert fiu.fail("a:b:c:d")
 
+fiu.enable("a:b:*")  # Test repeated enabling of a wildcard.
+
 fiu.enable("a:b:c:d")
 assert fiu.fail("a:b:c:d")
 
