@@ -14,6 +14,15 @@
 #include "internal.h"
 #include "wtable.h"
 
+/* Tracing mode for debugging libfiu itself. */
+#ifdef FIU_TRACE
+  #include <stdio.h>
+  #define trace(...) \
+	do { fprintf(stderr, __VA_ARGS__); fflush(stderr); } while (0)
+#else
+  #define trace(...) do { } while(0)
+#endif
+
 
 /* Different methods to decide when a point of failure fails */
 enum pf_method {
@@ -275,9 +284,7 @@ int fiu_fail(const char *name)
 
 	/* None found. */
 	if (pf == NULL) {
-		ef_runlock();
-		rec_count--;
-		return 0;
+		goto exit;
 	}
 
 	if (pf->flags & FIU_ONETIME) {
@@ -318,11 +325,15 @@ int fiu_fail(const char *name)
 	}
 
 exit:
+	trace("FIU  Not failing %s\n", name);
+
 	ef_runlock();
 	rec_count--;
 	return 0;
 
 exit_fail:
+	trace("FIU  Failing %s on %s\n", name, pf->name);
+
 	pthread_setspecific(last_failinfo_key,
 			pf->failinfo);
 	failnum = pf->failnum;

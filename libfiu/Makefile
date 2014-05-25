@@ -15,6 +15,9 @@ else
    endif
 endif
 
+ifdef TRACE
+    ALL_CFLAGS += -DFIU_TRACE=1
+endif
 
 # prefix for installing the binaries
 PREFIX=/usr/local
