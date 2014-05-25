@@ -118,6 +118,8 @@ clean:
 	rm -f build-flags build-env.h build-libcsoname build-needlibdl
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
+	rm -f modules/*.bb modules/*.bbg modules/*.da
+	rm -f modules/*.gcov modules/*.gcda modules/*.gcno modules/gmon.out
 
 .PHONY: default install uninstall clean .force-build-flags
 
