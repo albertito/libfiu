@@ -29,7 +29,7 @@ void *libc_symbol(const char *symbol);
 #endif
 
 /* Useful macros for recursion and debugging */
-#if 1
+#ifndef FIU_POSIX_TRACE
 	#define rec_inc() do { _fiu_called++; } while(0)
 	#define rec_dec() do { _fiu_called--; } while(0)
 	#define printd(...) do { } while(0)

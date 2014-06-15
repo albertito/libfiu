@@ -12,6 +12,11 @@ ifdef PROFILE
 ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
 endif
 
+ifdef POSIX_TRACE
+    ALL_CFLAGS += -DFIU_POSIX_TRACE=1
+endif
+
+
 # prefix for installing the binaries
 PREFIX=/usr/local
 
@@ -63,7 +68,7 @@ $(OBJS): build-flags
 
 # We define _GNU_SOURCE to get RTLD_NEXT if available; on non-GNU
 # platforms it should be harmless.
-codegen.o: codegen.c
+codegen.o: codegen.c build-flags
 	$(NICE_CC) $(ALL_CFLAGS) -D_GNU_SOURCE -c $< -o $@
 
 # some platforms do not have libdl, we only use it if available
