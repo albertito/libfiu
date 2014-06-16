@@ -20,6 +20,9 @@ PRELOAD_LIBS=""
 # use the POSIX preload library?
 USE_POSIX_PRELOAD=0
 
+# don't run, but show the command line instead
+DRY_RUN=0
+
 HELP_MSG="
 Usage: fiu-run [options] program [arguments]
 
@@ -96,7 +99,7 @@ function add_deprecated_enable() {
 }
 
 opts_reset;
-while getopts "+c:f:l:xe:p:u:i:h" opt; do
+while getopts "+c:f:l:xne:p:u:i:h" opt; do
 	case $opt in
 	c)
 		# Note we use the newline as a command separator.
@@ -111,6 +114,9 @@ while getopts "+c:f:l:xe:p:u:i:h" opt; do
 		;;
 	x)
 		USE_POSIX_PRELOAD=1
+		;;
+	n)
+		DRY_RUN=1
 		;;
 
 	# Deprecated options
@@ -155,5 +161,13 @@ fi
 export FIU_ENABLE="$ENABLE"
 export FIU_CTRL_FIFO="$FIFO_PREFIX"
 export LD_PRELOAD="$PLIBPATH/fiu_run_preload.so $PRELOAD_LIBS"
-exec "$@"
+
+if [ $DRY_RUN -eq 1 ] ; then
+	echo "FIU_ENABLE=\"$ENABLE\"" \\
+	echo "FIU_CTRL_FIFO=\"$FIFO_PREFIX\"" \\
+	echo "LD_PRELOAD=\"$PLIBPATH/fiu_run_preload.so $PRELOAD_LIBS\"" \\
+	echo "$@"
+else
+	exec "$@"
+fi
 
