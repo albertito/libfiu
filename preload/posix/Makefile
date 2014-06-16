@@ -58,7 +58,7 @@ build-flags: .force-build-flags
 
 $(GEN_OBJS): $(GEN_C)
 
-$(OBJS): build-flags
+$(OBJS): build-flags codegen.h
 
 %.mod.c: %.mod
 	$(NICE_GEN) $< $@ $<.fl
