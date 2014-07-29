@@ -73,8 +73,8 @@ void *libc_symbol(const char *symbol);
  * Wrapper generator macros
  */
 
-/* Generates the common top of the wrapped function */
-#define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST, ON_ERR) \
+/* Generates the init part of the wrapped function */
+#define mkwrap_init(RTYPE, NAME, PARAMS, PARAMST) \
 	static RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
 								\
 	static int _fiu_in_init_##NAME = 0;			\
@@ -89,13 +89,17 @@ void *libc_symbol(const char *symbol);
 								\
 		_fiu_in_init_##NAME--;				\
 		rec_dec();					\
-	}							\
-								\
+	}
+
+/* Generates the definition part of the wrapped function. */
+#define mkwrap_def(RTYPE, NAME, PARAMS, PARAMST) \
 	RTYPE NAME PARAMS					\
 	{ 							\
 		RTYPE r;					\
-		int fstatus;					\
-								\
+		int fstatus;
+
+/* Generate the first part of the body, which checks the recursion status */
+#define mkwrap_body_called(NAME, PARAMSN, ON_ERR) \
 		if (_fiu_called) {				\
 			if (_fiu_orig_##NAME == NULL) {		\
 				if (_fiu_in_init_##NAME) {	\
@@ -115,6 +119,11 @@ void *libc_symbol(const char *symbol);
 		/* fiu_fail() may call anything */		\
 		rec_inc();
 
+/* Generates the common top for most functions (init + def + body called) */
+#define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST, ON_ERR) \
+	mkwrap_init(RTYPE, NAME, PARAMS, PARAMST) \
+	mkwrap_def(RTYPE, NAME, PARAMS, PARAMST) \
+	mkwrap_body_called(NAME, PARAMSN, ON_ERR)
 
 /* Generates the body of the function for normal, non-errno usage. The return
  * value is taken from failinfo. */
