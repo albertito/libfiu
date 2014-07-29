@@ -123,6 +123,7 @@ void *libc_symbol(const char *symbol);
 		fstatus = fiu_fail(FIU_NAME);			\
 		if (fstatus != 0) {				\
 			r = (RTYPE) fiu_failinfo();		\
+			printd("failing\n");			\
 			goto exit;				\
 		}
 
@@ -133,6 +134,7 @@ void *libc_symbol(const char *symbol);
 		fstatus = fiu_fail(FIU_NAME);			\
 		if (fstatus != 0) {				\
 			r = FAIL_RET;				\
+			printd("failing\n");			\
 			goto exit;				\
 		}
 
@@ -151,6 +153,7 @@ void *libc_symbol(const char *symbol);
 				errno = (long) finfo;		\
 			}					\
 			r = FAIL_RET;				\
+			printd("failing\n");			\
 			goto exit;				\
 		}
 
@@ -161,6 +164,7 @@ void *libc_symbol(const char *symbol);
 								\
 		fstatus = fiu_fail(FIU_NAME);			\
 		if (fstatus != 0) {				\
+			printd("reducing\n");			\
 			CNT -= random() % CNT;			\
 		}
 
