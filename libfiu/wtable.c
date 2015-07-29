@@ -309,6 +309,11 @@ bool wtable_set(struct wtable *t, const char *key, void *value)
 				return false;
 		}
 
+		/* Invalidate the cache. We could be smart and walk it,
+		 * removing only the negative hits, but it's also more
+		 * expensive */
+		cache_invalidate(t->wcache);
+
 		return wildcards_set(t, strdup(key), value);
 	} else {
 		return hash_set(t->finals, key, value);
