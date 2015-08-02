@@ -66,9 +66,10 @@ libfiu.pc: build-flags libfiu.pc.in
 
 libs: libfiu.so libfiu.a
 
-libfiu.so: build-flags fiu.h $(OBJS)
+libfiu.so: build-flags symbols.map fiu.h $(OBJS)
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC \
 		-Wl,-soname,libfiu.so.$(LIB_SO_VER) \
+		-Wl,--version-script=symbols.map \
 		$(OBJS) -lpthread $(USE_LIBDL) -o libfiu.so.$(LIB_VER)
 	ln -fs libfiu.so.$(LIB_VER) libfiu.so
 	ln -fs libfiu.so.$(LIB_VER) libfiu.so.$(LIB_SO_VER)

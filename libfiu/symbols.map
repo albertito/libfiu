@@ -1,0 +1,17 @@
+# Map of publicly exported symbols.
+{
+	global:
+		fiu_disable;
+		fiu_enable;
+		fiu_enable_external;
+		fiu_enable_random;
+		fiu_enable_stack;
+		fiu_enable_stack_by_name;
+		fiu_fail;
+		fiu_failinfo;
+		fiu_init;
+		fiu_rc_fifo;
+		fiu_rc_string;
+
+	local: *;
+};
