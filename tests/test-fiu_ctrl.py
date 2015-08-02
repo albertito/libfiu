@@ -13,7 +13,7 @@ import time
 fiu_ctrl.PLIBPATH = "./libs/"
 
 def run_cat(**kwargs):
-    return fiu_ctrl.Subprocess(["/bin/cat"],
+    return fiu_ctrl.Subprocess(["./small-cat"],
         stdin = subprocess.PIPE, stdout = subprocess.PIPE,
         stderr = subprocess.PIPE, **kwargs)
 
@@ -49,6 +49,8 @@ out, err = p.communicate('test\n')
 assert out == 'test\n', (out, err)
 
 # Enable random.
+# This relies on cat doing a reasonably small number of read and writes, which
+# our small-cat does.
 result = { True: 0, False: 0 }
 for i in range(50):
     cmd = run_cat(fiu_enable_posix = True)

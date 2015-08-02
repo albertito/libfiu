@@ -29,6 +29,7 @@ preload/run/build-needlibdl
 tests/*.o
 tests/build-flags
 tests/test-?
+tests/small-cat
 tests/libs/
 tests/generated/build-flags
 tests/generated/tests/*.[oc]
