@@ -27,7 +27,7 @@ default: tests
 
 all: tests
 
-tests: c-tests py-tests gen-tests utils-tests
+tests: c-tests py-tests gen-tests utils-tests collisions-tests
 
 
 # Link the libraries to a single place, some of the tests need this.
@@ -96,6 +96,9 @@ gen-tests:
 
 utils-tests:
 	$(MAKE) -C utils
+
+collisions-tests:
+	$(MAKE) -C collisions
 
 #
 # Cleanup
