@@ -18,9 +18,9 @@ void *libc_symbol(const char *symbol);
  *  - GCC >= 4.3 on Linux
  *  - clang as of 2010-03-14
  */
+#define _GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__ * 10)
 #if \
-	( (defined __GNUC__) \
-		&& __GNUC__ >= 4 && __GNUC_MINOR__ >= 3 ) \
+	( (defined __GNUC__) && _GCC_VERSION >= 4030 ) \
 	|| (defined __clang__)
   #define constructor_attr(prio) __attribute__((constructor(prio)))
 #else
