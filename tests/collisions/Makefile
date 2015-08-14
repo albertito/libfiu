@@ -44,7 +44,7 @@ libcoltest.so: libcoltest.c libcoltest.h
 	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $< -o $@
 
 binary: binary.c libcoltest.so
-	$(NICE_CC) $(ALL_CFLAGS) -L. -lfiu -lcoltest $< -o $@
+	$(NICE_CC) $(ALL_CFLAGS) -L. $< -lfiu -lcoltest -o $@
 
 
 tests: binary
