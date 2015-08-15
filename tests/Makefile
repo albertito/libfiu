@@ -1,5 +1,5 @@
 
-CFLAGS += -std=c99 -pedantic -Wall -rdynamic
+CFLAGS += -std=c99 -pedantic -Wall
 ALL_CFLAGS = -I../libfiu/ -L../libfiu/ \
 	-D_XOPEN_SOURCE=600 -D_GNU_SOURCE -fPIC -DFIU_ENABLE=1 $(CFLAGS)
 
@@ -53,8 +53,19 @@ C_BINS := $(patsubst %.c,%,$(C_SRCS))
 
 c-tests: $(patsubst %.c,c-run-%,$(C_SRCS))
 
-test-%: test-%.o build-flags
+test-%: test-%.c build-flags
 	$(NICE_CC) $(ALL_CFLAGS) $< -lfiu -lpthread -o $@
+
+# Tests that use the stack need special build flags, as some common
+# optimizations can cause them to fail.
+# -rdynamic: Adds all symbols to the dynamic symbol table. This option is
+#    needed for backtrace() to work properly.
+# -fno-optimize-sibling-calls: This optimization can turn some calls into
+#    direct jumps, which leaves caller information out of the stack frame and
+#    makes functions not appear in the backtrace. We disable it.
+test-enable_stac%: test-enable_stac%.c build-flags
+	$(NICE_CC) $(ALL_CFLAGS) -lfiu -lpthread \
+		-rdynamic -fno-optimize-sibling-calls $< -o $@
 
 c-run-%: %
 	$(NICE_RUN) ./$<
@@ -68,9 +79,6 @@ build-flags: .force-build-flags
 		fi; \
 		echo "$(BF)" > build-flags; \
 	fi
-
-.c.o:
-	$(NICE_CC) $(ALL_CFLAGS) -c $< -o $@
 
 
 #
