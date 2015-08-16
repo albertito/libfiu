@@ -1,5 +1,5 @@
 
-CFLAGS += -std=c99 -pedantic -Wall -rdynamic
+CFLAGS += -std=c99 -pedantic -Wall
 ALL_CFLAGS = -I../../libfiu/ -L../../libfiu/ \
 	-D_XOPEN_SOURCE=600 -D_GNU_SOURCE -fPIC -DFIU_ENABLE=1 $(CFLAGS)
 
