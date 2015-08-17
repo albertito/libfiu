@@ -64,8 +64,8 @@ test-%: test-%.c build-flags
 #    direct jumps, which leaves caller information out of the stack frame and
 #    makes functions not appear in the backtrace. We disable it.
 test-enable_stac%: test-enable_stac%.c build-flags
-	$(NICE_CC) $(ALL_CFLAGS) -lfiu -lpthread \
-		-rdynamic -fno-optimize-sibling-calls $< -o $@
+	$(NICE_CC) $(ALL_CFLAGS) \
+		-rdynamic -fno-optimize-sibling-calls $< -lfiu -lpthread -o $@
 
 c-run-%: %
 	$(NICE_RUN) ./$<
