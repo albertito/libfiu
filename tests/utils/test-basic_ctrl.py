@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import subprocess
 import time
 
@@ -11,9 +12,12 @@ def launch_sh():
     # straightforward (which helps debugging and troubleshooting), but at the
     # same time it is interactive and we can make it do the operations we
     # want.
+    # We also set LC_ALL=C as we test the output for the word "error", which
+    # does not necessarily appear in other languages.
     p = subprocess.Popen("./wrap fiu-run -x cat".split(),
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            env=dict(os.environ, LC_ALL="C"))
 
     # Give it a moment to initialize and create the control files.
     time.sleep(0.2)
@@ -45,19 +49,19 @@ p = launch_sh()
 fiu_ctrl(p, ["-c", "enable name=posix/io/*"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err
+assert 'error' in err, err
 
 # Same, but with failinfo.
 p = launch_sh()
 fiu_ctrl(p, ["-c", "enable name=posix/io/*,failinfo=3"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err
+assert 'error' in err, err
 
 # Same, but with probability.
 p = launch_sh()
 fiu_ctrl(p, ["-c", "enable_random name=posix/io/*,probability=0.999"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err
+assert 'error' in err, err
 
