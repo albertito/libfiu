@@ -1,0 +1,18 @@
+# Configuration for https://travis-ci.org/
+
+language: c
+
+compiler:
+    - gcc
+    - clang
+
+addons:
+    apt:
+        packages:
+            - python-dev
+            - python3-dev
+
+script:
+    - make test
+
+
