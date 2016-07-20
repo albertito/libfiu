@@ -45,7 +45,7 @@ store a given file::
                 return true;
         }
 
-With current disk sizes, it's very unusual to ran out of free space, which
+With current disk sizes, it's very unusual to run out of free space, which
 makes the scenario where *free_space()* returns 0 hard to test. With libfiu,
 you can do the following small addition::
 

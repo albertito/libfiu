@@ -2,7 +2,7 @@
 Simulating failures in the POSIX API
 ====================================
 
-When developing robust sofware, developers often consider the cases when the
+When developing robust software, developers often consider the cases when the
 classic POSIX functions return failure.
 
 Testing that fault-handling code is a problem because under normal conditions
@@ -42,7 +42,7 @@ expected.
 
 When fortune is run, every *read()* has a 5% chance to fail, selecting an
 *errno* at random from the list of the ones that read() is allowed to return.
-If you want to select an specific *errno*, you can do it by passing its
+If you want to select a specific *errno*, you can do it by passing its
 numerical value using the *-i* parameter.
 
 The name of the failure points are fixed, and there is at least one for each
