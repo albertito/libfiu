@@ -24,11 +24,11 @@ PREFIX=/usr/local
 INSTALL=install
 
 
-MODS = $(wildcard modules/*.mod)
+MODS = $(sort $(wildcard modules/*.mod))
 GEN_C = $(addsuffix .c,$(MODS))
 GEN_OBJS = $(addsuffix .o,$(MODS))
 GEN_FL = $(addsuffix .fl,$(MODS))
-CUSTOM_OBJS = $(patsubst %.c,%.o,$(wildcard modules/*.custom.c))
+CUSTOM_OBJS = $(patsubst %.c,%.o,$(sort $(wildcard modules/*.custom.c)))
 OBJS = codegen.o $(GEN_OBJS) $(CUSTOM_OBJS)
 
 
