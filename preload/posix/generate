@@ -152,7 +152,7 @@ class Function:
 			n.append(self.fiu_name + '/reduce')
 		return n
 
-        def apply_variant(self, v):
+	def apply_variant(self, v):
 		if v != 'off64_t':
 			raise SyntaxError, "Unknown function variant: " + v
 
