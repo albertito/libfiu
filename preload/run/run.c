@@ -23,7 +23,7 @@ static void __attribute__((constructor)) fiu_run_init(void)
 	}
 
 	fiu_enable_env = getenv("FIU_ENABLE");
-	if (fiu_enable_env && fiu_enable_env != '\0') {
+	if (fiu_enable_env && *fiu_enable_env != '\0') {
 		/* FIU_ENABLE can contain more than one command, separated by
 		 * a newline, so we split them and call fiu_rc_string()
 		 * accordingly. */
