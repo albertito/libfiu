@@ -6,10 +6,8 @@
 #include <fiu.h>
 #include <fiu-control.h>
 
-void func1(int should_fail)
+int func1()
 {
-	int failed;
-
 	/*
 	int nptrs;
 	void *buffer[100];
@@ -17,13 +15,12 @@ void func1(int should_fail)
 	backtrace_symbols_fd(buffer, nptrs, 1);
 	*/
 
-	failed = fiu_fail("fp-1") != 0;
-	assert(failed == should_fail);
+	return fiu_fail("fp-1") != 0;
 }
 
-void func2(int should_fail)
+int func2()
 {
-	func1(should_fail);
+	return func1();
 }
 
 
@@ -38,13 +35,13 @@ int main(void)
 		return 0;
 	}
 
-	func1(0);
-	func2(1);
+	assert(func1() == 0);
+	assert(func2() == 1);
 
 	fiu_disable("fp-1");
 
-	func1(0);
-	func2(0);
+	assert(func1() == 0);
+	assert(func2() == 0);
 
 	return 0;
 }
