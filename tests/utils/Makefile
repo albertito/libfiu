@@ -10,7 +10,7 @@ endif
 
 default: all
 
-all: lnlibs tests
+all: tests
 
 
 # Link the libraries to a single place, as the scripts expect.
@@ -34,7 +34,7 @@ SRCS := $(wildcard test-*)
 
 tests: $(patsubst %,run-%,$(SRCS))
 
-run-%: %
+run-%: % lnlibs
 	$(NICE_RUN) ./$< > output-$<.txt 2>&1
 
 
