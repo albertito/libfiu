@@ -101,10 +101,8 @@ fiu_posix_preload.so: build-flags build-env.h build-needlibdl $(OBJS)
 		-o fiu_posix_preload.so
 
 
-# this should only be needed when building the function list and not the
-# preload library
-%.mod.fl: %.mod
-	$(NICE_GEN) $< $<.c $@
+# A module's function list gets generated with the .c file.
+%.mod.fl: %.mod.c ;
 
 function_list: $(GEN_FL) function_list.in
 	@echo "  function_list"
