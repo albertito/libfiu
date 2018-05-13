@@ -191,10 +191,16 @@ static int should_stack_fail(struct pf_info *pf)
  * To seed it, we use the current microseconds. To prevent seed reuse, we
  * re-seed after each fork (see atfork_child()). */
 static unsigned int randd_xn = 0xA673F42D;
+static bool randd_xn_manual = false;
 
 static void prng_seed(void)
 {
 	struct timeval tv;
+
+	/* If the seed is being handled manually, don't interfere. */
+	if (randd_xn_manual) {
+		return;
+	}
 
 	gettimeofday(&tv, NULL);
 
@@ -253,6 +259,13 @@ int fiu_init(unsigned int flags)
 	ef_wunlock();
 	rec_count--;
 	return 0;
+}
+
+/* Sets the PRNG seed. */
+void fiu_set_prng_seed(unsigned int seed)
+{
+	randd_xn = seed;
+	randd_xn_manual = true;
 }
 
 /* Returns the failure status of the given name. Must work well even before

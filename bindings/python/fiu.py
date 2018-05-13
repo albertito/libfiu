@@ -95,6 +95,11 @@ def disable(name):
 	if r != 0:
 		raise RuntimeError(r)
 
+def set_prng_seed(seed):
+	"""Sets the PRNG seed. Don't use this unless you know what you're
+	doing."""
+	return _ll.set_prng_seed(seed)
+
 def rc_fifo(basename):
 	"""Enables remote control over a named pipe that begins with the given
 	basename. The final path will be "basename-$PID"."""

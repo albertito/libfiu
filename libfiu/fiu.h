@@ -30,6 +30,21 @@ extern "C" {
  */
 int fiu_init(unsigned int flags);
 
+/** Sets the PRNG seed.
+ *
+ * This function is called if you want to manually set the seed used to
+ * generate random numbers.  This allows more control over randomized tests.
+ *
+ * Must be called before fiu_init(), or at fork. Otherwise, races might occur
+ * as this function is not threadsafe wrt. other fiu functions.
+ *
+ * There's no need to call this function for normal operations. Don't use it
+ * unless you know what you're doing.
+ *
+ * @param seed  PRNG seed to use.
+ */
+void fiu_set_prng_seed(unsigned int seed);
+
 /** Returns the failure status of the given point of failure.
  *
  * @param name  Point of failure name.
@@ -73,6 +88,7 @@ void *fiu_failinfo(void);
  * don't include it to avoid a circular dependency. */
 
 #define fiu_init(flags) 0
+#define fiu_set_prng_seed(seed)
 #define fiu_fail(name) 0
 #define fiu_failinfo() NULL
 #define fiu_do_on(name, action)
