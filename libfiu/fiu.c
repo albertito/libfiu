@@ -231,6 +231,8 @@ static void atfork_child(void)
  * time without clashes. */
 int fiu_init(unsigned int flags)
 {
+	char *static_seed_from_env;
+
 	/* Used to avoid re-initialization, protected by enabled_fails_lock */
 	static int initialized = 0;
 
@@ -250,6 +252,11 @@ int fiu_init(unsigned int flags)
 		ef_wunlock();
 		rec_count--;
 		return -1;
+	}
+
+	static_seed_from_env = getenv("FIU_PRNG_SEED");
+	if (static_seed_from_env != NULL) {
+		fiu_set_prng_seed(atoi(static_seed_from_env));
 	}
 
 	prng_seed();
