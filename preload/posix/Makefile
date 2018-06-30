@@ -81,8 +81,12 @@ build-needlibdl:
 # ia64 and alpha use libc.so.6.1), so find which one to use at build-time.
 # Please note that the argument to ldd *must* start with "./", otherwise some
 # "ldd"s won't work (for example, the one in FreeBSD 8.1).
+# To find out the soname, we build a dummy shared library against the libc,
+# and use ldd to extract the version. This shared library must actually use
+# something from libc, otherwise a smart compiler/linker (such as one using
+# --as-needed) might not link it against libc.
 build-libcsoname:
-	@$(CC) -x c /dev/null -lc -shared -o build-libccheck.so
+	@$(CC) build-libccheck.c -lc -shared -fPIC -o build-libccheck.so
 	@ldd ./build-libccheck.so | grep libc.so | awk '{ print $$1 }' > $@
 	@rm build-libccheck.so
 	@test "`cat $@`" != "" || \
