@@ -36,3 +36,4 @@ tests/generated/tests/*.[oc]
 .*.swp
 *.gcno
 *.gcda
+.*
