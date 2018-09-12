@@ -51,6 +51,9 @@ class Function:
 		self.use_errno = False
 		self.valid_errnos = []
 
+		# the FILE * for which a future ferror() shall fail too.
+		self.ferror = None
+
 		# if the given parameter should be reduced by a random amount
 		self.reduce = None
 
@@ -78,6 +81,8 @@ class Function:
 			elif k == 'valid errnos':
 				self.use_errno = True
 				self.valid_errnos = v.split()
+			elif k == 'ferror':
+				self.ferror = v
 			elif k == 'reduce':
 				self.reduce = v
 			elif k == 'variants':
@@ -125,8 +130,12 @@ class Function:
 			# be explicit 
 			self.write_valid_errnos(f)
 
-			f.write('mkwrap_body_errno("%s", %s)\n' % \
-					(self.fiu_name, self.on_error) )
+			if self.ferror is not None:
+				f.write('mkwrap_body_errno_ferror("%s", %s, %s)\n' % \
+						(self.fiu_name, self.on_error, self.ferror) )
+			else:
+				f.write('mkwrap_body_errno("%s", %s)\n' % \
+						(self.fiu_name, self.on_error) )
 		elif self.on_error is not None:
 			f.write('mkwrap_body_hardcoded("%s", %s)\n' % \
 					(self.fiu_name, self.on_error) )
@@ -163,8 +172,16 @@ class Function:
 		# enabling just <func>.
 		f.name = f.name + "64"
 		f.params = f.params.replace("off_t", "off64_t")
+		f.params = f.params.replace("fpos_t *", "fpos64_t *")
+		f.params = f.params.replace("const fpos_t *", "const fpos64_t *")
 		f.params_info = [
 			(x, y) if x != "off_t " else ("off64_t ", y)
+			for (x, y) in f.params_info]
+		f.params_info = [
+			(x, y) if x != "fpos_t *" else ("fpos64_t *", y)
+			for (x, y) in f.params_info]
+		f.params_info = [
+			(x, y) if x != "const fpos_t *" else ("const fpos64_t *", y)
 			for (x, y) in f.params_info]
 
 		# This is glibc-specific, so surround it with #ifdefs.

@@ -11,6 +11,9 @@ extern int __thread _fiu_called;
 /* Get a symbol from libc */
 void *libc_symbol(const char *symbol);
 
+/* Record internally an error for a stream */
+void set_ferror(void * stream);
+
 /* Some compilers support constructor priorities. Since we don't rely on them,
  * but use them for clarity purposes, use a macro so libfiu builds on systems
  * where they're not supported.
@@ -75,9 +78,9 @@ void *libc_symbol(const char *symbol);
 
 /* Generates the init part of the wrapped function */
 #define mkwrap_init(RTYPE, NAME, PARAMS, PARAMST) \
-	static RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
+	static __thread RTYPE (*_fiu_orig_##NAME) PARAMS = NULL;		\
 								\
-	static int _fiu_in_init_##NAME = 0;			\
+	static __thread int _fiu_in_init_##NAME = 0;			\
 								\
 	static void constructor_attr(201) _fiu_init_##NAME(void) \
 	{							\
@@ -163,6 +166,24 @@ void *libc_symbol(const char *symbol);
 			}					\
 			r = FAIL_RET;				\
 			printd("failing\n");			\
+			goto exit;				\
+		}
+
+/* As mkwrap_body_errno, but calls set_ferror for the given stream. */
+#define mkwrap_body_errno_ferror(FIU_NAME, FAIL_RET, STREAM) \
+								\
+		fstatus = fiu_fail(FIU_NAME);			\
+		if (fstatus != 0) {				\
+			void *finfo = fiu_failinfo();		\
+			if (finfo == NULL) {			\
+				errno = valid_errnos[random() % \
+					sizeof(valid_errnos) / sizeof(int)]; \
+			} else {				\
+				errno = (long) finfo;		\
+			}					\
+			r = FAIL_RET;				\
+			printd("failing\n");			\
+			set_ferror(STREAM); \
 			goto exit;				\
 		}
 
