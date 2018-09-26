@@ -81,11 +81,12 @@ static int read_line(int fd, char *buf)
  */
 int fiu_rc_string(const char *cmd, char ** const error)
 {
-	char m_cmd[MAX_LINE];
-	char command[MAX_LINE], parameters[MAX_LINE];
+	char m_cmd[MAX_LINE] = {0};
+	char command[MAX_LINE] = {0};
+	char parameters[MAX_LINE] = {0};
 
 	/* We need a version of cmd we can write to for parsing */
-	strncpy(m_cmd, cmd, MAX_LINE);
+	strncpy(m_cmd, cmd, MAX_LINE - 1);
 
 	/* Separate command and parameters */
 	{
@@ -96,14 +97,14 @@ int fiu_rc_string(const char *cmd, char ** const error)
 			*error = "Cannot get command";
 			return -1;
 		}
-		strncpy(command, tok, MAX_LINE);
+		strncpy(command, tok, MAX_LINE - 1);
 
 		tok = strtok_r(NULL, " \t", &state);
 		if (tok == NULL) {
 			*error = "Cannot get parameters";
 			return -1;
 		}
-		strncpy(parameters, tok, MAX_LINE);
+		strncpy(parameters, tok, MAX_LINE - 1);
 	}
 
 	/* Parsing of parameters.
@@ -224,9 +225,9 @@ static int rc_do_command(int fdr, int fdw)
  * removed. If the process forks, a new pipe will be created.
  */
 
-static char npipe_basename[PATH_MAX];
-static char npipe_path_in[PATH_MAX];
-static char npipe_path_out[PATH_MAX];
+static char npipe_basename[PATH_MAX] = {0};
+static char npipe_path_in[PATH_MAX] = {0};
+static char npipe_path_out[PATH_MAX] = {0};
 
 static void *rc_fifo_thread(void *unused)
 {
@@ -328,7 +329,7 @@ int fiu_rc_fifo(const char *basename)
 	if (r < 0)
 		return r;
 
-	strncpy(npipe_basename, basename, PATH_MAX);
+	strncpy(npipe_basename, basename, PATH_MAX - 1);
 	pthread_atfork(NULL, NULL, fifo_atfork_child);
 
 	return r;
