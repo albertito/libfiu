@@ -423,40 +423,90 @@ void clearerr (FILE *stream)
 
 
 
-/* Wrapper for fprintf(), we can't generate it because it has a variable
- * number of arguments */
+/*
+ * Variadic functions
+ *
+ * For some variadic functions, like printf(), we use a non-variadic
+ * counterpart (vprintf()) to implement the wrapping.
+ *
+ */
 
+/* Generate the body for a variadic function, which relies on a non-variadic
+ * function for expansion.
+ *
+ * We expect mkwrap_init to be called on the non-variadic one, see the calls
+ * below for examples.
+ */
+#define mkwrap_variadic_def_and_body_called( \
+		RTYPE, /* return type */ \
+		NAME, /* variadic name */ \
+		NVNAME, /* non-variadic name */ \
+		PARAMS, /* parameter definition, with types */ \
+		PARAMSN, /* parameter names only, with "arguments" for va part */ \
+		LASTPN, /* last parameter name */ \
+		ON_ERR /* what to return on error */ \
+		) \
+								\
+	RTYPE NAME PARAMS					\
+	{ 							\
+		RTYPE r;					\
+		int fstatus;					\
+		va_list arguments;				\
+								\
+		if (_fiu_called) {				\
+			if (_fiu_orig_##NVNAME == NULL) {	\
+				if (_fiu_in_init_##NVNAME) {	\
+					printd("fail on init\n"); \
+					return ON_ERR;		\
+				} else {			\
+					printd("get orig\n");	\
+					_fiu_init_##NVNAME();	\
+				}				\
+			}					\
+			printd("orig\n");			\
+			va_start(arguments, LASTPN);		\
+			r = (*_fiu_orig_##NVNAME) PARAMSN;	\
+			va_end(arguments);			\
+								\
+			return r;				\
+		}						\
+								\
+		printd("fiu\n");				\
+								\
+		/* fiu_fail() may call anything */		\
+		rec_inc();
+
+
+#define mkwrap_variadic_bottom( \
+		NAME /* variadic name */, \
+		NVNAME /* non-variadic name */, \
+		PARAMSN /* parameter names only, with "arguments" for va part */, \
+		LASTPN /* last parameter name */ \
+		) \
+								\
+		if (_fiu_orig_##NVNAME == NULL)			\
+			_fiu_init_##NVNAME();			\
+								\
+		printd("calling orig\n");			\
+		va_start(arguments, LASTPN);			\
+		r = (*_fiu_orig_##NVNAME) PARAMSN;		\
+		va_end(arguments);				\
+								\
+	exit:							\
+		rec_dec();					\
+		return r;					\
+	}
+
+
+/* fprintf() -> vfprintf() */
 mkwrap_init(int, vfprintf,
 	(FILE *restrict stream, const char *restrict format, va_list ap),
 	(FILE *restrict, const char *restrict, va_list));
 
-int fprintf(FILE *restrict stream, const char *restrict format, ...)
-{
-	int r;
-	va_list arguments;
-
-	if (_fiu_called) {
-		if (_fiu_orig_vfprintf == NULL) {
-			if (_fiu_in_init_vfprintf) {
-				printd("fail on init\n");
-				return -1;
-			} else {
-				printd("get orig\n");
-				_fiu_init_vfprintf();
-			}
-		}
-		printd("orig\n");
-		va_start(arguments, format);
-		r = (*_fiu_orig_vfprintf) (stream, format, arguments);
-		va_end(arguments);
-
-		return r;
-	}
-
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
+mkwrap_variadic_def_and_body_called(int, fprintf, vfprintf,
+	(FILE *restrict stream, const char *restrict format, ...),
+	(stream, format, arguments),
+	format, -1)
 
 	static const int valid_errnos[] = {
 	  #ifdef EAGAIN
@@ -494,70 +544,19 @@ int fprintf(FILE *restrict stream, const char *restrict format, ...)
 	  #endif
 	};
 
-	const int fstatus = fiu_fail("posix/stdio/sp/fprintf");
-
-	if (fstatus != 0) {
-		void *finfo = fiu_failinfo();
-		if (finfo == NULL) {
-			errno = valid_errnos[random() %
-				sizeof(valid_errnos) / sizeof(int)];
-		} else {
-			errno = (long) finfo;
-		}
-		r = -1;
-		printd("failing\n");
-		set_ferror(stream);
-		goto exit;
-	}
-
-	if (_fiu_orig_vfprintf == NULL)
-		_fiu_init_vfprintf();
-
-	printd("calling orig\n");
-	va_start(arguments, format);
-	r = (*_fiu_orig_vfprintf) (stream, format, arguments);
-	va_end(arguments);
-
-exit:
-	rec_dec();
-	return r;
-}
+mkwrap_body_errno_ferror("posix/stdio/sp/fprintf", -1, stream)
+mkwrap_variadic_bottom(fprintf, vfprintf, (stream, format, arguments), format)
 
 
-/* Wrapper for printf(), we can't generate it because it has a variable
- * number of arguments */
-
+/* printf() -> vprintf() */
 mkwrap_init(int, vprintf,
 	(const char *restrict format, va_list ap),
 	(const char *restrict, va_list));
 
-int printf(const char *restrict format, ...)
-{
-	int r;
-	va_list arguments;
-
-	if (_fiu_called) {
-		if (_fiu_orig_vprintf == NULL) {
-			if (_fiu_in_init_vprintf) {
-				printd("fail on init\n");
-				return -1;
-			} else {
-				printd("get orig\n");
-				_fiu_init_vprintf();
-			}
-		}
-		printd("orig\n");
-		va_start(arguments, format);
-		r = (*_fiu_orig_vprintf) (format, arguments);
-		va_end(arguments);
-
-		return r;
-	}
-
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
+mkwrap_variadic_def_and_body_called(int, printf, vprintf,
+	(const char *restrict format, ...),
+	(format, arguments),
+	format, -1)
 
 	static const int valid_errnos[] = {
 	  #ifdef EAGAIN
@@ -595,69 +594,19 @@ int printf(const char *restrict format, ...)
 	  #endif
 	};
 
-	const int fstatus = fiu_fail("posix/stdio/sp/printf");
-	if (fstatus != 0) {
-		void *finfo = fiu_failinfo();
-		if (finfo == NULL) {
-			errno = valid_errnos[random() %
-				sizeof(valid_errnos) / sizeof(int)];
-		} else {
-			errno = (long) finfo;
-		}
-		r = -1;
-		printd("failing\n");
-		set_ferror(stdout);
-		goto exit;
-	}
-
-	if (_fiu_orig_vprintf == NULL)
-		_fiu_init_vprintf();
-
-	printd("calling orig\n");
-	va_start(arguments, format);
-	r = (*_fiu_orig_vprintf) (format, arguments);
-	va_end(arguments);
-
-exit:
-	rec_dec();
-	return r;
-}
+mkwrap_body_errno_ferror("posix/stdio/sp/printf", -1, stdout)
+mkwrap_variadic_bottom(printf, vprintf, (format, arguments), format)
 
 
-/* Wrapper for dprintf(), we can't generate it because it has a variable
- * number of arguments */
-
+/* dprintf() -> vdprintf() */
 mkwrap_init(int, vdprintf,
 	(int fildes, const char *restrict format, va_list ap),
 	(int, const char *restrict, va_list));
 
-int dprintf(int fildes, const char *restrict format, ...)
-{
-	int r;
-	va_list arguments;
-
-	if (_fiu_called) {
-		if (_fiu_orig_vdprintf == NULL) {
-			if (_fiu_in_init_vdprintf) {
-				printd("fail on init\n");
-				return -1;
-			} else {
-				printd("get orig\n");
-				_fiu_init_vdprintf();
-			}
-		}
-		printd("orig\n");
-		va_start(arguments, format);
-		r = (*_fiu_orig_vdprintf) (fildes, format, arguments);
-		va_end(arguments);
-
-		return r;
-	}
-
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
+mkwrap_variadic_def_and_body_called(int, dprintf, vdprintf,
+	(int fildes, const char *restrict format, ...),
+	(fildes, format, arguments),
+	format, -1)
 
 	static const int valid_errnos[] = {
 	  #ifdef EAGAIN
@@ -695,68 +644,19 @@ int dprintf(int fildes, const char *restrict format, ...)
 	  #endif
 	};
 
-	const int fstatus = fiu_fail("posix/stdio/sp/dprintf");
-	if (fstatus != 0) {
-		void *finfo = fiu_failinfo();
-		if (finfo == NULL) {
-			errno = valid_errnos[random() %
-				sizeof(valid_errnos) / sizeof(int)];
-		} else {
-			errno = (long) finfo;
-		}
-		r = -1;
-		printd("failing\n");
-		goto exit;
-	}
-
-	if (_fiu_orig_vdprintf == NULL)
-		_fiu_init_vdprintf();
-
-	printd("calling orig\n");
-	va_start(arguments, format);
-	r = (*_fiu_orig_vdprintf) (fildes, format, arguments);
-	va_end(arguments);
-
-exit:
-	rec_dec();
-	return r;
-}
+mkwrap_body_errno("posix/stdio/sp/dprintf", -1)
+mkwrap_variadic_bottom(dprintf, vdprintf, (fildes, format, arguments), format)
 
 
-/* Wrapper for fscanf(), we can't generate it because it has a variable
- * number of arguments */
-
+/* fscanf() -> vfscanf() */
 mkwrap_init(int, vfscanf,
 	(FILE *restrict stream, const char *restrict format, va_list ap),
 	(FILE *restrict, const char *restrict, va_list));
 
-int fscanf(FILE *restrict stream, const char *restrict format, ...)
-{
-	int r;
-	va_list arguments;
-
-	if (_fiu_called) {
-		if (_fiu_orig_vfscanf == NULL) {
-			if (_fiu_in_init_vfscanf) {
-				printd("fail on init\n");
-				return EOF;
-			} else {
-				printd("get orig\n");
-				_fiu_init_vfscanf();
-			}
-		}
-		printd("orig\n");
-		va_start(arguments, format);
-		r = (*_fiu_orig_vfscanf) (stream, format, arguments);
-		va_end(arguments);
-
-		return r;
-	}
-
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
+mkwrap_variadic_def_and_body_called(int, fscanf, vfscanf,
+	(FILE *restrict stream, const char *restrict format, ...),
+	(stream, format, arguments),
+	format, EOF)
 
 	static const int valid_errnos[] = {
 	  #ifdef EAGAIN
@@ -788,69 +688,19 @@ int fscanf(FILE *restrict stream, const char *restrict format, ...)
 	  #endif
 	};
 
-	const int fstatus = fiu_fail("posix/stdio/sp/fscanf");
-	if (fstatus != 0) {
-		void *finfo = fiu_failinfo();
-		if (finfo == NULL) {
-			errno = valid_errnos[random() %
-				sizeof(valid_errnos) / sizeof(int)];
-		} else {
-			errno = (long) finfo;
-		}
-		r = EOF;
-		printd("failing\n");
-		set_ferror(stream);
-		goto exit;
-	}
-
-	if (_fiu_orig_vfscanf == NULL)
-		_fiu_init_vfscanf();
-
-	printd("calling orig\n");
-	va_start(arguments, format);
-	r = (*_fiu_orig_vfscanf) (stream, format, arguments);
-	va_end(arguments);
-
-exit:
-	rec_dec();
-	return r;
-}
+mkwrap_body_errno_ferror("posix/stdio/sp/fscanf", EOF, stream)
+mkwrap_variadic_bottom(fscanf, vfscanf, (stream, format, arguments), format)
 
 
-/* Wrapper for scanf(), we can't generate it because it has a variable
- * number of arguments */
-
+/* scanf() -> vscanf() */
 mkwrap_init(int, vscanf,
 	(const char *restrict format, va_list ap),
 	(const char *restrict, va_list));
 
-int scanf(const char *restrict format, ...)
-{
-	int r;
-	va_list arguments;
-
-	if (_fiu_called) {
-		if (_fiu_orig_vscanf == NULL) {
-			if (_fiu_in_init_vscanf) {
-				printd("fail on init\n");
-				return EOF;
-			} else {
-				printd("get orig\n");
-				_fiu_init_vscanf();
-			}
-		}
-		printd("orig\n");
-		va_start(arguments, format);
-		r = (*_fiu_orig_vscanf) (format, arguments);
-		va_end(arguments);
-
-		return r;
-	}
-
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
+mkwrap_variadic_def_and_body_called(int, scanf, vscanf,
+	(const char *restrict format, ...),
+	(format, arguments),
+	format, EOF)
 
 	static const int valid_errnos[] = {
 	  #ifdef EAGAIN
@@ -879,30 +729,5 @@ int scanf(const char *restrict format, ...)
 	  #endif
 	};
 
-	const int fstatus = fiu_fail("posix/stdio/sp/scanf");
-	if (fstatus != 0) {
-		void *finfo = fiu_failinfo();
-		if (finfo == NULL) {
-			errno = valid_errnos[random() %
-				sizeof(valid_errnos) / sizeof(int)];
-		} else {
-			errno = (long) finfo;
-		}
-		r = EOF;
-		printd("failing\n");
-		set_ferror(stdin);
-		goto exit;
-	}
-
-	if (_fiu_orig_vscanf == NULL)
-		_fiu_init_vscanf();
-
-	printd("calling orig\n");
-	va_start(arguments, format);
-	r = (*_fiu_orig_vscanf) (format, arguments);
-	va_end(arguments);
-
-exit:
-	rec_dec();
-	return r;
-}
+mkwrap_body_errno_ferror("posix/stdio/sp/scanf", EOF, stdin)
+mkwrap_variadic_bottom(scanf, vscanf, (format, arguments), format)
