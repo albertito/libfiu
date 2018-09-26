@@ -95,7 +95,7 @@ void set_ferror(void * stream);
 	}
 
 /* Generates the definition part of the wrapped function. */
-#define mkwrap_def(RTYPE, NAME, PARAMS, PARAMST) \
+#define mkwrap_def(RTYPE, NAME, PARAMS) \
 	RTYPE NAME PARAMS					\
 	{ 							\
 		RTYPE r;					\
@@ -125,7 +125,7 @@ void set_ferror(void * stream);
 /* Generates the common top for most functions (init + def + body called) */
 #define mkwrap_top(RTYPE, NAME, PARAMS, PARAMSN, PARAMST, ON_ERR) \
 	mkwrap_init(RTYPE, NAME, PARAMS, PARAMST) \
-	mkwrap_def(RTYPE, NAME, PARAMS, PARAMST) \
+	mkwrap_def(RTYPE, NAME, PARAMS) \
 	mkwrap_body_called(NAME, PARAMSN, ON_ERR)
 
 /* Generates the body of the function for normal, non-errno usage. The return
