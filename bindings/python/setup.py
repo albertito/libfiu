@@ -1,6 +1,7 @@
 
 import os
 import sys
+import tempfile
 from distutils.core import setup, Extension
 from distutils.command.build_py import build_py
 
@@ -22,12 +23,18 @@ class generate_and_build_py (build_py):
         prefix = os.environ.get('PREFIX', '/usr/local/')
         plibpath = os.environ.get('PLIBPATH', prefix + '/lib/')
 
-        contents = open('fiu_ctrl.in.py', 'r').read()
+        contents = open('fiu_ctrl.in.py', 'rt').read()
         contents = contents.replace('@@PLIBPATH@@', plibpath)
 
-        out = open('fiu_ctrl.py', 'w')
+        # Create/update the file atomically, as this could be invoked in
+        # parallel for python 2 and 3, and we don't want to accidentally use
+        # partially written files.
+        out = tempfile.NamedTemporaryFile(
+                mode = 'wt', delete = False,
+                dir = '.', prefix = 'tmp-fiu_ctrl.py')
         out.write(contents)
         out.close()
+        os.rename(out.name, 'fiu_ctrl.py')
 
 
 fiu_ll = Extension("fiu_ll",
