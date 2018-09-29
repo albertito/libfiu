@@ -120,6 +120,8 @@ clean:
 	rm -rf libs/ small-cat
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out build-flags
 	$(MAKE) -C generated clean
+	$(MAKE) -C collisions clean
+	$(MAKE) -C utils clean
 
 FORCE:
 

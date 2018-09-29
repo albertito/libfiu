@@ -84,6 +84,7 @@ uninstall:
 clean:
 	rm -f $(OBJS) fiu_run_preload.so fiu-run build-flags
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
+	rm -f build-needlibdl
 
 .PHONY: default install uninstall clean .force-build-flags
 

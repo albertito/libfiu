@@ -44,7 +44,6 @@ run-%: % lnlibs
 
 clean:
 	rm -f libs/*.so output-*.txt
-	rmdir libs/
 
 .PHONY: default all clean \
 	tests lnlibs
