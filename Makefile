@@ -80,7 +80,7 @@ python3_install: python3
 	cd bindings/python && python3 setup.py install
 
 python_clean:
-	cd bindings/python && rm -rf build/
+	cd bindings/python && rm -rf build/ fiu_ctrl.py
 
 
 clean: python_clean preload_clean libfiu_clean utils_clean test_clean
