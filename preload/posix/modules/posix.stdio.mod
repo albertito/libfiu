@@ -17,9 +17,10 @@ FILE *freopen(const char *pathname, const char *mode, FILE *stream);
 	valid errnos: EACCES EBADF EINTR EISDIR ELOOP EMFILE ENAMETOOLONG ENFILE ENOENT ENOTDIR ENOSPC ENXIO EOVERFLOW EROFS EBADF EINVAL ENOMEM ENXIO ETXTBSY
 	variants: off64_t
 
-int fclose(FILE *stream);
-	on error: EOF
-	valid errnos: EAGAIN EBADF EFBIG EFBIG EINTR EIO ENOMEM ENOSPC EPIPE ENXIO
+# This one needs to be further instrumented.
+# int fclose(FILE *stream);
+# 	on error: EOF
+# 	valid errnos: EAGAIN EBADF EFBIG EFBIG EINTR EIO ENOMEM ENOSPC EPIPE ENXIO
 
 FILE *fdopen(int fd, const char *mode);
 	on error: NULL
