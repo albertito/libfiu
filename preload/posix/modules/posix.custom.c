@@ -322,7 +322,7 @@ int ferror (FILE *stream)
 
 	if (r == 0 && get_ferror(stream)) {
 		printd("ferror fixed\n");
-		return 1;
+		r = 1;
 	}
 
 exit:
