@@ -80,6 +80,7 @@ struct hash {
 	struct entry *entries;
 	size_t table_size;
 	size_t nentries;
+	size_t nremoved;
 	void (*destructor)(void *);
 };
 
@@ -109,6 +110,7 @@ struct hash *hash_create(void (*destructor)(void *))
 
 	h->table_size = MIN_SIZE;
 	h->nentries = 0;
+	h->nremoved = 0;
 
 	if (destructor == NULL)
 		destructor = dumb_destructor;
@@ -142,7 +144,7 @@ void *hash_get(struct hash *h, const char *key)
 
 	pos = murmurhash2(key, strlen(key)) % h->table_size;
 
-	for (;;) {
+	for (int i = 0; i < h->table_size; i++) {
 		entry = h->entries + pos;
 		if (entry->in_use == NEVER) {
 			/* We got to a entry never used, no match. */
@@ -151,12 +153,16 @@ void *hash_get(struct hash *h, const char *key)
 				strcmp(key, entry->key) == 0) {
 			/* The key matches. */
 			return entry->value;
-		} else {
-			/* We use linear probing for now */
-			pos = (pos + 1) % h->table_size;
 		}
+
+		/* The key doesn't match this entry, continue with linear probing. */
+		pos = (pos + 1) % h->table_size;
 	}
 
+	/* We went through the entire table and did not find the key.
+	 * Note this is a pathological case that we don't expect would happen
+	 * under normal operation, since we resize the table so there are
+	 * always some never-used spaces. */
 	return NULL;
 }
 
@@ -170,25 +176,33 @@ static bool _hash_set(struct hash *h, char *key, void *value)
 
 	pos = murmurhash2(key, strlen(key)) % h->table_size;
 
-	for (;;) {
+	for (int i = 0; i < h->table_size; i++) {
 		entry = h->entries + pos;
-		if (entry->in_use != IN_USE) {
+		if (entry->in_use == NEVER) {
+			/* Use only fresh entries, reusing removed ones
+			 * introduces significant complications when combined
+			 * with the linear probing. */
 			entry->in_use = IN_USE;
 			entry->key = key;
 			entry->value = value;
 			h->nentries++;
 			return true;
-		} else if (strcmp(key, entry->key) == 0) {
+		} else if (entry->in_use == IN_USE &&
+				strcmp(key, entry->key) == 0) {
 			/* The key matches, override the value. */
 			h->destructor(entry->value);
 			entry->value = value;
 			return true;
-		} else {
-			/* The key doesn't match, linear probing. */
-			pos = (pos + 1) % h->table_size;
 		}
+
+		/* The key doesn't match this entry, continue with linear probing. */
+		pos = (pos + 1) % h->table_size;
 	}
 
+	/* We went through the entire table and did not find the key.
+	 * Note this is a pathological case that we don't expect would happen
+	 * under normal operation, since we resize the table so there are
+	 * always some never-used spaces. */
 	return false;
 }
 
@@ -198,9 +212,10 @@ static bool resize_table(struct hash *h, size_t new_size)
 	struct entry *old_entries, *e;
 	size_t old_size;
 
+	/* Do not resize below minimum size; however, continue anyway to clear
+	 * up removed entries. */
 	if (new_size < MIN_SIZE) {
-		/* Do not resize below minimum size */
-		return true;
+		new_size = MIN_SIZE;
 	}
 
 	old_entries = h->entries;
@@ -213,6 +228,7 @@ static bool resize_table(struct hash *h, size_t new_size)
 	memset(h->entries, 0, sizeof(struct entry) * new_size);
 	h->table_size = new_size;
 	h->nentries = 0;
+	h->nremoved = 0;
 
 	/* Insert the old entries into the new table. We use the internal
 	 * version _hash_set() to avoid copying the keys again. */
@@ -227,26 +243,53 @@ static bool resize_table(struct hash *h, size_t new_size)
 	return true;
 }
 
-bool hash_set(struct hash *h, const char *key, void *value)
-{
-	if ((float) h->nentries / h->table_size > 0.7) {
-		/* If we're over 70% full, grow the table by 30% */
-		if (!resize_table(h, h->table_size * 1.3))
-			return false;
+static bool auto_resize_table(hash_t *h) {
+	/* Slots in the table is taken by valid and removed entries.
+	 * Since we don't reuse removed slots, we need to also take them into
+	 * consideration and shrink if we are accumulating too many.
+	 *
+	 * This function always resizes to <number of entries> * 2, which
+	 * preserves the "at least 30% usable" property both when growing and
+	 * shrinking, and makes calculations simpler.
+	 */
+
+	/* Maintain at least 30% usable entries. */
+	float usable_ratio = (float) (h->table_size - h->nentries - h->nremoved)
+		/ h->table_size;
+	if (usable_ratio < 0.3) {
+		return resize_table(h, h->nentries * 2);
 	}
 
-	return _hash_set(h, strdup(key), value);
+	/* If we have less than 30% used (by valid entries), compact. */
+	float entries_ratio = (float) h->nentries / h->table_size;
+	if (h->table_size > MIN_SIZE && entries_ratio < 0.3) {
+		return resize_table(h, h->nentries * 2);
+	}
+
+	return true;
 }
 
+
+bool hash_set(struct hash *h, const char *key, void *value)
+{
+	bool r = _hash_set(h, strdup(key), value);
+
+	if (!auto_resize_table(h)) {
+		return false;
+	}
+
+	return r;
+}
 
 bool hash_del(struct hash *h, const char *key)
 {
 	size_t pos;
 	struct entry *entry;
+	bool found = false;
 
 	pos = murmurhash2(key, strlen(key)) % h->table_size;
 
-	for (;;) {
+	for (int i = 0; i < h->table_size; i++) {
 		entry = h->entries + pos;
 		if (entry->in_use == NEVER) {
 			/* We got to a never used key, not found. */
@@ -254,28 +297,33 @@ bool hash_del(struct hash *h, const char *key)
 		} else if (entry->in_use == IN_USE &&
 				strcmp(key, entry->key) == 0) {
 			/* The key matches, remove it. */
-			free(entry->key);
-			h->destructor(entry->value);
-			entry->key = NULL;
-			entry->value = NULL;
-			entry->in_use = REMOVED;
+			found = true;
 			break;
-		} else {
-			/* The key doesn't match, linear probing. */
-			pos = (pos + 1) % h->table_size;
 		}
+
+		/* The key doesn't match this entry, continue with linear probing. */
+		pos = (pos + 1) % h->table_size;
 	}
 
-	if (h->table_size > MIN_SIZE &&
-			(float) h->nentries / h->table_size < 0.5) {
-		/* If we're over 50% free, shrink. */
-		if (!resize_table(h, h->table_size * 0.8))
-			return false;
+	if (!found) {
+		return false;
 	}
+
+	/* Remove the entry */
+	free(entry->key);
+	h->destructor(entry->value);
+	entry->key = NULL;
+	entry->value = NULL;
+	entry->in_use = REMOVED;
+	h->nentries--;
+	h->nremoved++;
+
+	if (!auto_resize_table(h))
+		return false;
 
 	return true;
-
 }
+
 
 /* Generic, simple cache.
  *
@@ -436,7 +484,7 @@ bool cache_del(struct cache *c, const char *key)
 		free(e->key);
 		e->key = NULL;
 		e->value = NULL;
-		e->in_use = REMOVED;
+		e->in_use = NEVER;
 		pthread_rwlock_unlock(&c->lock);
 		return true;
 	}
