@@ -289,10 +289,22 @@ static void clear_ferror(void * stream)
 
 			for (;;) {
 				int next_index = (index + 1) % MAX_FERROR_TRACKED_FILES;
-				ferror_hash_table[index] = ferror_hash_table[next_index];
 
-				if (ferror_hash_table[index] == NULL)
-					break;
+				/* Break if next entry is not a collision or if there is
+				 * nothing to copy back. */
+
+				int next_hash_value = (int) (
+					(uintptr_t) ferror_hash_table[next_index]
+					% MAX_FERROR_TRACKED_FILES);
+
+				if (next_index == next_hash_value
+						|| ferror_hash_table[next_index] == NULL) {
+
+				    ferror_hash_table[index] = NULL;
+				    break;
+				}
+
+				ferror_hash_table[index] = ferror_hash_table[next_index];
 
 				index = next_index;
 			}
@@ -421,6 +433,47 @@ void clearerr (FILE *stream)
 	rec_dec();
 }
 
+/* Custom wrapper for fclose() that clears ferror_hash_table. */
+mkwrap_top(int , fclose, (FILE *stream), (stream), (FILE *), (EOF))
+	static const int valid_errnos[] = {
+	  #ifdef EAGAIN
+		EAGAIN,
+	  #endif
+	  #ifdef EBADF
+		EBADF,
+	  #endif
+	  #ifdef EFBIG
+		EFBIG,
+	  #endif
+	  #ifdef EFBIG
+		EFBIG,
+	  #endif
+	  #ifdef EINTR
+		EINTR,
+	  #endif
+	  #ifdef EIO
+		EIO,
+	  #endif
+	  #ifdef ENOMEM
+		ENOMEM,
+	  #endif
+	  #ifdef ENOSPC
+		ENOSPC,
+	  #endif
+	  #ifdef EPIPE
+		EPIPE,
+	  #endif
+	  #ifdef ENXIO
+		ENXIO,
+	  #endif
+	};
+mkwrap_body_errno("posix/stdio/oc/fclose", EOF)
+
+/* We need a custom injection of clear_ferror here to prevent stale entries in
+ * ferror_hash_table. */
+	clear_ferror(stream);
+
+mkwrap_bottom(fclose, (stream))
 
 
 /*
