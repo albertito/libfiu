@@ -4,7 +4,7 @@
  */
 
 #include "codegen.h"
-
+#include "hash.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -185,57 +185,58 @@ mkwrap_bottom(open64, (pathname, flags, mode))
 #endif
 
 /*
- * Here we keep track of when a FILE* I/O operation fails and fix ferror
- * accordingly.
+ * To simulate ferror() properly, we need to keep track of which FILE * have
+ * we returned a failure for.
+ *
+ * To do that, we keep a set of FILE *. This set is implemented using a hash
+ * table, for convenience.
+ *
+ * An alternative would be to have a static array, but then lookups would
+ * scale linearly with the number of files we're expected to fail, and (most
+ * importantly) require a new data type just for this.
  */
+static hash_t *ferror_hash_table;
+static pthread_mutex_t ferror_hash_table_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#define MAX_FERROR_TRACKED_FILES 16384
+static void constructor_attr(200) _fiu_init_ferror_hash_table(void)
+{
+	rec_inc();
+	pthread_mutex_lock(&ferror_hash_table_mutex);
 
-static void * ferror_hash_table[MAX_FERROR_TRACKED_FILES] = {NULL};
+	// Create the hash table. No need for a value destructor, as our values
+	// are not pointers but static values.
+	ferror_hash_table = hash_create(NULL);
 
-static int ferror_hash_table_usage = 0;
+	pthread_mutex_unlock(&ferror_hash_table_mutex);
+	rec_dec();
+}
 
-static pthread_mutex_t ferror_hash_table_usage_mutex
-	= PTHREAD_MUTEX_INITIALIZER;
+/* Our hash table uses character keys, to convert stream to keys we just get
+ * the hexadecimal representation via %p.
+ * 64 bit pointers fit in 18 characters, use 20 so we have room for \0 and
+ * more practical alignment. */
+#define STREAM_KEY_SIZE 20
+
+static void stream_to_key(void *stream, char key[STREAM_KEY_SIZE])
+{
+	snprintf(key, STREAM_KEY_SIZE, "%p", stream);
+}
 
 void set_ferror(void * stream)
 {
 	if (stream == NULL)
 		return;
 
-	/* Hash table has to have at least one empty position. */
-	if (ferror_hash_table_usage + 1 == MAX_FERROR_TRACKED_FILES) {
-		/* Original call is already failing, so we cannot report this
-		 * otherwise. */
-		fprintf(stderr, "libfiu: ferror() hash table is full, ferror() will"
-			" not be faked for this file (too many open files)\n");
-		return;
-	}
+	char key[STREAM_KEY_SIZE];
+	stream_to_key(stream, key);
 
-	pthread_mutex_lock(&ferror_hash_table_usage_mutex);
+	pthread_mutex_lock(&ferror_hash_table_mutex);
 
-	/* Our hash function is taking the least significant bits of a FILE *. */
-	uintptr_t ptr = (uintptr_t) stream;
+	// Use a dummy the value; we don't care about it, we only need to be able to
+	// distinguish it from NULL.
+	hash_set(ferror_hash_table, key, (void *) 0xDEAD);
 
-	int index = (int) (ptr % MAX_FERROR_TRACKED_FILES);
-
-	for (;;) {
-		if (ferror_hash_table[index] == stream) {
-			// found => do nothing
-			break;
-		}
-
-		if (ferror_hash_table[index] == NULL) {
-			// not found => insert
-			ferror_hash_table[index] = stream;
-			ferror_hash_table_usage++;
-			break;
-		}
-
-		index = (index + 1) % MAX_FERROR_TRACKED_FILES;
-	}
-
-	pthread_mutex_unlock(&ferror_hash_table_usage_mutex);
+	pthread_mutex_unlock(&ferror_hash_table_mutex);
 }
 
 static int get_ferror(void * stream)
@@ -243,33 +244,16 @@ static int get_ferror(void * stream)
 	if (stream == NULL)
 		return 1;
 
-	pthread_mutex_lock(&ferror_hash_table_usage_mutex);
+	char key[STREAM_KEY_SIZE];
+	stream_to_key(stream, key);
 
-	uintptr_t ptr = (uintptr_t) stream;
+	pthread_mutex_lock(&ferror_hash_table_mutex);
 
-	int index = (int) (ptr % MAX_FERROR_TRACKED_FILES);
+	void *value = hash_get(ferror_hash_table, key);
 
-	int r;
+	pthread_mutex_unlock(&ferror_hash_table_mutex);
 
-	for (;;) {
-		if (ferror_hash_table[index] == stream) {
-			// found
-			r = 1;
-			break;
-		}
-
-		if (ferror_hash_table[index] == NULL) {
-			// not found
-			r = 0;
-			break;
-		}
-
-		index = (index + 1) % MAX_FERROR_TRACKED_FILES;
-	}
-
-	pthread_mutex_unlock(&ferror_hash_table_usage_mutex);
-
-	return r;
+	return value != NULL;
 }
 
 static void clear_ferror(void * stream)
@@ -277,52 +261,14 @@ static void clear_ferror(void * stream)
 	if (stream == NULL)
 		return;
 
-	pthread_mutex_lock(&ferror_hash_table_usage_mutex);
+	char key[STREAM_KEY_SIZE];
+	stream_to_key(stream, key);
 
-	uintptr_t ptr = (uintptr_t) stream;
+	pthread_mutex_lock(&ferror_hash_table_mutex);
 
-	int index = (int) (ptr % MAX_FERROR_TRACKED_FILES);
+	hash_del(ferror_hash_table, key);
 
-	for (;;) {
-		if (ferror_hash_table[index] == stream) {
-			/* found => clear and move back colliding entries. */
-
-			for (;;) {
-				int next_index = (index + 1) % MAX_FERROR_TRACKED_FILES;
-
-				/* Break if next entry is not a collision or if there is
-				 * nothing to copy back. */
-
-				int next_hash_value = (int) (
-					(uintptr_t) ferror_hash_table[next_index]
-					% MAX_FERROR_TRACKED_FILES);
-
-				if (next_index == next_hash_value
-						|| ferror_hash_table[next_index] == NULL) {
-
-				    ferror_hash_table[index] = NULL;
-				    break;
-				}
-
-				ferror_hash_table[index] = ferror_hash_table[next_index];
-
-				index = next_index;
-			}
-
-			ferror_hash_table_usage--;
-
-			break;
-		}
-
-		if (ferror_hash_table[index] == NULL) {
-			/* not found => do nothing */
-			break;
-		}
-
-		index = (index + 1) % MAX_FERROR_TRACKED_FILES;
-	}
-
-	pthread_mutex_unlock(&ferror_hash_table_usage_mutex);
+	pthread_mutex_unlock(&ferror_hash_table_mutex);
 }
 
 

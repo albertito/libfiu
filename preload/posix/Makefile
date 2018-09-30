@@ -98,8 +98,9 @@ build-env.h: build-env.h.in build-libcsoname
 		> build-env.h
 
 
-fiu_posix_preload.so: build-flags build-env.h build-needlibdl $(OBJS)
-	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) \
+fiu_posix_preload.so: build-flags build-env.h build-needlibdl \
+		$(OBJS) ../../libfiu/hash.c
+	$(NICE_CC) $(ALL_CFLAGS) -shared -fPIC $(OBJS) ../../libfiu/hash.c \
 		-L../../libfiu/ \
 		-lfiu `cat build-needlibdl` \
 		-o fiu_posix_preload.so

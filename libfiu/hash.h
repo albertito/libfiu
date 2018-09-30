@@ -5,6 +5,7 @@
 /* Generic hash table. See hash.c for more information. */
 
 #include <sys/types.h>		/* for size_t */
+#include <stdbool.h>		/* for bool */
 #include <stdint.h>		/* for int64_t */
 
 typedef struct hash hash_t;
