@@ -273,47 +273,12 @@ static void clear_ferror(void * stream)
 
 
 /* Wrapper for ferror() */
-static __thread int (*_fiu_orig_ferror) (FILE *stream) = NULL;
+mkwrap_top(int, ferror, (FILE *stream), (stream), (FILE *), 1)
+mkwrap_body_hardcoded("posix/stdio/error/ferror", 1)
 
-static __thread int _fiu_in_init_ferror = 0;
-
-static void __attribute__((constructor(201))) _fiu_init_ferror(void) {
-	rec_inc();
-	_fiu_in_init_ferror++;
-	_fiu_orig_ferror = (int (*) (FILE *)) libc_symbol("ferror");
-	_fiu_in_init_ferror--;
-	rec_dec();
-}
-
-int ferror (FILE *stream)
-{
-	int r;
-	int fstatus;
-	if (_fiu_called) {
-		if (_fiu_orig_ferror == NULL) {
-			if (_fiu_in_init_ferror) {
-				printd("fail on init\n");
-				return 1;
-			} else {
-				printd("get orig\n");
-				_fiu_init_ferror();
-			}
-		}
-
-		printd("orig\n");
-		return (*_fiu_orig_ferror) (stream);
-	}
-	printd("fiu\n");
-
-	/* fiu_fail() may call anything */
-	rec_inc();
-	fstatus = fiu_fail("posix/stdio/error/ferror");
-	if (fstatus != 0) {
-		r = 1;
-		printd("failing\n");
-		goto exit;
-	}
-
+	/* The following is like mkwrap_bottom(), but has an additional check to
+	 * return 1 if we previously returned an error for this file, so the
+	 * semantics are consistent. */
 	if (_fiu_orig_ferror == NULL)
 		_fiu_init_ferror();
 
@@ -331,40 +296,13 @@ exit:
 }
 
 
-
-/* Wrapper for clearerr() */
-static __thread void (*_fiu_orig_clearerr) (FILE *stream) = NULL;
-
-static __thread int _fiu_in_init_clearerr = 0;
-
-static void __attribute__((constructor(201))) _fiu_init_clearerr(void)
-{
-	rec_inc();
-	_fiu_in_init_clearerr++;
-	_fiu_orig_clearerr = (void (*) (FILE *)) libc_symbol("clearerr");
-	_fiu_in_init_clearerr--;
-	rec_dec();
-}
+/* Custom wrapper for clearerr().
+ * This function does not fail as such, but we override it so we can provide a
+ * consistent view. */
+mkwrap_init(void, clearerr, (FILE *stream), (FILE *))
 
 void clearerr (FILE *stream)
 {
-	if (_fiu_called) {
-		if (_fiu_orig_clearerr == NULL) {
-			if (_fiu_in_init_clearerr) {
-				printd("fail on init\n");
-				return;
-			} else {
-				printd("get orig\n");
-				_fiu_init_clearerr();
-			}
-		}
-		printd("orig\n");
-		(*_fiu_orig_clearerr) (stream);
-		return;
-	}
-
-	printd("fiu\n");
-
 	rec_inc();
 
 	if (_fiu_orig_clearerr == NULL)
@@ -378,6 +316,7 @@ void clearerr (FILE *stream)
 
 	rec_dec();
 }
+
 
 /* Custom wrapper for fclose() that clears ferror_hash_table. */
 mkwrap_top(int , fclose, (FILE *stream), (stream), (FILE *), (EOF))
