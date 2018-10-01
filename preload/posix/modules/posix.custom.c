@@ -224,9 +224,6 @@ static void stream_to_key(void *stream, char key[STREAM_KEY_SIZE])
 
 void set_ferror(void * stream)
 {
-	if (stream == NULL)
-		return;
-
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
 
@@ -241,9 +238,6 @@ void set_ferror(void * stream)
 
 static int get_ferror(void * stream)
 {
-	if (stream == NULL)
-		return 1;
-
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
 
@@ -258,9 +252,6 @@ static int get_ferror(void * stream)
 
 static void clear_ferror(void * stream)
 {
-	if (stream == NULL)
-		return;
-
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
 
