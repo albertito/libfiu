@@ -6,6 +6,7 @@
 #include "codegen.h"
 #include "hash.h"
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -212,14 +213,13 @@ static void constructor_attr(200) _fiu_init_ferror_hash_table(void)
 }
 
 /* Our hash table uses character keys, to convert stream to keys we just get
- * the hexadecimal representation via %p.
- * 64 bit pointers fit in 18 characters, use 20 so we have room for \0 and
- * more practical alignment. */
-#define STREAM_KEY_SIZE 20
+ * the hexadecimal representation via PRIxPTR (%p is implementation
+ * dependent). */
+#define STREAM_KEY_SIZE (sizeof(uintptr_t) * 2 + 1)
 
 static void stream_to_key(void *stream, char key[STREAM_KEY_SIZE])
 {
-	snprintf(key, STREAM_KEY_SIZE, "%p", stream);
+	snprintf(key, STREAM_KEY_SIZE, "%" PRIxPTR, (uintptr_t) stream);
 }
 
 void set_ferror(void * stream)
