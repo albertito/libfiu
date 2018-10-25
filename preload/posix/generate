@@ -183,6 +183,7 @@ class Function:
 		f.params_info = [
 			(x, y) if x != "const fpos_t *" else ("const fpos64_t *", y)
 			for (x, y) in f.params_info]
+		f.ret_type = f.ret_type.replace("off_t", "off64_t")
 
 		# This is glibc-specific, so surround it with #ifdefs.
 		return [Verbatim("#ifdef __GLIBC__"), f, Verbatim("#endif")]
