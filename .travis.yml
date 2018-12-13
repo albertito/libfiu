@@ -1,5 +1,7 @@
 # Configuration for https://travis-ci.org/
 
+dist: xenial
+
 language: c
 
 compiler:
@@ -9,6 +11,7 @@ compiler:
 addons:
     apt:
         packages:
+            - coreutils
             - python-dev
             - python3-dev
 
