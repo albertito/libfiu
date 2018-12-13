@@ -198,8 +198,9 @@ mkwrap_bottom(open64, (pathname, flags, mode))
  */
 static hash_t *ferror_hash_table;
 static pthread_mutex_t ferror_hash_table_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_once_t ferror_hash_table_is_initialized = PTHREAD_ONCE_INIT;
 
-static void constructor_attr(200) _fiu_init_ferror_hash_table(void)
+static void _fiu_init_ferror_hash_table(void)
 {
 	rec_inc();
 	pthread_mutex_lock(&ferror_hash_table_mutex);
@@ -227,6 +228,9 @@ void set_ferror(void * stream)
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
 
+	pthread_once(&ferror_hash_table_is_initialized,
+			_fiu_init_ferror_hash_table);
+
 	pthread_mutex_lock(&ferror_hash_table_mutex);
 
 	// Use a dummy the value; we don't care about it, we only need to be able to
@@ -241,6 +245,9 @@ static int get_ferror(void * stream)
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
 
+	pthread_once(&ferror_hash_table_is_initialized,
+			_fiu_init_ferror_hash_table);
+
 	pthread_mutex_lock(&ferror_hash_table_mutex);
 
 	void *value = hash_get(ferror_hash_table, key);
@@ -254,6 +261,9 @@ static void clear_ferror(void * stream)
 {
 	char key[STREAM_KEY_SIZE];
 	stream_to_key(stream, key);
+
+	pthread_once(&ferror_hash_table_is_initialized,
+			_fiu_init_ferror_hash_table);
 
 	pthread_mutex_lock(&ferror_hash_table_mutex);
 
