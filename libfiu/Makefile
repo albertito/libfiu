@@ -1,6 +1,7 @@
 
 CFLAGS += -std=c99 -pedantic -Wall
-ALL_CFLAGS = -D_XOPEN_SOURCE=600 -fPIC -DFIU_ENABLE=1 $(CFLAGS)
+ALL_CFLAGS = -D_XOPEN_SOURCE=600 -fPIC -DFIU_ENABLE=1 \
+		$(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 # Optimization CFLAGS, only used when doing a non-debug build.
 OPT_CFLAGS = -O3
