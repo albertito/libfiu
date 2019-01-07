@@ -6,7 +6,6 @@
 #include <stdio.h>		/* snprintf() */
 #include <string.h>		/* strncpy() */
 #include <stdlib.h>		/* malloc()/free() */
-#include <limits.h>		/* PATH_MAX */
 #include <sys/types.h>		/* getpid(), mkfifo() */
 #include <unistd.h>		/* getpid() */
 #include <sys/stat.h>		/* mkfifo() */
@@ -225,9 +224,9 @@ static int rc_do_command(int fdr, int fdw)
  * removed. If the process forks, a new pipe will be created.
  */
 
-static char npipe_basename[PATH_MAX] = {0};
-static char npipe_path_in[PATH_MAX] = {0};
-static char npipe_path_out[PATH_MAX] = {0};
+static char *npipe_basename = NULL;
+static char *npipe_path_in = NULL;
+static char *npipe_path_out = NULL;
 
 static void *rc_fifo_thread(void *unused)
 {
@@ -289,8 +288,17 @@ static int _fiu_rc_fifo(const char *basename)
 	/* see rc_fifo_thread() */
 	rec_count++;
 
-	snprintf(npipe_path_in, PATH_MAX, "%s-%d.in", basename, getpid());
-	snprintf(npipe_path_out, PATH_MAX, "%s-%d.out", basename, getpid());
+	/* Allocate the pipe paths. Will be composed of
+	 * "<basename>-<pid>.[in|out]", so leave plenty of room for the last
+	 * part, to handle potentially long pids.
+	 * These live through the entire life of the binary and are never
+	 * freed. */
+	int path_len = strlen(basename) + 40;
+	npipe_path_in = malloc(path_len);
+	npipe_path_out = malloc(path_len);
+
+	snprintf(npipe_path_in, path_len, "%s-%d.in", basename, getpid());
+	snprintf(npipe_path_out, path_len, "%s-%d.out", basename, getpid());
 
 	if (mkfifo(npipe_path_in, 0600) != 0 && errno != EEXIST) {
 		rec_count--;
@@ -329,7 +337,7 @@ int fiu_rc_fifo(const char *basename)
 	if (r < 0)
 		return r;
 
-	strncpy(npipe_basename, basename, PATH_MAX - 1);
+	npipe_basename = strdup(basename);
 	pthread_atfork(NULL, NULL, fifo_atfork_child);
 
 	return r;
