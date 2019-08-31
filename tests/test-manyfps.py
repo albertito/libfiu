@@ -15,11 +15,11 @@ for i in range(N):
 
 # Remove only half and check again; this will stress the shrinking of our data
 # structures.
-for i in range(N / 2):
+for i in range(N // 2):
     fiu.disable(str(i))
 
-for i in range(N / 2, N):
+for i in range(N // 2, N):
     assert fiu.fail(str(i))
 
-for i in range(N / 2, N):
+for i in range(N // 2, N):
     fiu.disable(str(i))

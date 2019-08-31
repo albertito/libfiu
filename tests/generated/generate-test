@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Generate C testcases based on the given configuration file.
@@ -8,13 +8,13 @@ testing a wrapper.
 """
 
 import sys
-import ConfigParser
+import configparser
 import argparse
 from string import Template
 
 
 def listify(x):
-	if isinstance(x, (str, unicode)):
+	if isinstance(x, str):
 		return [x]
 	return x
 
@@ -103,7 +103,7 @@ def generate(options, outfile):
 	outfile.write("#include <errno.h>\n")
 
 	includes = options.get("include", [])
-	if isinstance(includes, (str, unicode)):
+	if isinstance(includes, str):
 		includes = includes.split()
 	for i in includes:
 		outfile.write("#include <%s>\n" % i)
@@ -135,7 +135,7 @@ def main():
 	parser = argparse.ArgumentParser(
 			description ="Generate C testcases")
 	parser.add_argument("-c", "--conf", metavar = "C",
-			required = True, type = file,
+			required = True, type = argparse.FileType('rt'),
 			help = "configuration file")
 	parser.add_argument("-o", "--out", metavar = "F",
 			required = True,
@@ -158,8 +158,8 @@ def main():
 		# anything.
 	}
 
-	conf = ConfigParser.SafeConfigParser(conf_defaults)
-	conf.readfp(args.conf)
+	conf = configparser.ConfigParser(conf_defaults)
+	conf.read_file(args.conf)
 
 	section = conf.sections()[0]
 

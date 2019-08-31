@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf8
 
 """
@@ -67,7 +67,7 @@ def get_ret_on_error(sections):
 
 	# remove spaces and newlines to make it easier detect the patterns
 	s = ' '.join(sections['RETURN VALUE'].split())
-	print s
+	print(s)
 
 	# Note: the '(-|‐)' regexp matches both the normal minus sign ('-')
 	# and the UTF-8 hypen sign ('‐', or \xe2\x80\x90); sadly both usually
@@ -80,7 +80,7 @@ def get_ret_on_error(sections):
 		r'[Oo]ther((-|‐) )?wise, (?P<ev>[-\w]+) shall be returned',
 		r'Other((-|‐) )?wise, the functions shall return (?P<ev>[-\w]+) and'
 	]
-	regexps = map(re.compile, regexps)
+	regexps = list(map(re.compile, regexps))
 
 	possible_errors = []
 	for regexp in regexps:
@@ -141,7 +141,7 @@ def get_defs(sections):
 if __name__ == '__main__':
 
 	if len(sys.argv) > 1:
-		print __doc__
+		print(__doc__)
 		sys.exit(1)
 
 	s = extract_sections(sys.stdin)
@@ -149,16 +149,16 @@ if __name__ == '__main__':
 	errnos = get_possible_errnos(s)
 	incs, funcs = get_defs(s)
 
-	print '\n'.join( 'include: ' + i for i in incs)
-	print
+	print('\n'.join( 'include: ' + i for i in incs))
+	print()
 
-	print '\n'.join(funcs)
+	print('\n'.join(funcs))
 
 	if on_error:
-		print '\ton error:', ' || '.join(on_error)
+		print('\ton error:', ' || '.join(on_error))
 
 	if errnos:
-		print '\tvalid errnos:', wrap(' '.join(sorted(set(errnos))),
-				60, indent = 2)
+		print('\tvalid errnos:', wrap(' '.join(sorted(set(errnos))),
+				60, indent = 2))
 
 

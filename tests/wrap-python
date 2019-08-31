@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Python wrapper, which makes it able to import the built (and not the
 # installed) version of libfiu.
@@ -34,7 +34,7 @@ os.environ["LD_LIBRARY_PATH"] = ":".join([lib_path, \
 # Find out the corresponding module path for the desired python version. The
 # path must be absolute
 mod_bins = glob.glob(os.path.dirname(sys.argv[0]) +
-			"/../bindings/python/build/lib*-%s.*/fiu_ll.so" \
+			"/../bindings/python/build/lib*-%s.*/fiu.py" \
 				% py_ver)
 if not mod_bins:
 	sys.stderr.write(("Can't find python%s bindings, run " +

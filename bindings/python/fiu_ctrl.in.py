@@ -109,7 +109,7 @@ class PipeControl (_ControlBase):
     def _open_pipes(self):
         # Open the files, but wait if they are not there, as the child process
         # may not have created them yet.
-        fd_in = _open_with_timeout(self.path_in, "a")
+        fd_in = _open_with_timeout(self.path_in, "w")
         fd_out = _open_with_timeout(self.path_out, "r")
         return fd_in, fd_out
 

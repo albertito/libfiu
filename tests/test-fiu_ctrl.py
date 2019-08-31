@@ -14,6 +14,7 @@ fiu_ctrl.PLIBPATH = "./libs/"
 
 def run_cat(**kwargs):
     return fiu_ctrl.Subprocess(["./small-cat"],
+        universal_newlines = True,
         stdin = subprocess.PIPE, stdout = subprocess.PIPE,
         stderr = subprocess.PIPE, **kwargs)
 

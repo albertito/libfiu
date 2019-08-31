@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Performance tests using fsck.ext2 on a test file.
@@ -52,14 +52,14 @@ def run_and_time(name, args):
     end = time.time()
 
     if verbose == 2:
-        print 'Ran %s -> %d' % (args, status)
+        print('Ran %s -> %d' % (args, status))
 
     if status != 0:
-        print 'Error running %s: %s' % (args[0], status)
+        print('Error running %s: %s' % (args[0], status))
         raise RuntimeError
 
-    print '%-10s u:%.3f  s:%.3f  r:%.3f' % (
-            name, rusage.ru_utime, rusage.ru_stime, end - start)
+    print('%-10s u:%.3f  s:%.3f  r:%.3f' % (
+            name, rusage.ru_utime, rusage.ru_stime, end - start))
 
 
 def run_fsck(name, fiu_args):
@@ -72,7 +72,7 @@ def run_fsck(name, fiu_args):
     stdout, stderr = child.communicate()
 
     if child.returncode != 0:
-        print 'Error running fsck: %s' % child.returncode
+        print('Error running fsck: %s' % child.returncode)
         raise RuntimeError
 
     # Find the times reported by fsck.
@@ -95,8 +95,8 @@ def run_fsck(name, fiu_args):
         sys_time = float(times[2])
         break
 
-    print '%-10s u:%.3f  s:%.3f  r:%.3f' % (
-            name, user_time, sys_time, real_time)
+    print('%-10s u:%.3f  s:%.3f  r:%.3f' % (
+            name, user_time, sys_time, real_time))
 
 
 def check_test_file():
@@ -110,7 +110,7 @@ def check_test_file():
             ["mkfs.ext2", "-F", test_file],
             stdout = open('/dev/null', 'w'))
     if retcode != 0:
-        print 'Error running mkfs.ext2:', retcode
+        print('Error running mkfs.ext2:', retcode)
         return
 
 

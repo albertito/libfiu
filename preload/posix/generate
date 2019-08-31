@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Reads function information and generates code for the preloader library.
@@ -88,8 +88,7 @@ class Function:
 			elif k == 'variants':
 				self.variants = v.split();
 			else:
-				raise SyntaxError, \
-					"Unknown information: " + k
+				raise SyntaxError("Unknown information: " + k)
 
 	def __repr__(self):
 		s = '<F %(rt)s %(n)s ( %(p)s ) -- %(fn)s %(oe)s %(ve)s>' % \
@@ -124,7 +123,7 @@ class Function:
 			if self.on_error is None:
 				desc = "%s uses errno but has no on_error" % \
 					self.name
-				raise RuntimeError, desc
+				raise RuntimeError(desc)
 
 			# We can't put this as a macro parameter, so it has to
 			# be explicit 
@@ -163,7 +162,7 @@ class Function:
 
 	def apply_variant(self, v):
 		if v != 'off64_t':
-			raise SyntaxError, "Unknown function variant: " + v
+			raise SyntaxError("Unknown function variant: " + v)
 
 		f = copy.copy(self)
 
@@ -289,8 +288,7 @@ def parse_module(path):
 				elif k == 'v':
 					directives.append(Verbatim(v))
 				else:
-					raise SyntaxError, \
-						("Unknown directive", l)
+					raise SyntaxError("Unknown directive", l)
 			else:
 				current_func = Function(l, ctx)
 		else:
@@ -342,7 +340,7 @@ def write_function_list(directives, path):
 
 
 def usage():
-	print "Use: ./generate input.mod output.c file_list.fl"
+	print("Use: ./generate input.mod output.c file_list.fl")
 
 def main():
 	if len(sys.argv) < 4:

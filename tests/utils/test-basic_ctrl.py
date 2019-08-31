@@ -1,11 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import subprocess
 import time
 
 def fiu_ctrl(p, args):
-    subprocess.check_call("./wrap fiu-ctrl".split() + args + [str(p.pid)])
+    subprocess.check_call("./wrap fiu-ctrl".split() + args + [str(p.pid)],
+            universal_newlines = True)
 
 def launch_sh():
     # We use cat as a subprocess as it is reasonably ubiquitous, simple and
@@ -15,6 +16,7 @@ def launch_sh():
     # We also set LC_ALL=C as we test the output for the word "error", which
     # does not necessarily appear in other languages.
     p = subprocess.Popen("./wrap fiu-run -x cat".split(),
+            universal_newlines = True,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=dict(os.environ, LC_ALL="C"))
@@ -34,7 +36,8 @@ def send_cmd(p, cmd):
 
 # Launch a subprocess and check that it shows up in fiu-ls.
 p = launch_sh()
-out = subprocess.check_output("./wrap fiu-ls".split())
+out = subprocess.check_output("./wrap fiu-ls".split(),
+        universal_newlines = True)
 assert ("%s: cat" % p.pid) in out, out
 
 # Send it a command and check that it works.

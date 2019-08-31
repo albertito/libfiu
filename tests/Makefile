@@ -16,13 +16,13 @@ ifneq ($(V), 1)
 	NICE_RUN = @echo "  RUN $<"; \
 		   LD_LIBRARY_PATH=../libfiu/ \
 		   LD_PRELOAD=./libs/fiu_run_preload.so:./libs/fiu_posix_preload.so
-	NICE_PY = @echo "  PY  $<"; ./wrap-python 2
+	NICE_PY = @echo "  PY  $<"; ./wrap-python 3
 	NICE_LN = @echo "  LN $@"; ln -f
 else
 	NICE_CC = $(CC)
 	NICE_RUN = LD_LIBRARY_PATH=../libfiu/ \
 		   LD_PRELOAD=./libs/fiu_run_preload.so:./libs/fiu_posix_preload.so
-	NICE_PY = ./wrap-python 2
+	NICE_PY = ./wrap-python 3
 	NICE_LN = ln -f
 endif
 
