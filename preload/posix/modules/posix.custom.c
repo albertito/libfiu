@@ -440,7 +440,7 @@ mkwrap_bottom(fclose, (stream))
 /* fprintf() -> vfprintf() */
 mkwrap_init(int, vfprintf,
 	(FILE *restrict stream, const char *restrict format, va_list ap),
-	(FILE *restrict, const char *restrict, va_list));
+	(FILE *restrict, const char *restrict, va_list))
 
 mkwrap_variadic_def_and_body_called(int, fprintf, vfprintf,
 	(FILE *restrict stream, const char *restrict format, ...),
@@ -490,7 +490,7 @@ mkwrap_variadic_bottom(fprintf, vfprintf, (stream, format, arguments), format)
 /* printf() -> vprintf() */
 mkwrap_init(int, vprintf,
 	(const char *restrict format, va_list ap),
-	(const char *restrict, va_list));
+	(const char *restrict, va_list))
 
 mkwrap_variadic_def_and_body_called(int, printf, vprintf,
 	(const char *restrict format, ...),
@@ -540,7 +540,7 @@ mkwrap_variadic_bottom(printf, vprintf, (format, arguments), format)
 /* dprintf() -> vdprintf() */
 mkwrap_init(int, vdprintf,
 	(int fildes, const char *restrict format, va_list ap),
-	(int, const char *restrict, va_list));
+	(int, const char *restrict, va_list))
 
 mkwrap_variadic_def_and_body_called(int, dprintf, vdprintf,
 	(int fildes, const char *restrict format, ...),
@@ -590,7 +590,7 @@ mkwrap_variadic_bottom(dprintf, vdprintf, (fildes, format, arguments), format)
 /* fscanf() -> vfscanf() */
 mkwrap_init(int, vfscanf,
 	(FILE *restrict stream, const char *restrict format, va_list ap),
-	(FILE *restrict, const char *restrict, va_list));
+	(FILE *restrict, const char *restrict, va_list))
 
 mkwrap_variadic_def_and_body_called(int, fscanf, vfscanf,
 	(FILE *restrict stream, const char *restrict format, ...),
@@ -634,7 +634,7 @@ mkwrap_variadic_bottom(fscanf, vfscanf, (stream, format, arguments), format)
 /* scanf() -> vscanf() */
 mkwrap_init(int, vscanf,
 	(const char *restrict format, va_list ap),
-	(const char *restrict, va_list));
+	(const char *restrict, va_list))
 
 mkwrap_variadic_def_and_body_called(int, scanf, vscanf,
 	(const char *restrict format, ...),
