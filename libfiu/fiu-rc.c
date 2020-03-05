@@ -197,13 +197,15 @@ static int rc_do_command(int fdr, int fdw)
 {
 	int len, r, reply_len;
 	char buf[MAX_LINE], reply[MAX_LINE];
-	char *error;
+	char *error = NULL;
 
 	len = read_line(fdr, buf);
 	if (len <= 0)
 		return len;
 
 	r = fiu_rc_string(buf, &error);
+	if (r < 0)
+		fprintf(stderr, "fiu_rc_string error: %s\n", error);
 
 	reply_len = snprintf(reply, MAX_LINE, "%d\n", r);
 	r = write(fdw, reply, reply_len);
