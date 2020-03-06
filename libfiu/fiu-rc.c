@@ -205,7 +205,7 @@ static int rc_do_command(int fdr, int fdw)
 
 	r = fiu_rc_string(buf, &error);
 	if (r < 0)
-		fprintf(stderr, "fiu_rc_string error: %s\n", error);
+		fprintf(stderr, "libfiu: rc parsing error: %s\n", error);
 
 	reply_len = snprintf(reply, MAX_LINE, "%d\n", r);
 	r = write(fdw, reply, reply_len);

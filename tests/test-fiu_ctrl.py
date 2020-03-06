@@ -49,6 +49,19 @@ cmd.disable('posix/io/rw/*')
 out, err = p.communicate('test\n')
 assert out == 'test\n', (out, err)
 
+# Bad command.
+cmd = run_cat(fiu_enable_posix = True)
+p = cmd.start()
+exc = None
+try:
+    cmd.run_raw_cmd('badcommand', ["name=a"])
+except Exception as e:
+    exc = e
+assert isinstance(exc, fiu_ctrl.CommandError), "got exception: %r" % exc
+out, err = p.communicate('test\n')
+assert out == 'test\n', out
+assert err == 'libfiu: rc parsing error: Unknown command\n', err
+
 # Enable random.
 # This relies on cat doing a reasonably small number of read and writes, which
 # our small-cat does.
