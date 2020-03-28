@@ -1,6 +1,6 @@
 # Configuration for https://travis-ci.org/
 
-dist: xenial
+dist: bionic
 
 language: c
 
