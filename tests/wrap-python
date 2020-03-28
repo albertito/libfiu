@@ -10,12 +10,16 @@ import os
 import glob
 
 
-if len(sys.argv) < 2 or sys.argv[1] not in ("2", "3"):
+if len(sys.argv) < 2 or sys.argv[1] not in ("2", "2v", "3", "3v"):
 	sys.stderr.write("Error: the first argument must be the " +
 				"version (2 or 3)\n")
 	sys.exit(1)
 
 py_ver = sys.argv[1]
+verbose = False
+if py_ver[-1] == "v":
+    verbose = True
+    py_ver = py_ver[:-1]
 
 
 # Find the path where the library was built and add it to the lookup paths, so
@@ -54,6 +58,11 @@ if py_ver == '2':
 	py_bin = "python"
 else:
 	py_bin = "python3"
+
+if verbose:
+    print("LD_LIBRARY_PATH=%s" % os.environ["LD_LIBRARY_PATH"],
+        "PYTHONPATH=%s" % os.environ["PYTHONPATH"],
+        py_bin, " ".join(sys.argv[2:]))
 
 os.execvp(py_bin, [py_bin] + sys.argv[2:])
 
