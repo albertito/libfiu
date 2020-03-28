@@ -19,7 +19,7 @@ def fail(name):
 	"Returns the failure status of the given point of failure."
 	return _ll.fail(name)
 
-def failinfo(name):
+def failinfo():
 	"""Returns the information associated with the last failure. Use with
 	care, can be fatal if the point of failure was not enabled via
 	Python."""
