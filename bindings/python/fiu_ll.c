@@ -42,10 +42,10 @@ static PyObject *failinfo(PyObject *self, PyObject *args)
 		return NULL;
 
 	/* We assume failinfo is a python object; but the caller must be
-	 * careful because if it's not, it can get into trouble.
-	 * Note that we DO NOT TOUCH THE RC OF THE OBJECT. It's entirely up to
-	 * the caller to make sure it's still alive. */
-	return (PyObject *) fiu_failinfo();
+	 * careful because if it's not, it can get into trouble. */
+	PyObject *rv = fiu_failinfo();
+	Py_XINCREF(rv);
+	return rv;
 }
 
 static PyObject *enable(PyObject *self, PyObject *args)
@@ -59,7 +59,8 @@ static PyObject *enable(PyObject *self, PyObject *args)
 				&flags))
 		return NULL;
 
-	/* See failinfo()'s comment regarding failinfo's RC */
+	/* The caller will guarantee that failinfo doesn't dissapear from under
+	 * our feet. */
 	return PyLong_FromLong(fiu_enable(name, failnum, failinfo, flags));
 }
 
@@ -75,7 +76,8 @@ static PyObject *enable_random(PyObject *self, PyObject *args)
 				&failinfo, &flags, &probability))
 		return NULL;
 
-	/* See failinfo()'s comment regarding failinfo's RC */
+	/* The caller will guarantee that failinfo doesn't dissapear from under
+	 * our feet. */
 	return PyLong_FromLong(fiu_enable_random(name, failnum, failinfo,
 				flags, probability));
 }
