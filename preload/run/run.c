@@ -29,7 +29,7 @@ static void __attribute__((constructor)) fiu_run_init(void)
 		 * accordingly. */
 		char *tok, *state;
 		char *env_copy;
-		char *rc_error;
+		char *rc_error = "no error returned";
 
 		env_copy = strdup(fiu_enable_env);
 		if (env_copy == NULL) {
