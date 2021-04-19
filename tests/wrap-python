@@ -54,10 +54,7 @@ mod_path = os.path.dirname(os.path.abspath(mod_bins[0]))
 os.environ["PYTHONPATH"] = ":".join([mod_path,
 					os.environ.get("PYTHONPATH", "")])
 
-if py_ver == '2':
-	py_bin = "python"
-else:
-	py_bin = "python3"
+py_bin = "python" + py_ver
 
 if verbose:
     print("LD_LIBRARY_PATH=%s" % os.environ["LD_LIBRARY_PATH"],

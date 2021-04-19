@@ -61,17 +61,17 @@ test_clean:
 	$(MAKE) -C tests clean
 
 
-bindings: python2 python3
+bindings: python3
 
-bindings_install: python2_install python3_install
+bindings_install: python3_install
 
 bindings_clean: python_clean
 
 python2: libfiu
-	cd bindings/python && python setup.py build
+	cd bindings/python && python2 setup.py build
 
 python2_install: python2
-	cd bindings/python && python setup.py install
+	cd bindings/python && python2 setup.py install
 
 python3: libfiu
 	cd bindings/python && python3 setup.py build
