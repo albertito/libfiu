@@ -14,6 +14,8 @@ injection of failures.
 
 Python bindings are available in the `bindings/` directory.
 
+[![Gitlab CI status](https://gitlab.com/albertito/libfiu/badges/master/pipeline.svg)](https://gitlab.com/albertito/libfiu/pipelines)
+
 
 ## Documentation
 

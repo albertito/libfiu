@@ -1,0 +1,21 @@
+# Configuration for the GitLab CI.
+
+image: gcc
+
+stages:
+  - test
+
+test:
+  stage: test
+  before_script:
+    - apt update
+    - apt -y install make coreutils python3-dev
+  script:
+    - make all
+    - make test
+  artifacts:
+    when: always
+    expire_in: 1 hour
+    paths:
+      - ./
+
