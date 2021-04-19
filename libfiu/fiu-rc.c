@@ -175,13 +175,17 @@ int fiu_rc_string(const char *cmd, char ** const error)
 
 	/* Excecute the command */
 	if (strcmp(command, "disable") == 0) {
+		*error = "Error in disable";
 		return fiu_disable(fp_name);
 	} else if (strcmp(command, "enable") == 0) {
+		*error = "Error in enable";
 		return fiu_enable(fp_name, failnum, failinfo, flags);
 	} else if (strcmp(command, "enable_random") == 0) {
+		*error = "Error in enable_random";
 		return fiu_enable_random(fp_name, failnum, failinfo,
 				flags, probability);
 	} else if (strcmp(command, "enable_stack_by_name") == 0) {
+		*error = "Error in enable_stack_by_name";
 		return fiu_enable_stack_by_name(fp_name, failnum, failinfo,
 				flags, func_name, func_pos_in_stack);
 	} else {
