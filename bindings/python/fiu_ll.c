@@ -114,7 +114,7 @@ static int external_callback(const char *name, int *failnum, void **failinfo,
 		return 0;
 	}
 
-	cbrv = PyEval_CallObject(*failinfo, args);
+	cbrv = PyObject_CallObject(*failinfo, args);
 	Py_DECREF(args);
 
 	if (cbrv == NULL) {
