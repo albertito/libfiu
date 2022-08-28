@@ -73,16 +73,19 @@ int fiu_enable_external(const char *name, int failnum, void *failinfo,
  * the stack at the given position.
  *
  * This function relies on GNU extensions such as backtrace() and dladdr(), so
- * it may not be available on your platform.
+ * it may not be available on your platform. It's also quite dependent on
+ * compiler behaviour; for example, inline functions may not show up on the
+ * backtrace.
  *
- * - name: point of failure name.
- * - failnum: what will fiu_fail() return, must be != 0.
- * - failinfo: what will fiu_failinfo() return.
- * - flags: flags.
- * - func: pointer to the function.
- * - func_pos: position where we expect the function to be; use -1 for "any".
- * 	Values other than -1 are not supported at the moment, but will be in
- * 	the future.
+ * @param name Name of the point of failure to enable.
+ * @param failnum  What will fiu_fail() return, must be != 0.
+ * @param failinfo  What will fiu_failinfo() return.
+ * @param flags  Flags.
+ * @param func  Pointer to the function.
+ * @param func_pos  Position where we expect the function to be; use -1 for
+ * 		"any".  Values other than -1 are not supported at the moment,
+ * 		but will be in the future.
+ * @returns  0 if success, < 0 otherwise (e.g. backtrace() is not functional).
  */
 int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 		unsigned int flags, void *func, int func_pos_in_stack);
@@ -91,7 +94,9 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
  * the stack at 'func_pos_in_stack'.
  *
  * This function relies on GNU extensions such as backtrace() and dladdr(), so
- * if your platform does not support them, it will always return failure.
+ * if your platform does not support them, it will always return failure. It's
+ * also quite dependent on compiler behaviour; for example, inline functions
+ * may not show up on the backtrace.
  *
  * It is exactly like fiu_enable_stack() but takes a function name, it will
  * ask the dynamic linker to find the corresponding function pointer.
@@ -104,7 +109,7 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
  * @param func_pos_in_stack  Position where we expect the function to be; use
  * 		-1 for "any". Values other than -1 are not supported at the
  * 		moment, but will be in the future.
- * @returns  0 if success, < 0 otherwise.
+ * @returns  0 if success, < 0 otherwise (e.g. backtrace() is not functional).
  */
 int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
 		unsigned int flags, const char *func_name,

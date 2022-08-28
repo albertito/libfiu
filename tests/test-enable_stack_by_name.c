@@ -6,7 +6,7 @@
 #include <fiu.h>
 #include <fiu-control.h>
 
-int func1()
+int __attribute__ ((noinline)) func1()
 {
 	/*
 	int nptrs;
@@ -18,7 +18,7 @@ int func1()
 	return fiu_fail("fp-1") != 0;
 }
 
-int func2()
+int __attribute__ ((noinline)) func2()
 {
 	return func1();
 }
