@@ -38,16 +38,15 @@ os.environ["LD_LIBRARY_PATH"] = ":".join([lib_path, \
 # Find out the corresponding module path for the desired python version. The
 # path must be absolute
 mod_bins = glob.glob(os.path.dirname(sys.argv[0]) +
-			"/../bindings/python/build/lib*-%s.*/fiu.py" \
-				% py_ver)
+            "/../bindings/python/build/lib*/fiu.py")
 if not mod_bins:
 	sys.stderr.write(("Can't find python%s bindings, run " +
 				"make python%s\n") % (py_ver, py_ver))
 	sys.exit(1)
 
 if len(mod_bins) > 1:
-	sys.stderr.write("Found too many matching python%s bindings" \
-				% py_ver)
+	sys.stderr.write("Found too many matching python bindings")
+	sys.stderr.write("Run this and try again: make clean; make python3")
 	sys.exit(1)
 
 mod_path = os.path.dirname(os.path.abspath(mod_bins[0]))
