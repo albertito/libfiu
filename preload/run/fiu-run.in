@@ -83,13 +83,13 @@ function opts_reset() {
 }
 
 function add_deprecated_enable() {
-	if [ "$NAME" == "" ]; then
+	if [ "$DEP_NAME" == "" ]; then
 		return
 	fi;
 
 	PARAMS="name=$DEP_NAME,failnum=$DEP_FAILNUM,failinfo=$DEP_FAILINFO"
-	if [ $PROB -ge 0 ]; then
-		C="enable_random $PARAMS,probability=$PROB"
+	if [ "$DEP_PROB" -ge 0 ]; then
+		C="enable_random $PARAMS,probability=$DEP_PROB"
 	else
 		C="enable $PARAMS"
 	fi
