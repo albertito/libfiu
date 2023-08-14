@@ -67,12 +67,6 @@ bindings_install: python3_install
 
 bindings_clean: python_clean
 
-python2: libfiu
-	cd bindings/python && python2 setup.py build
-
-python2_install: python2
-	cd bindings/python && python2 setup.py install
-
 python3: libfiu
 	cd bindings/python && python3 setup.py build
 
@@ -88,7 +82,7 @@ clean: python_clean preload_clean libfiu_clean utils_clean test_clean
 
 .PHONY: default all clean install all_install uninstall all_uninstall \
 	libfiu libfiu_clean libfiu_install libfiu_uninstall \
-	python2 python2_install python3 python3_install python_clean \
+	python3 python3_install python_clean \
 	bindings bindings_install bindings_clean \
 	preload preload_clean preload_install preload_uninstall \
 	utils utils_clean utils_install utils_uninstall \

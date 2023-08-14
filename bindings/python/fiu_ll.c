@@ -1,11 +1,10 @@
 
 /*
- * Python 2/3 bindings for libfiu
+ * Python 3 bindings for libfiu
  * Alberto Bertogli (albertito@blitiri.com.ar)
  *
  * This is the low-level module, used by the python one to construct
- * friendlier objects. It support both Python 2 and 3, assuming the constants
- * PYTHON2 and PYTHON3 are defined accordingly.
+ * friendlier objects.
  */
 
 #include <Python.h>
@@ -225,35 +224,23 @@ static PyMethodDef fiu_methods[] = {
 	{ NULL }
 };
 
-#ifdef PYTHON3
 static PyModuleDef fiu_module = {
 	PyModuleDef_HEAD_INIT,
 	.m_name = "libfiu",
 	.m_size = -1,
 	.m_methods = fiu_methods,
 };
-#endif
 
-#ifdef PYTHON2
-PyMODINIT_FUNC initfiu_ll(void)
-#else
 PyMODINIT_FUNC PyInit_fiu_ll(void)
-#endif
 {
 	PyObject *m;
 
-#ifdef PYTHON2
-	m = Py_InitModule("fiu_ll", fiu_methods);
-#else
 	m = PyModule_Create(&fiu_module);
-#endif
 
 	PyModule_AddIntConstant(m, "FIU_ONETIME", FIU_ONETIME);
 
 	fiu_init(0);
 
-#ifdef PYTHON3
 	return m;
-#endif
 }
 

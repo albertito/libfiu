@@ -5,12 +5,6 @@ import tempfile
 from distutils.core import setup, Extension
 from distutils.command.build_py import build_py
 
-if sys.version_info[0] == 2:
-	ver_define = ('PYTHON2', '1')
-elif sys.version_info[0] == 3:
-	ver_define = ('PYTHON3', '1')
-
-
 # We need to generate the fiu_ctrl.py file from fiu_ctrl.in.py, replacing some
 # environment variables in its contents.
 class generate_and_build_py (build_py):
@@ -39,7 +33,6 @@ class generate_and_build_py (build_py):
 
 fiu_ll = Extension("fiu_ll",
 		sources = ['fiu_ll.c'],
-		define_macros = [ver_define],
 		libraries = ['fiu'],
 
 		# these two allow us to build without having libfiu installed,
