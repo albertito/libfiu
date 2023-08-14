@@ -9,7 +9,7 @@ test:
   stage: test
   before_script:
     - apt update
-    - apt -y install make coreutils python3-dev
+    - apt -y install make coreutils python3-dev python3-setuptools
   script:
     - make all
     - make test

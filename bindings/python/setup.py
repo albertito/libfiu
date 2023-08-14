@@ -2,8 +2,8 @@
 import os
 import sys
 import tempfile
-from distutils.core import setup, Extension
-from distutils.command.build_py import build_py
+from setuptools import setup, Extension
+from setuptools.command.build_py import build_py
 
 # We need to generate the fiu_ctrl.py file from fiu_ctrl.in.py, replacing some
 # environment variables in its contents.
@@ -20,8 +20,7 @@ class generate_and_build_py (build_py):
         contents = open('fiu_ctrl.in.py', 'rt').read()
         contents = contents.replace('@@PLIBPATH@@', plibpath)
 
-        # Create/update the file atomically, as this could be invoked in
-        # parallel for python 2 and 3, and we don't want to accidentally use
+        # Create/update the file atomically, we don't want to accidentally use
         # partially written files.
         out = tempfile.NamedTemporaryFile(
                 mode = 'wt', delete = False,
@@ -35,7 +34,7 @@ fiu_ll = Extension("fiu_ll",
 		sources = ['fiu_ll.c'],
 		libraries = ['fiu'],
 
-		# these two allow us to build without having libfiu installed,
+		# These two allow us to build without having libfiu installed,
 		# assuming we're in the libfiu source tree
 		include_dirs = ['../../libfiu/'],
 		library_dirs=['../../libfiu/'])
