@@ -1,4 +1,3 @@
-
 """
 Test the creation of many failure points.
 """

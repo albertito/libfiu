@@ -1,13 +1,12 @@
 
-#include <stdio.h>		/* printf() */
-#include <unistd.h>		/* execve() */
-#include <string.h>		/* strtok(), memset(), strncpy() */
-#include <stdlib.h>		/* atoi(), atol() */
-#include <getopt.h>		/* getopt() */
+#include <getopt.h> /* getopt() */
+#include <stdio.h>  /* printf() */
+#include <stdlib.h> /* atoi(), atol() */
+#include <string.h> /* strtok(), memset(), strncpy() */
+#include <unistd.h> /* execve() */
 
-#include <fiu.h>
 #include <fiu-control.h>
-
+#include <fiu.h>
 
 static void __attribute__((constructor)) fiu_run_init(void)
 {
@@ -41,13 +40,12 @@ static void __attribute__((constructor)) fiu_run_init(void)
 		while (tok) {
 			if (fiu_rc_string(tok, &rc_error) != 0) {
 				fprintf(stderr,
-					"fiu_run_preload: Error applying "
-						"FIU_ENABLE commands: %s\n",
-						rc_error);
+				        "fiu_run_preload: Error applying "
+				        "FIU_ENABLE commands: %s\n",
+				        rc_error);
 				return;
 			}
 			tok = strtok_r(NULL, "\n", &state);
 		}
 	}
 }
-

@@ -1,12 +1,12 @@
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
-#include <fiu.h>
 #include <fiu-control.h>
+#include <fiu.h>
 
-int __attribute__ ((noinline)) func1()
+int __attribute__((noinline)) func1()
 {
 	/*
 	int nptrs;
@@ -18,11 +18,10 @@ int __attribute__ ((noinline)) func1()
 	return fiu_fail("fp-1") != 0;
 }
 
-int __attribute__ ((noinline)) func2()
+int __attribute__((noinline)) func2()
 {
 	return func1();
 }
-
 
 int main(void)
 {
@@ -32,7 +31,7 @@ int main(void)
 	r = fiu_enable_stack_by_name("fp-1", 1, NULL, 0, "func2", -1);
 	if (r != 0) {
 		printf("NOTE: fiu_enable_stack_by_name() failed, "
-				"skipping test\n");
+		       "skipping test\n");
 		return 0;
 	}
 
@@ -46,4 +45,3 @@ int main(void)
 
 	return 0;
 }
-

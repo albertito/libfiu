@@ -3,15 +3,15 @@
  * libfiu remote control API
  */
 
-#include <stdio.h>		/* snprintf() */
-#include <string.h>		/* strncpy() */
-#include <stdlib.h>		/* malloc()/free() */
-#include <sys/types.h>		/* getpid(), mkfifo() */
-#include <unistd.h>		/* getpid() */
-#include <sys/stat.h>		/* mkfifo() */
-#include <fcntl.h>		/* open() and friends */
-#include <pthread.h>		/* pthread_create() and friends */
-#include <errno.h>		/* errno and friends */
+#include <errno.h>     /* errno and friends */
+#include <fcntl.h>     /* open() and friends */
+#include <pthread.h>   /* pthread_create() and friends */
+#include <stdio.h>     /* snprintf() */
+#include <stdlib.h>    /* malloc()/free() */
+#include <string.h>    /* strncpy() */
+#include <sys/stat.h>  /* mkfifo() */
+#include <sys/types.h> /* getpid(), mkfifo() */
+#include <unistd.h>    /* getpid() */
 
 /* Enable us, so we get the real prototypes from the headers */
 #define FIU_ENABLE 1
@@ -19,10 +19,8 @@
 #include "fiu-control.h"
 #include "internal.h"
 
-
 /* Max length of a line containing a control directive */
 #define MAX_LINE 512
-
 
 /*
  * Generic remote control
@@ -78,7 +76,7 @@ static int read_line(int fd, char *buf)
  * This function is ugly, but we aim for simplicity and ease to extend for
  * future commands.
  */
-int fiu_rc_string(const char *cmd, char ** const error)
+int fiu_rc_string(const char *cmd, char **const error)
 {
 	char m_cmd[MAX_LINE] = {0};
 	char command[MAX_LINE] = {0};
@@ -130,16 +128,14 @@ int fiu_rc_string(const char *cmd, char ** const error)
 			OPT_POS_IN_STACK,
 			FLAG_ONETIME,
 		};
-		char * const token[] = {
-			[OPT_NAME] = "name",
-			[OPT_FAILNUM] = "failnum",
-			[OPT_FAILINFO] = "failinfo",
-			[OPT_PROBABILITY] = "probability",
-			[OPT_FUNC_NAME] = "func_name",
-			[OPT_POS_IN_STACK] = "pos_in_stack",
-			[FLAG_ONETIME] = "onetime",
-			NULL
-		};
+		char *const token[] = {[OPT_NAME] = "name",
+		                       [OPT_FAILNUM] = "failnum",
+		                       [OPT_FAILINFO] = "failinfo",
+		                       [OPT_PROBABILITY] = "probability",
+		                       [OPT_FUNC_NAME] = "func_name",
+		                       [OPT_POS_IN_STACK] = "pos_in_stack",
+		                       [FLAG_ONETIME] = "onetime",
+		                       NULL};
 
 		char *value;
 		char *opts = parameters;
@@ -152,7 +148,7 @@ int fiu_rc_string(const char *cmd, char ** const error)
 				failnum = atoi(value);
 				break;
 			case OPT_FAILINFO:
-				failinfo = (void *) strtoul(value, NULL, 10);
+				failinfo = (void *)strtoul(value, NULL, 10);
 				break;
 			case OPT_PROBABILITY:
 				probability = strtod(value, NULL);
@@ -182,12 +178,13 @@ int fiu_rc_string(const char *cmd, char ** const error)
 		return fiu_enable(fp_name, failnum, failinfo, flags);
 	} else if (strcmp(command, "enable_random") == 0) {
 		*error = "Error in enable_random";
-		return fiu_enable_random(fp_name, failnum, failinfo,
-				flags, probability);
+		return fiu_enable_random(fp_name, failnum, failinfo, flags,
+		                         probability);
 	} else if (strcmp(command, "enable_stack_by_name") == 0) {
 		*error = "Error in enable_stack_by_name";
 		return fiu_enable_stack_by_name(fp_name, failnum, failinfo,
-				flags, func_name, func_pos_in_stack);
+		                                flags, func_name,
+		                                func_pos_in_stack);
 	} else {
 		*error = "Unknown command";
 		return -1;
@@ -219,7 +216,6 @@ static int rc_do_command(int fdr, int fdw)
 	return len;
 }
 
-
 /*
  * Remote control via named pipes
  *
@@ -248,7 +244,7 @@ static void *rc_fifo_thread(void *unused)
 reopen:
 	if (errcount > 10) {
 		fprintf(stderr, "libfiu: Too many errors in remote control "
-				"thread, shutting down\n");
+		                "thread, shutting down\n");
 		return NULL;
 	}
 
@@ -348,4 +344,3 @@ int fiu_rc_fifo(const char *basename)
 
 	return r;
 }
-

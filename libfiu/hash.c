@@ -8,14 +8,14 @@
  * It is NOT thread-safe.
  */
 
-#include <sys/types.h>		/* for size_t */
-#include <stdint.h>		/* for [u]int*_t */
-#include <stdbool.h>		/* for bool */
-#include <stdlib.h>		/* for malloc() */
-#include <string.h>		/* for memcpy()/memcmp() */
-#include <stdio.h>		/* snprintf() */
-#include <pthread.h>		/* read-write locks */
 #include "hash.h"
+#include <pthread.h>   /* read-write locks */
+#include <stdbool.h>   /* for bool */
+#include <stdint.h>    /* for [u]int*_t */
+#include <stdio.h>     /* snprintf() */
+#include <stdlib.h>    /* for malloc() */
+#include <string.h>    /* for memcpy()/memcmp() */
+#include <sys/types.h> /* for size_t */
 
 /* MurmurHash2, by Austin Appleby. The one we use.
  * It has been modify to fit into the coding style, to work on uint32_t
@@ -34,7 +34,7 @@ static uint32_t murmurhash2(const char *key, size_t len)
 
 	// Mix 4 bytes at a time into the hash
 	while (len >= 4) {
-		uint32_t k = *(uint32_t *) key;
+		uint32_t k = *(uint32_t *)key;
 
 		k *= m;
 		k ^= k >> r;
@@ -49,10 +49,13 @@ static uint32_t murmurhash2(const char *key, size_t len)
 
 	// Handle the last few bytes of the input array
 	switch (len) {
-		case 3: h ^= key[2] << 16;
-		case 2: h ^= key[1] << 8;
-		case 1: h ^= key[0];
-			h *= m;
+	case 3:
+		h ^= key[2] << 16;
+	case 2:
+		h ^= key[1] << 8;
+	case 1:
+		h ^= key[0];
+		h *= m;
 	}
 
 	// Do a few final mixes of the hash to ensure the last few
@@ -83,7 +86,6 @@ struct hash {
 	size_t nremoved;
 	void (*destructor)(void *);
 };
-
 
 /* Minimum table size. */
 #define MIN_SIZE 10
@@ -150,12 +152,13 @@ void *hash_get(struct hash *h, const char *key)
 			/* We got to a entry never used, no match. */
 			return NULL;
 		} else if (entry->in_use == IN_USE &&
-				strcmp(key, entry->key) == 0) {
+		           strcmp(key, entry->key) == 0) {
 			/* The key matches. */
 			return entry->value;
 		}
 
-		/* The key doesn't match this entry, continue with linear probing. */
+		/* The key doesn't match this entry, continue with linear
+		 * probing. */
 		pos = (pos + 1) % h->table_size;
 	}
 
@@ -188,14 +191,15 @@ static bool _hash_set(struct hash *h, char *key, void *value)
 			h->nentries++;
 			return true;
 		} else if (entry->in_use == IN_USE &&
-				strcmp(key, entry->key) == 0) {
+		           strcmp(key, entry->key) == 0) {
 			/* The key matches, override the value. */
 			h->destructor(entry->value);
 			entry->value = value;
 			return true;
 		}
 
-		/* The key doesn't match this entry, continue with linear probing. */
+		/* The key doesn't match this entry, continue with linear
+		 * probing. */
 		pos = (pos + 1) % h->table_size;
 	}
 
@@ -243,7 +247,8 @@ static bool resize_table(struct hash *h, size_t new_size)
 	return true;
 }
 
-static bool auto_resize_table(hash_t *h) {
+static bool auto_resize_table(hash_t *h)
+{
 	/* Slots in the table is taken by valid and removed entries.
 	 * Since we don't reuse removed slots, we need to also take them into
 	 * consideration and shrink if we are accumulating too many.
@@ -254,21 +259,20 @@ static bool auto_resize_table(hash_t *h) {
 	 */
 
 	/* Maintain at least 30% usable entries. */
-	float usable_ratio = (float) (h->table_size - h->nentries - h->nremoved)
-		/ h->table_size;
+	float usable_ratio =
+	    (float)(h->table_size - h->nentries - h->nremoved) / h->table_size;
 	if (usable_ratio < 0.3) {
 		return resize_table(h, h->nentries * 2);
 	}
 
 	/* If we have less than 30% used (by valid entries), compact. */
-	float entries_ratio = (float) h->nentries / h->table_size;
+	float entries_ratio = (float)h->nentries / h->table_size;
 	if (h->table_size > MIN_SIZE && entries_ratio < 0.3) {
 		return resize_table(h, h->nentries * 2);
 	}
 
 	return true;
 }
-
 
 bool hash_set(struct hash *h, const char *key, void *value)
 {
@@ -295,13 +299,14 @@ bool hash_del(struct hash *h, const char *key)
 			/* We got to a never used key, not found. */
 			return false;
 		} else if (entry->in_use == IN_USE &&
-				strcmp(key, entry->key) == 0) {
+		           strcmp(key, entry->key) == 0) {
 			/* The key matches, remove it. */
 			found = true;
 			break;
 		}
 
-		/* The key doesn't match this entry, continue with linear probing. */
+		/* The key doesn't match this entry, continue with linear
+		 * probing. */
 		pos = (pos + 1) % h->table_size;
 	}
 
@@ -323,7 +328,6 @@ bool hash_del(struct hash *h, const char *key)
 
 	return true;
 }
-
 
 /* Generic, simple cache.
  *
@@ -457,7 +461,6 @@ miss:
 	return false;
 }
 
-
 bool cache_set(struct cache *c, const char *key, void *value)
 {
 	pthread_rwlock_wrlock(&c->lock);
@@ -492,4 +495,3 @@ bool cache_del(struct cache *c, const char *key)
 	pthread_rwlock_unlock(&c->lock);
 	return false;
 }
-

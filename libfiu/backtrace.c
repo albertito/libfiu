@@ -7,12 +7,11 @@
 /* This is needed for some of the functions below. */
 #define _GNU_SOURCE
 
-#include <stdlib.h>	/* NULL */
-#include <execinfo.h>
 #include <dlfcn.h>
-#include <sys/procfs.h>
+#include <execinfo.h>
 #include <link.h>
-
+#include <stdlib.h> /* NULL */
+#include <sys/procfs.h>
 
 int get_backtrace(void *buffer, int size)
 {
@@ -35,9 +34,9 @@ void *get_func_end(void *func)
 {
 	int r;
 	Dl_info dl_info;
-	ElfW(Sym) *elf_info;
+	ElfW(Sym) * elf_info;
 
-	r = dladdr1(func, &dl_info, (void **) &elf_info, RTLD_DL_SYMENT);
+	r = dladdr1(func, &dl_info, (void **)&elf_info, RTLD_DL_SYMENT);
 	if (r == 0)
 		return NULL;
 	if (elf_info == NULL)
@@ -45,7 +44,7 @@ void *get_func_end(void *func)
 	if (dl_info.dli_saddr == NULL)
 		return NULL;
 
-	return ((unsigned char *) func) + elf_info->st_size;
+	return ((unsigned char *)func) + elf_info->st_size;
 }
 
 void *get_func_addr(const char *func_name)
@@ -58,8 +57,7 @@ void *get_func_addr(const char *func_name)
 
 #warning Using dummy versions of backtrace
 
-#include <stddef.h>	/* for NULL */
-
+#include <stddef.h> /* for NULL */
 
 int get_backtrace(void *buffer, int size)
 {
@@ -89,7 +87,7 @@ void *get_func_addr(const char *func_name)
 static void *fp_to_voidp(void (*funcp)())
 {
 	unsigned char **p;
-	p = (unsigned char **) &funcp;
+	p = (unsigned char **)&funcp;
 	return *p;
 }
 

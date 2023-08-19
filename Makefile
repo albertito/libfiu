@@ -80,12 +80,23 @@ python_clean:
 clean: python_clean preload_clean libfiu_clean utils_clean test_clean
 
 
+# Auto-format code with an uniform style.
+# Most preload/posix files are not auto-formatted because of the crazy code
+# generation macros.
+format:
+	clang-format -i \
+		`find bindings/ libfiu/ tests/ preload/run/ \
+			-iname '*.[ch]'` \
+		preload/posix/codegen.c
+	black -q -l 79 bindings/python/*.py tests/*.py
+
+
 .PHONY: default all clean install all_install uninstall all_uninstall \
 	libfiu libfiu_clean libfiu_install libfiu_uninstall \
 	python3 python3_install python_clean \
 	bindings bindings_install bindings_clean \
 	preload preload_clean preload_install preload_uninstall \
 	utils utils_clean utils_install utils_uninstall \
-	test tests test_clean
-
+	test tests test_clean \
+	format
 

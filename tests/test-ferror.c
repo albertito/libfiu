@@ -1,20 +1,19 @@
 /* Test the handling of FILE * errors. */
 
-#include <fiu.h>
-#include <fiu-control.h>
-#include <stdio.h>
 #include <errno.h>
+#include <fiu-control.h>
+#include <fiu.h>
 #include <stdio.h>
 #include <string.h>
 
-
-int test(const char *prefix) {
+int test(const char *prefix)
+{
 	FILE *fp = fopen("/dev/zero", "r");
 
 	unsigned char buf[1024];
 	ssize_t r;
 
-	fiu_enable("posix/stdio/rw/fread", 1, (void *) EIO, 0);
+	fiu_enable("posix/stdio/rw/fread", 1, (void *)EIO, 0);
 
 	r = fread(buf, 1, 1024, fp);
 
@@ -27,13 +26,15 @@ int test(const char *prefix) {
 
 	if (errno != EIO) {
 		printf("%s: errno not set appropriately: ", prefix);
-		printf("errno = %d / %s, expected EIO\n", errno, strerror(errno));
+		printf("errno = %d / %s, expected EIO\n", errno,
+		       strerror(errno));
 		return -1;
 	}
 
 	if (ferror(fp) == 0) {
-		printf("%s: ferror() said there was no failure, but there was\n",
-				prefix);
+		printf(
+		    "%s: ferror() said there was no failure, but there was\n",
+		    prefix);
 		return -1;
 	}
 
@@ -41,7 +42,7 @@ int test(const char *prefix) {
 
 	if (ferror(fp) != 0) {
 		printf("%s: clearerr(), ferror() said there were failures\n",
-				prefix);
+		       prefix);
 		return -1;
 	}
 
@@ -55,7 +56,8 @@ int test(const char *prefix) {
 	return 0;
 }
 
-int main(void) {
+int main(void)
+{
 	// Run the test many times, to stress structure reuse a bit. This is
 	// not as thorough but does exercise some bugs we've had, such as
 	// forgetting to decrement the recursion counter.

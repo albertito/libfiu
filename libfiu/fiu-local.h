@@ -34,4 +34,3 @@
 #endif /* FIU_ENABLE */
 
 #endif /* _FIU_LOCAL_H */
-

@@ -16,16 +16,15 @@
  * this may change in the future.
  */
 
-#include <sys/types.h>		/* for size_t */
-#include <stdint.h>		/* for [u]int*_t */
-#include <stdbool.h>		/* for bool */
-#include <stdlib.h>		/* for malloc() */
-#include <string.h>		/* for memcpy()/memcmp() */
-#include <stdio.h>		/* snprintf() */
+#include <stdbool.h>   /* for bool */
+#include <stdint.h>    /* for [u]int*_t */
+#include <stdio.h>     /* snprintf() */
+#include <stdlib.h>    /* for malloc() */
+#include <string.h>    /* for memcpy()/memcmp() */
+#include <sys/types.h> /* for size_t */
 
 #include "hash.h"
 #include "wtable.h"
-
 
 /* Entry of the wildcard array. */
 struct wentry {
@@ -51,10 +50,8 @@ struct wtable {
 	void (*destructor)(void *);
 };
 
-
 /* Minimum table size. */
 #define MIN_SIZE 10
-
 
 struct wtable *wtable_create(void (*destructor)(void *))
 {
@@ -129,7 +126,6 @@ static unsigned int strlast(const char *s1, const char *s2)
 	return i;
 }
 
-
 /* True if s is a wildcarded string, False otherwise. */
 static bool is_wildcard(const char *s, size_t len)
 {
@@ -142,10 +138,8 @@ static bool is_wildcard(const char *s, size_t len)
  * ws is a "wildcard string", which can end in a '*', in which case we compare
  * only up to that position, to do a wildcard matching.
  */
-static bool ws_matches_s(
-		const char *ws, size_t ws_len,
-		const char *s, size_t s_len,
-		bool exact)
+static bool ws_matches_s(const char *ws, size_t ws_len, const char *s,
+                         size_t s_len, bool exact)
 {
 	if (ws == NULL || s == NULL)
 		return false;
@@ -170,7 +164,8 @@ static bool ws_matches_s(
  * Returns a pointer to the entry, or NULL if not found.
  */
 static struct wentry *wildcards_find_entry(struct wtable *t, const char *key,
-		bool exact, struct wentry **first_free)
+                                           bool exact,
+                                           struct wentry **first_free)
 {
 	size_t key_len;
 	size_t pos;
@@ -188,8 +183,8 @@ static struct wentry *wildcards_find_entry(struct wtable *t, const char *key,
 			}
 			continue;
 
-		} else if (ws_matches_s(entry->key, entry->key_len,
-				key, key_len, exact)) {
+		} else if (ws_matches_s(entry->key, entry->key_len, key,
+		                        key_len, exact)) {
 			/* The key matches. */
 			return entry;
 		}
@@ -320,7 +315,6 @@ bool wtable_set(struct wtable *t, const char *key, void *value)
 	}
 }
 
-
 bool wtable_del(struct wtable *t, const char *key)
 {
 	struct wentry *entry;
@@ -345,7 +339,7 @@ bool wtable_del(struct wtable *t, const char *key)
 
 		/* Shrink if the table is less than 60% occupied. */
 		if (t->ws_size > MIN_SIZE &&
-				(float) t->ws_used_count / t->ws_size < 0.6) {
+		    (float)t->ws_used_count / t->ws_size < 0.6) {
 			if (!resize_table(t, t->ws_used_count + 3))
 				return false;
 		}
@@ -360,4 +354,3 @@ bool wtable_del(struct wtable *t, const char *key)
 		return hash_del(t->finals, key);
 	}
 }
-

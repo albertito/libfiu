@@ -13,13 +13,11 @@
 extern "C" {
 #endif
 
-
 /* Flags for fiu_enable*() */
 
 /** Only fail once; the point of failure will be automatically disabled
  * afterwards. */
 #define FIU_ONETIME 1
-
 
 /** Enables the given point of failure unconditionally.
  *
@@ -30,8 +28,7 @@ extern "C" {
  * @returns 0 if success, < 0 otherwise.
  */
 int fiu_enable(const char *name, int failnum, void *failinfo,
-		unsigned int flags);
-
+               unsigned int flags);
 
 /** Enables the given point of failure, with the given probability. That makes
  * it fail with the given probability.
@@ -46,15 +43,14 @@ int fiu_enable(const char *name, int failnum, void *failinfo,
  * @returns  0 if success, < 0 otherwise.
  */
 int fiu_enable_random(const char *name, int failnum, void *failinfo,
-		unsigned int flags, float probability);
-
+                      unsigned int flags, float probability);
 
 /** Type of external callback functions.
  * They must return 0 to indicate not to fail, != 0 to indicate otherwise. Can
  * modify failnum, failinfo and flags, in order to alter the values of the
  * point of failure. */
 typedef int external_cb_t(const char *name, int *failnum, void **failinfo,
-		unsigned int *flags);
+                          unsigned int *flags);
 
 /** Enables the given point of failure, leaving the decision whether to fail
  * or not to the given external function.
@@ -67,7 +63,7 @@ typedef int external_cb_t(const char *name, int *failnum, void **failinfo,
  * @returns  0 if success, < 0 otherwise.
  */
 int fiu_enable_external(const char *name, int failnum, void *failinfo,
-		unsigned int flags, external_cb_t *external_cb);
+                        unsigned int flags, external_cb_t *external_cb);
 
 /* Enables the given point of failure, but only if the given function is in
  * the stack at the given position.
@@ -88,7 +84,7 @@ int fiu_enable_external(const char *name, int failnum, void *failinfo,
  * @returns  0 if success, < 0 otherwise (e.g. backtrace() is not functional).
  */
 int fiu_enable_stack(const char *name, int failnum, void *failinfo,
-		unsigned int flags, void *func, int func_pos_in_stack);
+                     unsigned int flags, void *func, int func_pos_in_stack);
 
 /** Enables the given point of failure, but only if 'func_name' is in
  * the stack at 'func_pos_in_stack'.
@@ -112,8 +108,8 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
  * @returns  0 if success, < 0 otherwise (e.g. backtrace() is not functional).
  */
 int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
-		unsigned int flags, const char *func_name,
-		int func_pos_in_stack);
+                             unsigned int flags, const char *func_name,
+                             int func_pos_in_stack);
 
 /** Disables the given point of failure. That makes it NOT fail.
  *
@@ -146,12 +142,10 @@ int fiu_rc_fifo(const char *basename);
  *			message.
  * @returns  0 if success, < 0 otherwise.
  */
-int fiu_rc_string(const char *cmd, char ** const error);
-
+int fiu_rc_string(const char *cmd, char **const error);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif // _FIU_CONTROL_H
-

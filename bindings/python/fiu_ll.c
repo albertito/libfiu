@@ -12,9 +12,8 @@
 /* Unconditionally enable fiu, otherwise we get fake headers */
 #define FIU_ENABLE 1
 
-#include <fiu.h>
 #include <fiu-control.h>
-
+#include <fiu.h>
 
 static PyObject *fail(PyObject *self, PyObject *args)
 {
@@ -55,7 +54,7 @@ static PyObject *enable(PyObject *self, PyObject *args)
 	unsigned int flags;
 
 	if (!PyArg_ParseTuple(args, "siOI:enable", &name, &failnum, &failinfo,
-				&flags))
+	                      &flags))
 		return NULL;
 
 	/* The caller will guarantee that failinfo doesn't dissapear from under
@@ -72,18 +71,17 @@ static PyObject *enable_random(PyObject *self, PyObject *args)
 	double probability;
 
 	if (!PyArg_ParseTuple(args, "siOId:enable_random", &name, &failnum,
-				&failinfo, &flags, &probability))
+	                      &failinfo, &flags, &probability))
 		return NULL;
 
 	/* The caller will guarantee that failinfo doesn't dissapear from under
 	 * our feet. */
-	return PyLong_FromLong(fiu_enable_random(name, failnum, failinfo,
-				flags, probability));
+	return PyLong_FromLong(
+	    fiu_enable_random(name, failnum, failinfo, flags, probability));
 }
 
-
 static int external_callback(const char *name, int *failnum, void **failinfo,
-		unsigned int *flags)
+                             unsigned int *flags)
 {
 	int rv;
 	PyObject *cbrv;
@@ -140,7 +138,7 @@ static PyObject *enable_external(PyObject *self, PyObject *args)
 	PyObject *py_external_cb;
 
 	if (!PyArg_ParseTuple(args, "siIO:enable_external", &name, &failnum,
-				&flags, &py_external_cb))
+	                      &flags, &py_external_cb))
 		return NULL;
 
 	if (!PyCallable_Check(py_external_cb)) {
@@ -155,8 +153,8 @@ static PyObject *enable_external(PyObject *self, PyObject *args)
 	 * Similar to the way failinfo is handled, we DO NOT TOUCH THE RC OF
 	 * THE EXTERNAL CALLBACK, assuming the caller will take care of making
 	 * sure it doesn't dissapear from beneath us. */
-	return PyLong_FromLong(fiu_enable_external(name, failnum,
-				py_external_cb, flags, external_callback));
+	return PyLong_FromLong(fiu_enable_external(
+	    name, failnum, py_external_cb, flags, external_callback));
 }
 
 static PyObject *enable_stack_by_name(PyObject *self, PyObject *args)
@@ -168,14 +166,13 @@ static PyObject *enable_stack_by_name(PyObject *self, PyObject *args)
 	char *func_name;
 	int pos_in_stack = -1;
 
-	if (!PyArg_ParseTuple(args, "siOIs|i:enable_stack_by_name",
-				&name, &failnum, &failinfo, &flags,
-				&func_name, &pos_in_stack))
+	if (!PyArg_ParseTuple(args, "siOIs|i:enable_stack_by_name", &name,
+	                      &failnum, &failinfo, &flags, &func_name,
+	                      &pos_in_stack))
 		return NULL;
 
-	return PyLong_FromLong(fiu_enable_stack_by_name(name, failnum,
-				failinfo, flags,
-				func_name, pos_in_stack));
+	return PyLong_FromLong(fiu_enable_stack_by_name(
+	    name, failnum, failinfo, flags, func_name, pos_in_stack));
 }
 
 static PyObject *disable(PyObject *self, PyObject *args)
@@ -210,25 +207,23 @@ static PyObject *rc_fifo(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef fiu_methods[] = {
-	{ "fail", (PyCFunction) fail, METH_VARARGS, NULL },
-	{ "failinfo", (PyCFunction) failinfo, METH_VARARGS, NULL },
-	{ "enable", (PyCFunction) enable, METH_VARARGS, NULL },
-	{ "enable_random", (PyCFunction) enable_random, METH_VARARGS, NULL },
-	{ "enable_external", (PyCFunction) enable_external,
-		METH_VARARGS, NULL },
-	{ "enable_stack_by_name", (PyCFunction) enable_stack_by_name,
-		METH_VARARGS, NULL },
-	{ "disable", (PyCFunction) disable, METH_VARARGS, NULL },
-	{ "set_prng_seed", (PyCFunction) set_prng_seed, METH_VARARGS, NULL },
-	{ "rc_fifo", (PyCFunction) rc_fifo, METH_VARARGS, NULL },
-	{ NULL }
-};
+    {"fail", (PyCFunction)fail, METH_VARARGS, NULL},
+    {"failinfo", (PyCFunction)failinfo, METH_VARARGS, NULL},
+    {"enable", (PyCFunction)enable, METH_VARARGS, NULL},
+    {"enable_random", (PyCFunction)enable_random, METH_VARARGS, NULL},
+    {"enable_external", (PyCFunction)enable_external, METH_VARARGS, NULL},
+    {"enable_stack_by_name", (PyCFunction)enable_stack_by_name, METH_VARARGS,
+     NULL},
+    {"disable", (PyCFunction)disable, METH_VARARGS, NULL},
+    {"set_prng_seed", (PyCFunction)set_prng_seed, METH_VARARGS, NULL},
+    {"rc_fifo", (PyCFunction)rc_fifo, METH_VARARGS, NULL},
+    {NULL}};
 
 static PyModuleDef fiu_module = {
-	PyModuleDef_HEAD_INIT,
-	.m_name = "libfiu",
-	.m_size = -1,
-	.m_methods = fiu_methods,
+    PyModuleDef_HEAD_INIT,
+    .m_name = "libfiu",
+    .m_size = -1,
+    .m_methods = fiu_methods,
 };
 
 PyMODINIT_FUNC PyInit_fiu_ll(void)
@@ -243,4 +238,3 @@ PyMODINIT_FUNC PyInit_fiu_ll(void)
 
 	return m;
 }
-

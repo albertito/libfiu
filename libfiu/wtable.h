@@ -9,7 +9,7 @@
 #ifndef _WTABLE_H
 #define _WTABLE_H
 
-#include <stdbool.h>		/* for bool */
+#include <stdbool.h> /* for bool */
 
 typedef struct wtable wtable_t;
 
@@ -21,4 +21,3 @@ bool wtable_set(wtable_t *t, const char *key, void *value);
 bool wtable_del(wtable_t *t, const char *key);
 
 #endif
-

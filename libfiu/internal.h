@@ -27,4 +27,3 @@ void *get_func_addr(const char *func_name);
 int backtrace_works(void (*caller)());
 
 #endif
-

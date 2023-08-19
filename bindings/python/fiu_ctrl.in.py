@@ -21,20 +21,22 @@ import time
 PLIBPATH = "@@PLIBPATH@@"
 
 
-class CommandError (RuntimeError):
+class CommandError(RuntimeError):
     """There was an error running the command."""
+
     pass
 
 
 class Flags:
-	"""Contains the valid flag constants.
+    """Contains the valid flag constants.
 
-	ONETIME: This point of failure is disabled immediately after failing once.
-	"""
-	ONETIME = "onetime"
+    ONETIME: This point of failure is disabled immediately after failing once.
+    """
+
+    ONETIME = "onetime"
 
 
-class _ControlBase (object):
+class _ControlBase(object):
     """Base class for remote control objects."""
 
     def run_raw_cmd(self, cmd, args):
@@ -53,21 +55,28 @@ class _ControlBase (object):
 
         return args
 
-    def enable(self, name, failnum = 1, failinfo = None, flags = ()):
+    def enable(self, name, failnum=1, failinfo=None, flags=()):
         """Enables the given point of failure."""
         args = self._basic_args(name, failnum, failinfo, flags)
         self.run_raw_cmd("enable", args)
 
-    def enable_random(self, name, probability, failnum = 1,
-            failinfo = None, flags = ()):
+    def enable_random(
+        self, name, probability, failnum=1, failinfo=None, flags=()
+    ):
         "Enables the given point of failure, with the given probability."
         args = self._basic_args(name, failnum, failinfo, flags)
         args.append("probability=%f" % probability)
         self.run_raw_cmd("enable_random", args)
 
-    def enable_stack_by_name(self, name, func_name,
-            failnum = 1, failinfo = None, flags = (),
-            pos_in_stack = -1):
+    def enable_stack_by_name(
+        self,
+        name,
+        func_name,
+        failnum=1,
+        failinfo=None,
+        flags=(),
+        pos_in_stack=-1,
+    ):
         """Enables the given point of failure, but only if 'func_name' is in
         the stack.
 
@@ -84,7 +93,7 @@ class _ControlBase (object):
         self.run_raw_cmd("disable", ["name=%s" % name])
 
 
-def _open_with_timeout(path, mode, timeout = 3):
+def _open_with_timeout(path, mode, timeout=3):
     """Open a file, waiting if it doesn't exist yet."""
     deadline = time.time() + timeout
     while not os.path.exists(path):
@@ -95,8 +104,9 @@ def _open_with_timeout(path, mode, timeout = 3):
     return open(path, mode)
 
 
-class PipeControl (_ControlBase):
+class PipeControl(_ControlBase):
     """Control pipe used to control a libfiu-instrumented process."""
+
     def __init__(self, path_prefix):
         """Constructor.
 
@@ -119,7 +129,7 @@ class PipeControl (_ControlBase):
         # external intervention that can be used for debugging.
         fd_in, fd_out = self._open_pipes()
 
-        s = "%s %s\n" % (cmd, ','.join(args))
+        s = "%s %s\n" % (cmd, ",".join(args))
         fd_in.write(s)
         fd_in.flush()
 
@@ -128,17 +138,18 @@ class PipeControl (_ControlBase):
             raise CommandError
 
 
-class EnvironmentControl (_ControlBase):
+class EnvironmentControl(_ControlBase):
     """Pre-execution environment control."""
+
     def __init__(self):
         self.env = ""
 
     def run_raw_cmd(self, cmd, args):
         """Add a raw command to the environment."""
-        self.env += "%s %s\n" % (cmd, ','.join(args))
+        self.env += "%s %s\n" % (cmd, ",".join(args))
 
 
-class Subprocess (_ControlBase):
+class Subprocess(_ControlBase):
     """Wrapper for subprocess.Popen, but without immediate execution.
 
     This class provides a wrapper for subprocess.Popen, which can be used to
@@ -156,13 +167,14 @@ class Subprocess (_ControlBase):
     Note that using shell=True is not recommended, as it makes the pid of the
     controlled process to be unknown.
     """
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
 
         # Note this removes fiu_enable_posix from kwargs if it's there, that
         # way kwargs remains "clean" for passing to Popen.
-        self.fiu_enable_posix = kwargs.pop('fiu_enable_posix', False)
+        self.fiu_enable_posix = kwargs.pop("fiu_enable_posix", False)
 
         self._proc = None
         self.tmpdir = None
@@ -175,19 +187,19 @@ class Subprocess (_ControlBase):
         self.ctrl.run_raw_cmd(cmd, args)
 
     def start(self):
-        self.tmpdir = tempfile.mkdtemp(prefix = 'fiu_ctrl-')
+        self.tmpdir = tempfile.mkdtemp(prefix="fiu_ctrl-")
 
         env = os.environ
-        env['LD_PRELOAD'] = env.get('LD_PRELOAD', '')
+        env["LD_PRELOAD"] = env.get("LD_PRELOAD", "")
         if self.fiu_enable_posix:
-            env['LD_PRELOAD'] += ' ' + PLIBPATH + '/fiu_posix_preload.so'
-        env['LD_PRELOAD'] += ' ' + PLIBPATH + '/fiu_run_preload.so '
-        env['FIU_CTRL_FIFO'] = self.tmpdir + '/ctrl-fifo'
-        env['FIU_ENABLE'] = self.ctrl.env
+            env["LD_PRELOAD"] += " " + PLIBPATH + "/fiu_posix_preload.so"
+        env["LD_PRELOAD"] += " " + PLIBPATH + "/fiu_run_preload.so "
+        env["FIU_CTRL_FIFO"] = self.tmpdir + "/ctrl-fifo"
+        env["FIU_ENABLE"] = self.ctrl.env
 
         self._proc = subprocess.Popen(*self.args, **self.kwargs)
 
-        fifo_path = "%s-%d" % (env['FIU_CTRL_FIFO'], self._proc.pid)
+        fifo_path = "%s-%d" % (env["FIU_CTRL_FIFO"], self._proc.pid)
         self.ctrl = PipeControl(fifo_path)
 
         return self._proc
@@ -195,6 +207,5 @@ class Subprocess (_ControlBase):
     def __del__(self):
         # Remove the temporary directory.
         # The "'fiu_ctrl-' in self.tmpdir" check is just a safeguard.
-        if self.tmpdir and 'fiu_ctrl-' in self.tmpdir:
+        if self.tmpdir and "fiu_ctrl-" in self.tmpdir:
             shutil.rmtree(self.tmpdir)
-

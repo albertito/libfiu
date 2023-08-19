@@ -11,20 +11,20 @@
  *
  * Please note this is a non-deterministic test. */
 
+#include <assert.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <assert.h>
 
-#include <fiu.h>
 #include <fiu-control.h>
+#include <fiu.h>
 
 /* Be careful with increasing these numbers, as the memory usage is directly
  * related to them. */
 #define NHIGH 1000
-#define NLOW  1000
+#define NLOW 1000
 
 /* Maximum number of a failure point's name */
 #define MAX_FPNAME 32
@@ -73,14 +73,14 @@ void *no_check_caller(void *unused)
 	return NULL;
 }
 
-bool rand_bool(void) {
+bool rand_bool(void)
+{
 	return (rand() % 2) == 0;
 }
 
 /* Used too know if a point is enabled or not. */
 bool enabled[NHIGH];
 pthread_rwlock_t enabled_lock;
-
 
 /* Calls all the *enabled* points all the time. */
 unsigned long long checking_caller_count = 0;
@@ -98,11 +98,11 @@ void *checking_caller(void *unused)
 			}
 
 			for (low = 0; low < NLOW; low++) {
-				failed = fiu_fail(
-					final_point_name[high][low]) != 0;
+				failed =
+				    fiu_fail(final_point_name[high][low]) != 0;
 				if (!failed) {
 					printf("ERROR: %d:%d did not fail\n",
-							high, low);
+					       high, low);
 					assert(false);
 				}
 				checking_caller_count++;
@@ -131,14 +131,12 @@ void *enabler(void *unused)
 
 			pthread_rwlock_wrlock(&enabled_lock);
 			if (enabled[high]) {
-				assert(fiu_disable(wildcard_point_name[high])
-						== 0);
+				assert(fiu_disable(wildcard_point_name[high]) ==
+				       0);
 				enabled[high] = false;
 			} else {
-				assert(
-					fiu_enable(
-						wildcard_point_name[high],
-						1, NULL, 0) == 0);
+				assert(fiu_enable(wildcard_point_name[high], 1,
+				                  NULL, 0) == 0);
 				enabled[high] = true;
 			}
 			pthread_rwlock_unlock(&enabled_lock);
@@ -177,8 +175,8 @@ int main(void)
 		make_wildcard_point_name(wildcard_point_name[high], high);
 
 		for (low = 0; low < NLOW; low++) {
-			make_final_point_name(final_point_name[high][low],
-					high, low);
+			make_final_point_name(final_point_name[high][low], high,
+			                      low);
 		}
 	}
 
@@ -201,11 +199,8 @@ int main(void)
 	pthread_rwlock_destroy(&enabled_lock);
 
 	printf("wildcard nc: %-8llu  c: %-8llu  e: %-8llu  t: %llu\n",
-			no_check_caller_count, checking_caller_count,
-			enabler_count,
-			no_check_caller_count + checking_caller_count
-				+ enabler_count);
+	       no_check_caller_count, checking_caller_count, enabler_count,
+	       no_check_caller_count + checking_caller_count + enabler_count);
 
 	return 0;
 }
-

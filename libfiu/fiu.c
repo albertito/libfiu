@@ -1,28 +1,32 @@
 
-#include <stdlib.h>		/* malloc() and friends */
-#include <string.h>		/* strcmp() and friends */
-#include <pthread.h>		/* mutexes */
-#include <sys/time.h>		/* gettimeofday() */
-#include <time.h>		/* gettimeofday() */
-#include <limits.h>		/* ULONG_MAX */
+#include <limits.h>   /* ULONG_MAX */
+#include <pthread.h>  /* mutexes */
+#include <stdlib.h>   /* malloc() and friends */
+#include <string.h>   /* strcmp() and friends */
+#include <sys/time.h> /* gettimeofday() */
+#include <time.h>     /* gettimeofday() */
 
 /* Enable us, so we get the real prototypes from the headers */
 #define FIU_ENABLE 1
 
-#include "fiu.h"
 #include "fiu-control.h"
+#include "fiu.h"
 #include "internal.h"
 #include "wtable.h"
 
 /* Tracing mode for debugging libfiu itself. */
 #ifdef FIU_TRACE
-  #include <stdio.h>
-  #define trace(...) \
-	do { fprintf(stderr, __VA_ARGS__); fflush(stderr); } while (0)
+#include <stdio.h>
+#define trace(...)                                                             \
+	do {                                                                   \
+		fprintf(stderr, __VA_ARGS__);                                  \
+		fflush(stderr);                                                \
+	} while (0)
 #else
-  #define trace(...) do { } while(0)
+#define trace(...)                                                             \
+	do {                                                                   \
+	} while (0)
 #endif
-
 
 /* Different methods to decide when a point of failure fails */
 enum pf_method {
@@ -66,8 +70,8 @@ struct pf_info {
 /* Creates a new pf_info.
  * Only the common fields are filled, the caller should take care of the
  * method-specific ones. For internal use only. */
-static struct pf_info *pf_create(const char *name, int failnum,
-		void *failinfo, unsigned int flags, enum pf_method method)
+static struct pf_info *pf_create(const char *name, int failnum, void *failinfo,
+                                 unsigned int flags, enum pf_method method)
 {
 	struct pf_info *pf;
 
@@ -99,23 +103,34 @@ exit:
 	return pf;
 }
 
-static void pf_free(struct pf_info *pf) {
+static void pf_free(struct pf_info *pf)
+{
 	free(pf->name);
 	pthread_mutex_destroy(&pf->lock);
 	free(pf);
 }
-
 
 /* Table used to keep the information about the enabled points of failure.
  * It is protected by enabled_fails_lock. */
 wtable_t *enabled_fails = NULL;
 static pthread_rwlock_t enabled_fails_lock = PTHREAD_RWLOCK_INITIALIZER;
 
-#define ef_rlock() do { pthread_rwlock_rdlock(&enabled_fails_lock); } while (0)
-#define ef_wlock() do { pthread_rwlock_wrlock(&enabled_fails_lock); } while (0)
-#define ef_runlock() do { pthread_rwlock_unlock(&enabled_fails_lock); } while (0)
-#define ef_wunlock() do { pthread_rwlock_unlock(&enabled_fails_lock); } while (0)
-
+#define ef_rlock()                                                             \
+	do {                                                                   \
+		pthread_rwlock_rdlock(&enabled_fails_lock);                    \
+	} while (0)
+#define ef_wlock()                                                             \
+	do {                                                                   \
+		pthread_rwlock_wrlock(&enabled_fails_lock);                    \
+	} while (0)
+#define ef_runlock()                                                           \
+	do {                                                                   \
+		pthread_rwlock_unlock(&enabled_fails_lock);                    \
+	} while (0)
+#define ef_wunlock()                                                           \
+	do {                                                                   \
+		pthread_rwlock_unlock(&enabled_fails_lock);                    \
+	} while (0)
 
 /* To prevent unwanted recursive calls that would deadlock, we use a
  * thread-local recursion count. Unwanted recursive calls can result from
@@ -132,10 +147,8 @@ static pthread_rwlock_t enabled_fails_lock = PTHREAD_RWLOCK_INITIALIZER;
  * almost everywhere. */
 __thread int rec_count = 0;
 
-
 /* Used to keep the last failinfo via TLS */
 static pthread_key_t last_failinfo_key;
-
 
 /*
  * Miscelaneous internal functions
@@ -148,7 +161,7 @@ static int pc_in_func(struct pf_info *pf, void *pc)
 	 * so we use different methods depending on its availability. */
 	if (pf->minfo.stack.func_end) {
 		return (pc >= pf->minfo.stack.func_start &&
-				pc <= pf->minfo.stack.func_end);
+		        pc <= pf->minfo.stack.func_end);
 	} else {
 		return pf->minfo.stack.func_start == get_func_start(pc);
 	}
@@ -167,8 +180,8 @@ static int should_stack_fail(struct pf_info *pf)
 
 	for (i = 0; i < nptrs; i++) {
 		if (pc_in_func(pf, buffer[i]) &&
-				(pf->minfo.stack.func_pos_in_stack == -1 ||
-				 i == pf->minfo.stack.func_pos_in_stack)) {
+		    (pf->minfo.stack.func_pos_in_stack == -1 ||
+		     i == pf->minfo.stack.func_pos_in_stack)) {
 			return 1;
 		}
 	}
@@ -211,7 +224,7 @@ static double randd(void)
 {
 	randd_xn = 1103515245 * randd_xn + 12345;
 
-	return (double) randd_xn / UINT_MAX;
+	return (double)randd_xn / UINT_MAX;
 }
 
 /* Function that runs after the process has been forked, at the child. It's
@@ -220,7 +233,6 @@ static void atfork_child(void)
 {
 	prng_seed();
 }
-
 
 /*
  * Core API
@@ -246,7 +258,7 @@ int fiu_init(unsigned int flags)
 
 	pthread_key_create(&last_failinfo_key, NULL);
 
-	enabled_fails = wtable_create((void (*)(void *)) pf_free);
+	enabled_fails = wtable_create((void (*)(void *))pf_free);
 
 	if (pthread_atfork(NULL, NULL, atfork_child) != 0) {
 		ef_wunlock();
@@ -318,26 +330,24 @@ int fiu_fail(const char *name)
 	}
 
 	switch (pf->method) {
-		case PF_ALWAYS:
+	case PF_ALWAYS:
+		goto exit_fail;
+		break;
+	case PF_PROB:
+		if (pf->minfo.probability > randd())
 			goto exit_fail;
-			break;
-		case PF_PROB:
-			if (pf->minfo.probability > randd())
-				goto exit_fail;
-			break;
-		case PF_EXTERNAL:
-			if (pf->minfo.external_cb(pf->name,
-					&(pf->failnum),
-					&(pf->failinfo),
-					&(pf->flags)))
-				goto exit_fail;
-			break;
-		case PF_STACK:
-			if (should_stack_fail(pf))
-				goto exit_fail;
-			break;
-		default:
-			break;
+		break;
+	case PF_EXTERNAL:
+		if (pf->minfo.external_cb(pf->name, &(pf->failnum),
+		                          &(pf->failinfo), &(pf->flags)))
+			goto exit_fail;
+		break;
+	case PF_STACK:
+		if (should_stack_fail(pf))
+			goto exit_fail;
+		break;
+	default:
+		break;
 	}
 
 	if (pf->flags & FIU_ONETIME) {
@@ -354,8 +364,7 @@ exit:
 exit_fail:
 	trace("FIU  Failing %s on %s\n", name, pf->name);
 
-	pthread_setspecific(last_failinfo_key,
-			pf->failinfo);
+	pthread_setspecific(last_failinfo_key, pf->failinfo);
 	failnum = pf->failnum;
 
 	if (pf->flags & FIU_ONETIME) {
@@ -373,7 +382,6 @@ void *fiu_failinfo(void)
 {
 	return pthread_getspecific(last_failinfo_key);
 }
-
 
 /*
  * Control API
@@ -397,7 +405,7 @@ static int insert_pf(struct pf_info *pf)
 
 /* Makes the given name fail. */
 int fiu_enable(const char *name, int failnum, void *failinfo,
-		unsigned int flags)
+               unsigned int flags)
 {
 	struct pf_info *pf;
 
@@ -410,7 +418,7 @@ int fiu_enable(const char *name, int failnum, void *failinfo,
 
 /* Makes the given name fail with the given probability. */
 int fiu_enable_random(const char *name, int failnum, void *failinfo,
-		unsigned int flags, float probability)
+                      unsigned int flags, float probability)
 {
 	struct pf_info *pf;
 
@@ -424,7 +432,7 @@ int fiu_enable_random(const char *name, int failnum, void *failinfo,
 
 /* Makes the given name fail when the external function returns != 0. */
 int fiu_enable_external(const char *name, int failnum, void *failinfo,
-		unsigned int flags, external_cb_t *external_cb)
+                        unsigned int flags, external_cb_t *external_cb)
 {
 	struct pf_info *pf;
 
@@ -439,7 +447,7 @@ int fiu_enable_external(const char *name, int failnum, void *failinfo,
 /* Makes the given name fail when func is in the stack at func_pos.
  * If func_pos is -1, then any position will match. */
 int fiu_enable_stack(const char *name, int failnum, void *failinfo,
-		unsigned int flags, void *func, int func_pos_in_stack)
+                     unsigned int flags, void *func, int func_pos_in_stack)
 {
 	struct pf_info *pf;
 
@@ -447,7 +455,7 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 	if (func_pos_in_stack != -1)
 		return -1;
 
-	if (backtrace_works((void (*)()) fiu_enable_stack) == 0)
+	if (backtrace_works((void (*)())fiu_enable_stack) == 0)
 		return -1;
 
 	// We need either get_func_end() or get_func_start() to work, see
@@ -467,15 +475,15 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 
 /* Same as fiu_enable_stack(), but takes a function name. */
 int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
-		unsigned int flags, const char *func_name,
-		int func_pos_in_stack)
+                             unsigned int flags, const char *func_name,
+                             int func_pos_in_stack)
 {
 	void *fp;
 
 	/* We need to check this here instead of relying on the test within
 	 * fiu_enable_stack() in case it is inlined; that would fail the check
 	 * because fiu_enable_stack() would not be in the stack. */
-	if (backtrace_works((void (*)()) fiu_enable_stack_by_name) == 0)
+	if (backtrace_works((void (*)())fiu_enable_stack_by_name) == 0)
 		return -1;
 
 	fp = get_func_addr(func_name);
@@ -483,7 +491,7 @@ int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
 		return -1;
 
 	return fiu_enable_stack(name, failnum, failinfo, flags, fp,
-			func_pos_in_stack);
+	                        func_pos_in_stack);
 }
 
 /* Makes the given name NOT fail. */
@@ -501,5 +509,3 @@ int fiu_disable(const char *name)
 	rec_count--;
 	return success ? 0 : -1;
 }
-
-

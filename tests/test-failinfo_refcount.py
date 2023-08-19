@@ -1,4 +1,3 @@
-
 """
 Test that we keep references to failinfo as needed.
 """
@@ -8,9 +7,9 @@ import fiu
 # Object we'll use for failinfo
 finfo = [1, 2, 3]
 
-fiu.enable('p1', failinfo = finfo)
+fiu.enable("p1", failinfo=finfo)
 
-assert fiu.fail('p1')
+assert fiu.fail("p1")
 assert fiu.failinfo() is finfo
 
 finfo_id = id(finfo)

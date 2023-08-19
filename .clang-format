@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+IndentWidth: 8
+UseTab: AlignWithSpaces
+BreakBeforeBraces: Linux
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+IndentCaseLabels: false
+

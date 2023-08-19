@@ -1,10 +1,10 @@
 
-#include <stdio.h>
-#include <dlfcn.h>
-#include <sys/time.h>
-#include <stdlib.h>
 #include "codegen.h"
 #include "build-env.h"
+#include <dlfcn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
 
 /* Recursion counter, per-thread */
 int __thread _fiu_called = 0;
@@ -40,7 +40,6 @@ void *libc_symbol(const char *symbol)
 #endif
 }
 
-
 /* this runs after all function-specific constructors */
 static void constructor_attr(250) _fiu_init_final(void)
 {
@@ -56,4 +55,3 @@ static void constructor_attr(250) _fiu_init_final(void)
 
 	rec_dec();
 }
-

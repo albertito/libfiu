@@ -4,9 +4,9 @@
 
 /* Generic hash table. See hash.c for more information. */
 
-#include <sys/types.h>		/* for size_t */
-#include <stdbool.h>		/* for bool */
-#include <stdint.h>		/* for int64_t */
+#include <stdbool.h>   /* for bool */
+#include <stdint.h>    /* for int64_t */
+#include <sys/types.h> /* for size_t */
 
 typedef struct hash hash_t;
 
@@ -16,7 +16,6 @@ void hash_free(hash_t *h);
 void *hash_get(hash_t *h, const char *key);
 bool hash_set(hash_t *h, const char *key, void *value);
 bool hash_del(hash_t *h, const char *key);
-
 
 /* Generic cache. */
 
@@ -32,4 +31,3 @@ bool cache_del(cache_t *c, const char *key);
 bool cache_invalidate(cache_t *c);
 
 #endif
-

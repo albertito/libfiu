@@ -3,4 +3,7 @@
 
 int called_wtable_get = 0;
 
-void wtable_get(void) { called_wtable_get++; }
+void wtable_get(void)
+{
+	called_wtable_get++;
+}

@@ -36,7 +36,7 @@ for i in range(200):
 
 s = "x"
 for i in range(200):
-    assert fiu.fail(s + '/asdf')
+    assert fiu.fail(s + "/asdf")
     fiu.disable(s + "/*")
     s += "/x"
 

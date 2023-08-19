@@ -11,14 +11,12 @@
 #ifndef _FIU_H
 #define _FIU_H
 
-
 /* Controls whether the external code enables libfiu or not. */
 #ifdef FIU_ENABLE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /** Initializes the library.
  *
@@ -64,12 +62,12 @@ void *fiu_failinfo(void);
 
 /** Performs the given action when the given point of failure fails. Mostly
  * used in the following macros. */
-#define fiu_do_on(name, action) \
-        do { \
-                if (fiu_fail(name)) { \
-                        action; \
-                } \
-        } while (0)
+#define fiu_do_on(name, action)                                                \
+	do {                                                                   \
+		if (fiu_fail(name)) {                                          \
+			action;                                                \
+		}                                                              \
+	} while (0)
 
 /** Exits the program when the given point of failure fails. */
 #define fiu_exit_on(name) fiu_do_on(name, exit(EXIT_FAILURE))
@@ -77,7 +75,6 @@ void *fiu_failinfo(void);
 /** Makes the function return the given retval when the given point of failure
  * fails. */
 #define fiu_return_on(name, retval) fiu_do_on(name, return retval)
-
 
 #ifdef __cplusplus
 }
@@ -98,4 +95,3 @@ void *fiu_failinfo(void);
 #endif /* FIU_ENABLE */
 
 #endif /* _FIU_H */
-

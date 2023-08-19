@@ -4,15 +4,15 @@
  *
  * Please note this is a non-deterministic test. */
 
+#include <assert.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <assert.h>
 
-#include <fiu.h>
 #include <fiu-control.h>
+#include <fiu.h>
 
 #define NPOINTS 10000
 
@@ -51,14 +51,14 @@ void *no_check_caller(void *unused)
 	return NULL;
 }
 
-bool rand_bool(void) {
+bool rand_bool(void)
+{
 	return (rand() % 2) == 0;
 }
 
 /* Used too know if a point is enabled or not. */
 bool enabled[NPOINTS];
 pthread_rwlock_t enabled_lock;
-
 
 /* Calls all the *enabled* points all the time. */
 unsigned long long checking_caller_count = 0;
@@ -105,8 +105,8 @@ void *enabler(void *unused)
 				assert(fiu_disable(point_name[i]) == 0);
 				enabled[i] = false;
 			} else {
-				assert(fiu_enable(point_name[i], 1, NULL, 0)
-						== 0);
+				assert(fiu_enable(point_name[i], 1, NULL, 0) ==
+				       0);
 				enabled[i] = true;
 			}
 			pthread_rwlock_unlock(&enabled_lock);
@@ -166,11 +166,8 @@ int main(void)
 	pthread_rwlock_destroy(&enabled_lock);
 
 	printf("parallel nc: %-8llu  c: %-8llu  e: %-8llu  t: %llu\n",
-			no_check_caller_count, checking_caller_count,
-			enabler_count,
-			no_check_caller_count + checking_caller_count
-				+ enabler_count);
+	       no_check_caller_count, checking_caller_count, enabler_count,
+	       no_check_caller_count + checking_caller_count + enabler_count);
 
 	return 0;
 }
-
