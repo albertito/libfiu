@@ -103,6 +103,7 @@ mkwrap_bottom(open, (pathname, flags, mode))
 /* The 64-bit variant for glibc.
  * The code is identical to open(), just using open64() where appropriate. */
 #ifdef __GLIBC__
+#if LIBFIU_CAN_DEFINE_64BIT_FUNCTIONS
 
 mkwrap_init(int, open64, (const char *pathname, int flags, ...),
 		(const char *, int, ...))
@@ -183,7 +184,8 @@ mkwrap_body_called(open, (pathname, flags, mode), -1)
 mkwrap_body_errno("posix/io/oc/open", -1)
 mkwrap_bottom(open64, (pathname, flags, mode))
 
-#endif
+#endif  // LIBFIU_CAN_DEFINE_64BIT_FUNCTIONS
+#endif  // __GLIBC__
 
 /*
  * To simulate ferror() properly, we need to keep track of which FILE * have

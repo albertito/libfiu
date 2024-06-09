@@ -2,6 +2,7 @@
 #ifndef _FIU_CODEGEN
 #define _FIU_CODEGEN
 
+#include "build-env.h"
 #include <fiu.h>		/* fiu_* */
 #include <stdlib.h>		/* NULL, random() */
 

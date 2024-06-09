@@ -92,11 +92,18 @@ build-libcsoname:
 	@test "`cat $@`" != "" || \
 		(echo "Error finding soname, please report"; rm $@; exit 1)
 
-build-env.h: build-env.h.in build-libcsoname
+# Some platforms alias 64-bit functions at the asm level, in which case we
+# need to skip generating the 64-bit variants.
+# This helper detects that situation.
+build-check-redefine-64:
+	@$(CC) -c build-check-redefine-64.c -o /dev/null 2>/dev/null \
+		&& echo 1 > $@ || echo 0 > $@
+
+build-env.h: build-env.h.in build-libcsoname build-check-redefine-64
 	@echo "  GEN $@"
 	$(Q) sed "s+@@LIBC_SONAME@@+`cat build-libcsoname`+g" build-env.h.in \
+		| sed "s+@@CAN_DEFINE_64BIT_FUNCTIONS@@+`cat build-check-redefine-64`+g" \
 		> build-env.h
-
 
 fiu_posix_preload.so: build-flags build-env.h build-needlibdl \
 		$(OBJS) ../../libfiu/hash.c
@@ -124,6 +131,7 @@ uninstall:
 clean:
 	rm -f $(OBJS) $(GEN_OBJS:.o=.c) $(GEN_FL)
 	rm -f build-flags build-env.h build-libcsoname build-needlibdl
+	rm -f build-check-redefine-64
 	rm -f function_list fiu_posix_preload.so
 	rm -f *.bb *.bbg *.da *.gcov *.gcda *.gcno gmon.out
 	rm -f modules/*.bb modules/*.bbg modules/*.da
