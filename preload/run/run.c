@@ -47,5 +47,6 @@ static void __attribute__((constructor)) fiu_run_init(void)
 			}
 			tok = strtok_r(NULL, "\n", &state);
 		}
+		free(env_copy);
 	}
 }
