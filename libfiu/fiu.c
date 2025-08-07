@@ -455,7 +455,7 @@ int fiu_enable_stack(const char *name, int failnum, void *failinfo,
 	if (func_pos_in_stack != -1)
 		return -1;
 
-	if (backtrace_works((void (*)())fiu_enable_stack) == 0)
+	if (backtrace_works((void (*)(void))fiu_enable_stack) == 0)
 		return -1;
 
 	// We need either get_func_end() or get_func_start() to work, see
@@ -483,7 +483,7 @@ int fiu_enable_stack_by_name(const char *name, int failnum, void *failinfo,
 	/* We need to check this here instead of relying on the test within
 	 * fiu_enable_stack() in case it is inlined; that would fail the check
 	 * because fiu_enable_stack() would not be in the stack. */
-	if (backtrace_works((void (*)())fiu_enable_stack_by_name) == 0)
+	if (backtrace_works((void (*)(void))fiu_enable_stack_by_name) == 0)
 		return -1;
 
 	fp = get_func_addr(func_name);

@@ -24,6 +24,6 @@ void *get_func_addr(const char *func_name);
 
 /* Do the above backtrace-related functions work?
  * Takes a pointer to the caller so it can verify it's on the stack. */
-int backtrace_works(void (*caller)());
+int backtrace_works(void (*caller)(void));
 
 #endif
