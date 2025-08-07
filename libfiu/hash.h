@@ -21,7 +21,7 @@ bool hash_del(hash_t *h, const char *key);
 
 typedef struct cache cache_t;
 
-cache_t *cache_create();
+cache_t *cache_create(void);
 bool cache_resize(struct cache *c, size_t new_size);
 void cache_free(cache_t *c);
 

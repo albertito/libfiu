@@ -344,7 +344,7 @@ struct cache {
 	pthread_rwlock_t lock;
 };
 
-struct cache *cache_create()
+struct cache *cache_create(void)
 {
 	struct cache *c;
 
