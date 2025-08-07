@@ -84,14 +84,14 @@ void *get_func_addr(const char *func_name)
 /* Ugly but useful conversion from function pointer to void *.
  * This is not guaranteed by the standard, but has to work on all platforms
  * where we support backtrace(), because that function assumes it so. */
-static void *fp_to_voidp(void (*funcp)())
+static void *fp_to_voidp(void (*funcp)(void))
 {
 	unsigned char **p;
 	p = (unsigned char **)&funcp;
 	return *p;
 }
 
-int backtrace_works(void (*caller)())
+int backtrace_works(void (*caller)(void))
 {
 	/* We remember the result so we don't have to compute it over an over
 	 * again, we know it doesn't change. */
