@@ -16,6 +16,7 @@ preload/posix/*.so
 preload/posix/build-flags
 preload/posix/build-libcsoname
 preload/posix/build-needlibdl
+preload/posix/build-check-redefine-64
 preload/posix/build-env.h
 preload/posix/function_list
 preload/posix/modules/*.o

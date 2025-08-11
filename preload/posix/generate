@@ -185,7 +185,15 @@ class Function:
 		f.ret_type = f.ret_type.replace("off_t", "off64_t")
 
 		# This is glibc-specific, so surround it with #ifdefs.
-		return [Verbatim("#ifdef __GLIBC__"), f, Verbatim("#endif")]
+        # Also only apply it if we can define the 64-bit functions on the same
+        # file (detected at build-time).
+		return [
+                Verbatim("#ifdef __GLIBC__"),
+                Verbatim("#if LIBFIU_CAN_DEFINE_64BIT_FUNCTIONS"),
+                f,
+                Verbatim("#endif  // LIBFIU_CAN_DEFINE_64BIT_FUNCTIONS"),
+                Verbatim("#endif  // __GLIBC__"),
+                ]
 
 	def get_all_variants(self):
 		"""Returns all variants of the given function provided via

@@ -9,4 +9,7 @@
 /* libc's soname, used for dlopen()ing the C library */
 #define LIBC_SONAME "@@LIBC_SONAME@@"
 
+/* Whether 64-bit functions can be defined alongside the base ones */
+#define LIBFIU_CAN_DEFINE_64BIT_FUNCTIONS @@CAN_DEFINE_64BIT_FUNCTIONS@@
+
 #endif
