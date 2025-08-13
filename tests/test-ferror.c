@@ -11,7 +11,7 @@ int test(const char *prefix)
 	FILE *fp = fopen("/dev/zero", "r");
 
 	unsigned char buf[1024];
-	ssize_t r;
+	size_t r;
 
 	fiu_enable("posix/stdio/rw/fread", 1, (void *)EIO, 0);
 
