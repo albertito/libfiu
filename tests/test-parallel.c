@@ -123,7 +123,7 @@ void *enabler(void *unused)
 	return NULL;
 }
 
-void disable_all()
+void disable_all(void)
 {
 	int i = 0;
 
