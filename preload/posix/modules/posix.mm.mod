@@ -26,7 +26,7 @@ int msync(void *addr, size_t length, int flags);
 
 # glibc's mprotect() does not use const in the first argument, as the standard
 # says it should
-v: #ifdef __GLIBC__
+v: #if defined(__GLIBC__) || defined(__FreeBSD__)
 int mprotect(void *addr, size_t len, int prot);
 	on error: -1
 	valid errnos: EACCES EINVAL ENOMEM

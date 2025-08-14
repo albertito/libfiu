@@ -17,6 +17,14 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#ifdef __FreeBSD__
+#ifdef ferror
+#undef ferror
+#endif
+#ifdef clearerr
+#undef clearerr
+#endif
+#endif
 
 /* Wrapper for open(), we can't generate it because it has a variable number
  * of arguments */

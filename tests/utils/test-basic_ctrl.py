@@ -4,6 +4,9 @@ import os
 import subprocess
 import time
 
+import platform
+os_name = platform.system()
+
 def fiu_ctrl(p, args):
     subprocess.check_call("./wrap fiu-ctrl".split() + args + [str(p.pid)],
             universal_newlines = True)
@@ -52,19 +55,34 @@ p = launch_sh()
 fiu_ctrl(p, ["-c", "enable name=posix/io/*"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err, err
+error_pattern = (
+    'error' if os_name == 'Linux'
+    else 'cat: stdout:' if os_name == 'FreeBSD'
+    else None
+)
+assert error_pattern in err, err
 
 # Same, but with failinfo.
 p = launch_sh()
 fiu_ctrl(p, ["-c", "enable name=posix/io/*,failinfo=3"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err, err
+error_pattern = (
+    'error' if os_name == 'Linux'
+    else 'cat: stdout: No such process' if os_name == 'FreeBSD'
+    else None
+)
+assert error_pattern in err, err
 
 # Same, but with probability.
 p = launch_sh()
 fiu_ctrl(p, ["-c", "enable_random name=posix/io/*,probability=0.999"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
-assert 'error' in err, err
+error_pattern = (
+    'error' if os_name == 'Linux'
+    else 'cat: stdout:' if os_name == 'FreeBSD'
+    else None
+)
+assert error_pattern in err, err
 

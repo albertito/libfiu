@@ -51,6 +51,12 @@ USE_DUMMY_BACKTRACE := $(shell $(CC) $(ALL_CFLAGS) -c backtrace.c \
 ifndef USE_DUMMY_BACKTRACE
 # The real backtrace needs linking against libdl.
 USE_LIBDL = -ldl
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),FreeBSD)
+    USE_LIBDL += -lexecinfo
+endif
+
 endif
 
 
