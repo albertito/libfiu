@@ -42,17 +42,17 @@ void *get_func_start(void *pc)
 
 static int dladdr1(const void *addr, Dl_info *info, void **extra_info, int flags)
 {
-    if ((addr == NULL) || (info == NULL) || (extra_info == NULL)) {
-        return 0;
+	if ((addr == NULL) || (info == NULL) || (extra_info == NULL)) {
+		return 0;
     }
 
-    if ((flags != RTLD_DL_SYMENT) && (flags != RTLD_DL_LINKMAP)) {
-        return 0;
-    }
+	if ((flags != RTLD_DL_SYMENT) && (flags != RTLD_DL_LINKMAP)) {
+		return 0;
+	}
 
-    *extra_info = NULL;
+	*extra_info = NULL;
 
-    return 0;
+	return 0;
 }
 #endif
 
