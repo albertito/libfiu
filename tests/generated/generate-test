@@ -101,7 +101,6 @@ def generate(options, outfile):
 	if 'multi_defines' in options:
 		print(options['multi_defines'])
 		multi_defines = options['multi_defines'].split("\\n")
-		print(multi_defines)
 		for i in multi_defines:
 			outfile.write("%s\n" % i)
 
