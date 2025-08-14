@@ -7,6 +7,11 @@
 /* This is needed for some of the functions below. */
 #define _GNU_SOURCE
 
+#ifdef __FreeBSD__
+#define __BSD_VISIBLE 1
+#include <sys/types.h>
+#endif
+
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <link.h>
@@ -29,6 +34,27 @@ void *get_func_start(void *pc)
 
 	return info.dli_saddr;
 }
+
+#ifdef __FreeBSD__
+
+#define RTLD_DL_SYMENT 1
+#define RTLD_DL_LINKMAP 2
+
+static int dladdr1(const void *addr, Dl_info *info, void **extra_info, int flags)
+{
+    if ((addr == NULL) || (info == NULL) || (extra_info == NULL)) {
+        return 0;
+    }
+
+    if ((flags != RTLD_DL_SYMENT) && (flags != RTLD_DL_LINKMAP)) {
+        return 0;
+    }
+
+    *extra_info = NULL;
+
+    return 0;
+}
+#endif
 
 void *get_func_end(void *func)
 {

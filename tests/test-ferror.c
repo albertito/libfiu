@@ -6,6 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __FreeBSD__
+#ifdef ferror
+#undef ferror
+#endif
+#ifdef clearerr
+#undef clearerr
+#endif
+#endif
+
 int test(const char *prefix)
 {
 	FILE *fp = fopen("/dev/zero", "r");
@@ -58,6 +67,7 @@ int test(const char *prefix)
 
 int main(void)
 {
+	fiu_init(0);
 	// Run the test many times, to stress structure reuse a bit. This is
 	// not as thorough but does exercise some bugs we've had, such as
 	// forgetting to decrement the recursion counter.
