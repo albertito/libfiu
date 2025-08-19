@@ -80,6 +80,7 @@ TEST_MAIN_TMPL = r"""
 int main(void) {
 	int s, f;
 
+	fiu_init(0);
 	s = success();
 	f = failure();
 

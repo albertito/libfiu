@@ -62,6 +62,7 @@ int main(void)
 	// not as thorough but does exercise some bugs we've had, such as
 	// forgetting to decrement the recursion counter.
 	char prefix[8];
+	fiu_init(0);
 	for (int i = 0; i < 200; i++) {
 		snprintf(prefix, 8, "%2d", i);
 		test(prefix);
