@@ -3,12 +3,17 @@ CFLAGS += -std=c99 -pedantic -Wall
 ALL_CFLAGS = -I../../libfiu/ -L../../libfiu/ \
 	-D_XOPEN_SOURCE=600 -D_GNU_SOURCE -fPIC -DFIU_ENABLE=1 $(CFLAGS)
 
-ifdef DEBUG
-ALL_CFLAGS += -g
-endif
+# Optimization CFLAGS, only used when doing a non-debug build.
+OPT_CFLAGS = -O3
 
-ifdef PROFILE
-ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
+ifdef DEBUG
+	ALL_CFLAGS += -g
+else
+	ifdef PROFILE
+		ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
+	else
+		ALL_CFLAGS += $(OPT_CFLAGS)
+	endif
 endif
 
 ifneq ($(V), 1)
