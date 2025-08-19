@@ -5,6 +5,22 @@ include: <stdio.h>
 include: <errno.h>
 include: <stdarg.h>
 
+v: #ifdef __FreeBSD__
+include: <sys/types.h>
+v: #ifdef getc
+v: #undef getc
+v: #endif
+v: #ifdef putc
+v: #undef putc
+v: #endif
+v: #ifdef getchar
+v: #undef getchar
+v: #endif
+v: #ifdef putchar
+v: #undef putchar
+v: #endif
+v: #endif
+
 fiu name base: posix/stdio/oc/
 
 FILE *fopen(const char *pathname, const char *mode);

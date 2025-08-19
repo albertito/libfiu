@@ -6,6 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __FreeBSD__
+#ifdef ferror
+#undef ferror
+#endif
+#ifdef clearerr
+#undef clearerr
+#endif
+#endif
+
 int test(const char *prefix)
 {
 	FILE *fp = fopen("/dev/zero", "r");
