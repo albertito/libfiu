@@ -109,6 +109,8 @@ class Function:
 
 		# extract params names and types
 		paramst = ', '.join([i[0] for i in self.params_info])
+		if not paramst:
+			paramst = 'void'
 		paramsn = ', '.join([i[1] for i in self.params_info])
 
 		f.write('mkwrap_top(%s, %s, (%s), (%s), (%s), (%s))\n' % \
