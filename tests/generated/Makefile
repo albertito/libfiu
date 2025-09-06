@@ -11,6 +11,12 @@ ifdef PROFILE
 ALL_CFLAGS += -g -pg -fprofile-arcs -ftest-coverage
 endif
 
+# Note we pass -O0 (after $CFLAGS) to explicitly disable optimizations;
+# otherwise, the compiler may inline or optimize away some of the functions
+# under test, causing false positives.
+# See https://bugs.debian.org/1097184 for an example.
+ALL_CFLAGS += -O0
+
 ifneq ($(V), 1)
 	NICE_CC = @echo "  CC  $@"; $(CC)
 	NICE_RUN = @echo "  RUN $<"; \
