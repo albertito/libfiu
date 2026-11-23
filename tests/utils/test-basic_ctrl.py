@@ -48,22 +48,27 @@ assert out == 'test\n', out
 assert err == '', err
 
 # Launch and then make I/O fail at runtime.
+# We enable linux/io/* too, because newer versions of GNU cat use splice() to
+# copy between pipes.
 p = launch_sh()
-fiu_ctrl(p, ["-c", "enable name=posix/io/*"])
+fiu_ctrl(p, ["-c", "enable name=posix/io/*",
+             "-c", "enable name=linux/io/*"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
 assert 'error' in err, err
 
 # Same, but with failinfo.
 p = launch_sh()
-fiu_ctrl(p, ["-c", "enable name=posix/io/*,failinfo=3"])
+fiu_ctrl(p, ["-c", "enable name=posix/io/*,failinfo=3",
+             "-c", "enable name=linux/io/*,failinfo=3"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
 assert 'error' in err, err
 
 # Same, but with probability.
 p = launch_sh()
-fiu_ctrl(p, ["-c", "enable_random name=posix/io/*,probability=0.999"])
+fiu_ctrl(p, ["-c", "enable_random name=posix/io/*,probability=0.999",
+             "-c", "enable_random name=linux/io/*,probability=0.999"])
 out, err = send_cmd(p, "test\n")
 assert out == '', out
 assert 'error' in err, err

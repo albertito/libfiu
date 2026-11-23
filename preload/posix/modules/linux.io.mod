@@ -14,3 +14,14 @@ int sync_file_range(int fd, off_t offset, off_t nbytes, \
 
 v: #endif
 
+# splice() is linux-only.
+v: #ifdef __linux__
+
+ssize_t splice(int fd_in, off64_t *off_in, int fd_out, off64_t *off_out, \
+		size_t len, unsigned int flags);
+	on error: -1
+	valid errnos: EAGAIN EBADF EINVAL ENOMEM ESPIPE
+	reduce: len
+
+v: #endif
+
